@@ -106,33 +106,10 @@ export function makePhysics(A, opts = {}) {
     return Math.min(0.8, p.frac * expRise((e - p.e0) / (p.eLim - p.e0), 3)) * FMAX[j];
   };
 
-  // path with the segment each point belongs to (wrap points belong to the bone they wrap)
-  const _qi = new THREE.Quaternion();
-  function ownedPath(W, m) {
-    let pts = m.pts.map(q => ({ p: pt(W, q.seg, q.p), seg: q.seg }));
-    for (const w of m.wraps) {
-      const out = [pts[0]];
-      for (let i = 1; i < pts.length; i++) wrapOwned(W, w, pts[i - 1], pts[i], out, w.depth);
-      pts = out;
-    }
-    return pts;
-  }
-  function wrapOwned(W, w, a, b, out, depth) {
-    const ww = W[w.seg]; _qi.copy(ww.q).invert();
-    const J = S[w.seg].J;
-    const toN = P => P.clone().sub(ww.p).applyQuaternion(_qi).add(J).sub(w.c).divide(w.r);
-    const an = toN(a.p), bn = toN(b.p), d = bn.clone().sub(an);
-    const dd = d.lengthSq();
-    let t = dd > 1e-12 ? -an.dot(d) / dd : 0;
-    t = Math.max(0.02, Math.min(0.98, t));
-    const qn = an.clone().addScaledVector(d, t);
-    const L = qn.length();
-    if (L >= 1 || L < 1e-6) { out.push(b); return; }
-    qn.multiplyScalar(1.0 / L);
-    const q = { p: qn.multiply(w.r).add(w.c).sub(J).applyQuaternion(ww.q).add(ww.p), seg: w.seg };
-    if (depth > 0) { wrapOwned(W, w, a, q, out, depth - 1); wrapOwned(W, w, q, b, out, depth - 1); }
-    else { out.push(q); out.push(b); }
-  }
+  // Use the anatomy module's trace for both lever lengths and joint reactions.
+  // A wrap contact belongs to the bone it wraps; there is no second geometry
+  // algorithm here that could drift when an attachment or pulley is improved.
+  const ownedPath = A.ownedStrandPath;
   // net pull of a strand of tension f on the set of segments `set`
   function pullOn(path, set, f) {
     const F = V(0, 0, 0);

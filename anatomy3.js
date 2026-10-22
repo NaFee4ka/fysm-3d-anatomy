@@ -904,7 +904,10 @@ export function createAnatomy(THREE) {
 
   // ---------- paths with wrapping ----------
   const _qi = new THREE.Quaternion();
-  function wrapSeg(W, w, a, b, out, depth) {
+  // Coordinates and the segment that carries each path point must come from the
+  // same trace: lengths drive moment arms, while point ownership drives joint
+  // reactions. `owners` is optional so the render/length-only path stays lean.
+  function wrapSeg(W, w, a, b, out, depth, owners, ownerB) {
     const ww = W[w.seg]; _qi.copy(ww.q).invert();
     const J = S[w.seg].J;
     const toN = P => P.clone().sub(ww.p).applyQuaternion(_qi).add(J).sub(w.c).divide(w.r);
@@ -914,21 +917,31 @@ export function createAnatomy(THREE) {
     t = Math.max(0.02, Math.min(0.98, t));
     const qn = an.clone().addScaledVector(d, t);
     const L = qn.length();
-    if (L >= 1 || L < 1e-6) { out.push(b); return; }
+    if (L >= 1 || L < 1e-6) { out.push(b); if (owners) owners.push(ownerB); return; }
     qn.multiplyScalar(1.0 / L);
     const q = qn.multiply(w.r).add(w.c).sub(J).applyQuaternion(ww.q).add(ww.p);
-    if (depth > 0) { wrapSeg(W, w, a, q, out, depth - 1); wrapSeg(W, w, q, b, out, depth - 1); }
-    else { out.push(q); out.push(b); }
+    if (depth > 0) {
+      wrapSeg(W, w, a, q, out, depth - 1, owners, w.seg);
+      wrapSeg(W, w, q, b, out, depth - 1, owners, ownerB);
+    } else {
+      out.push(q); out.push(b);
+      if (owners) owners.push(w.seg, ownerB);
+    }
   }
-  function strandPath(W, m) {
+  function traceStrandPath(W, m, withOwners) {
     let pts = m.pts.map(q => pt(W, q.seg, q.p));
+    let owners = withOwners ? m.pts.map(q => q.seg) : null;
     for (const w of m.wraps) {
       const out = [pts[0]];
-      for (let i = 1; i < pts.length; i++) wrapSeg(W, w, pts[i - 1], pts[i], out, w.depth);
+      const outOwners = withOwners ? [owners[0]] : null;
+      for (let i = 1; i < pts.length; i++) wrapSeg(W, w, pts[i - 1], pts[i], out, w.depth, outOwners, owners && owners[i]);
       pts = out;
+      owners = outOwners;
     }
-    return pts;
+    return withOwners ? pts.map((p, i) => ({ p, seg: owners[i] })) : pts;
   }
+  function strandPath(W, m) { return traceStrandPath(W, m, false); }
+  function ownedStrandPath(W, m) { return traceStrandPath(W, m, true); }
   function pathLength(pts) { let L = 0; for (let i = 1; i < pts.length; i++) L += pts[i].distanceTo(pts[i - 1]); return L; }
 
   // ---------- joint analysis: clinical components ----------
@@ -1477,5 +1490,5 @@ export function createAnatomy(THREE) {
     },
   ];
 
-  return { strandPath, pathLength, strandInstances, analyzeJoint, analyzeRegions, ROM, REGION, LIGS, CAP_NAMES, UNITS, JOINTS, POSES, measure, support, comOf, LANDMARKS, MASS, placeW, poseAt, blendConf, poseFromData, STAND, scapulaPose, nScap, uScap, THREE, D, V, SEG, S, VERT, BONES, computeWorld, pt, quatAngleDeg, sideName, qAx, AX, MT, MC, lerp3, AZ, armZ, mirrorQ, IDQ, resolveRaw, lmkTag, lmkRegion, CENTRAL };
+  return { strandPath, ownedStrandPath, pathLength, strandInstances, analyzeJoint, analyzeRegions, ROM, REGION, LIGS, CAP_NAMES, UNITS, JOINTS, POSES, measure, support, comOf, LANDMARKS, MASS, placeW, poseAt, blendConf, poseFromData, STAND, scapulaPose, nScap, uScap, THREE, D, V, SEG, S, VERT, BONES, computeWorld, pt, quatAngleDeg, sideName, qAx, AX, MT, MC, lerp3, AZ, armZ, mirrorQ, IDQ, resolveRaw, lmkTag, lmkRegion, CENTRAL };
 }
