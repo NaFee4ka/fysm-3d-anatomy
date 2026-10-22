@@ -1,0 +1,15 @@
+import * as THREE from 'three';
+import fs from 'fs';
+import { createAnatomy } from './anatomy3.js';
+const A = createAnatomy(THREE);
+const data = JSON.parse(fs.readFileSync(process.argv[3] || 'poses.json', 'utf8'));
+const id = process.argv[2] || 'half';
+const c = A.poseFromData(data[id]); const W = A.placeW(c.local, c.rootQ);
+const f = v => v.toArray().map(x => x.toFixed(3)).join(', ');
+const tip = A.LANDMARKS.find(l => l.tag === 'tip2' && l.side === 'L');
+const S = W.hum_L.p, E = W.fore_L.p, Wr = W.hand_L.p, T = A.pt(W, tip.seg, tip.p);
+console.log('shoulder', f(S), '| elbow', f(E), '| wrist', f(Wr), '| tip2', f(T));
+const u = E.clone().sub(S).normalize(), fo = Wr.clone().sub(E).normalize();
+console.log('upper arm dir', f(u), 'elev above horizontal', (Math.asin(u.y) * 180 / Math.PI).toFixed(1), '| forearm dir', f(fo), 'elev', (Math.asin(fo.y) * 180 / Math.PI).toFixed(1), '| elbow flex', (180 - Math.acos(-u.dot(fo) * -1 * -1) * 0).toFixed(0));
+const ear = A.pt(W, 'head', new THREE.Vector3(0.085, 1.61, -0.06));
+console.log('ear', f(ear), 'neck C5 approx', f(W.neckB.p), 'head', f(W.head.p));

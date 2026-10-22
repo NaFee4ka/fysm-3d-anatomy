@@ -1,0 +1,10 @@
+import * as THREE from 'three';
+import fs from 'fs';
+import { createAnatomy } from './anatomy3.js';
+import { makePhysics } from './physics_core.mjs';
+const A = createAnatomy(THREE);
+const data = JSON.parse(fs.readFileSync('poses.json', 'utf8'));
+const L = {}; for (const k in A.STAND.local) L[k] = A.STAND.local[k].clone();
+L.fore_L = A.qAx(A.AX.X, -30);
+const W = A.placeW(L, A.STAND.rootQ);
+console.log('fore local X -30 -> forearm dir', W.hand_L.p.clone().sub(W.fore_L.p).normalize().toArray().map(v => v.toFixed(2)).join(','));

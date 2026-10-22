@@ -1,0 +1,370 @@
+<title>Анатомия шести асан</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,500&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: anatomy lightbox. A dark stage holds the model; controls and the card sit in a quiet panel, below the stage on phones and beside it on wide screens. */
+:root {
+  --ink: #0d1215;
+  --panel: #12191d;
+  --raise: #19232a;
+  --line: #26333b;
+  --bone: #ece4d3;
+  --muted: #8f9ca3;
+  --warm: #ff9a3d;
+  --cool: #45bfff;
+  --work: #3fdc86;
+  --gold: #ffcf5c;
+  --rose: #c25a62;
+  --font-ui: "Golos Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-num: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --font-latin: "Cormorant Garamond", "Iowan Old Style", "Times New Roman", serif;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+[hidden] { display: none !important; }
+body { background: var(--ink); color: var(--bone); font: 15px/1.5 var(--font-ui); -webkit-font-smoothing: antialiased; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--ink); }
+button { font: inherit; color: inherit; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+.warm-t { color: var(--warm); } .cool-t { color: var(--cool); } .gold-t { color: var(--gold); } .work-t { color: var(--work); }
+
+.app { min-height: 100%; display: grid; grid-template-areas: "head" "stage" "panel"; grid-template-columns: minmax(0, 1fr); }
+.gutter { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+.top { grid-area: head; padding-block: 14px 12px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.top-title { min-width: 0; }
+.poses { display: flex; flex-wrap: wrap; gap: 6px; }
+.pose-tab { flex: none; display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px 0 6px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--muted); font-size: 14px; cursor: pointer; white-space: nowrap; }
+.pose-tab .num { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--raise); color: var(--bone); font-size: 12px; }
+.pose-tab:hover { border-color: #3a4851; color: var(--bone); }
+.pose-tab[aria-pressed="true"] { background: var(--raise); color: var(--bone); border-color: var(--gold); }
+.pose-tab[aria-pressed="true"] .num { background: var(--gold); color: var(--ink); }
+.eyebrow { margin: 0 0 2px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+h1 { margin: 0; font-size: 24px; line-height: 1.15; font-weight: 600; letter-spacing: -0.01em; text-wrap: balance; }
+.top-meta { margin: 0; font-size: 13px; color: var(--muted); }
+
+.stage { grid-area: stage; position: relative; height: clamp(330px, 54svh, 760px); background: var(--ink); border-block: 1px solid var(--line); overflow: hidden; }
+#view { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+#view:active { cursor: grabbing; }
+.stage-tools { position: absolute; top: 10px; right: max(10px, env(safe-area-inset-right, 0px)); display: flex; gap: 8px; }
+.icon-btn { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 10px; border: 1px solid var(--line); background: color-mix(in srgb, var(--ink) 70%, transparent); color: var(--bone); cursor: pointer; }
+.icon-btn:hover { border-color: var(--muted); }
+.hint { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); margin: 0; padding: 6px 12px; border-radius: 999px; background: color-mix(in srgb, var(--ink) 75%, transparent); border: 1px solid var(--line); color: var(--muted); font-size: 13px; white-space: nowrap; transition: opacity .4s; }
+.hint.gone { opacity: 0; }
+.loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: 14px; pointer-events: none; }
+.stage.ready .loading { display: none; }
+
+.panel { grid-area: panel; padding-block: 16px 28px; display: flex; flex-direction: column; gap: 18px; background: var(--panel); }
+.block-label { margin: 0 0 8px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+
+.pose-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; }
+.pose-end { font-size: 13px; color: var(--muted); }
+.pose-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+.pose-top label { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+#pose-out { font-size: 13px; color: var(--bone); }
+input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 28px; background: transparent; margin: 0; --fill: 100%; }
+input[type=range]::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--gold) 0 var(--fill), var(--line) var(--fill) 100%); }
+input[type=range]::-moz-range-track { height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--gold) 0 var(--fill), var(--line) var(--fill) 100%); }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; margin-top: -8px; border-radius: 50%; background: var(--bone); border: 3px solid var(--ink); box-shadow: 0 0 0 1px var(--gold); }
+input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: var(--bone); border: 3px solid var(--ink); box-shadow: 0 0 0 1px var(--gold); }
+.btn { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--raise); cursor: pointer; font-size: 14px; }
+.btn:hover { border-color: var(--muted); }
+.btn[aria-pressed="true"] { border-color: var(--gold); }
+.pose-actions { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.pose-caption { margin: 0; font-size: 13px; color: var(--muted); }
+
+.layers { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px 0 12px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; font-size: 14px; }
+.chip[aria-pressed="true"] { background: var(--raise); color: var(--bone); border-color: #3a4851; }
+.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex: none; }
+.chip[aria-pressed="false"] .dot { opacity: 0.35; }
+.dot-bone { background: #e4d9c2; }
+.dot-joint { background: var(--gold); box-shadow: 0 0 8px var(--gold); }
+.dot-muscle { background: var(--rose); }
+.dot-lig { background: #e6dfd0; }
+.dot-deep { background: #7a2f36; }
+.dot-fascia { background: #d5e4ea; box-shadow: 0 0 0 2px rgba(213,228,234,0.25); }
+.dot-flines { background: conic-gradient(#4fa3ff 0 25%, #ff6b6b 0 50%, #ffd166 0 75%, #06d6a0 0); }
+.link-btn { background: none; border: 0; padding: 0; color: var(--bone); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--bone) 35%, transparent); text-underline-offset: 3px; cursor: pointer; font: inherit; }
+.link-btn:hover { color: var(--gold); }
+ul.plain { margin: 4px 0 10px; padding-left: 18px; color: var(--muted); font-size: 13.5px; line-height: 1.45; }
+.card-title .dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; vertical-align: 0.12em; }
+.rank-name .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 4px; }
+.dot-light { background: linear-gradient(90deg, var(--cool), var(--warm)); }
+.dot-force { background: #fff0cf; box-shadow: 0 0 6px #fff0cf; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px; gap: 2px; margin: 2px 0 12px; }
+.seg button { border: 0; background: transparent; color: var(--muted); padding: 6px 14px; border-radius: 999px; cursor: pointer; font-size: 14px; }
+.seg button[aria-pressed="true"] { background: var(--raise); color: var(--bone); }
+.legend-effort { display: none; }
+body.mode-effort .legend-length { display: none; }
+body.mode-effort .legend-effort { display: block; }
+.legend-bar.effort { background: linear-gradient(90deg, #1e2b33 0%, #1f6a43 40%, var(--work) 100%); }
+.fl-bar { display: flex; height: 12px; border-radius: 6px; overflow: hidden; background: var(--line); gap: 2px; }
+.fl-seg { display: block; height: 100%; }
+.fl-0 { background: var(--gold); } .fl-1 { background: #d98a3c; } .fl-2 { background: #8fb6c9; } .fl-3 { background: #6a7e88; }
+.fl-legend { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 4px; font-size: 13.5px; }
+.fl-legend li { display: grid; grid-template-columns: 10px 1fr auto auto; align-items: center; gap: 8px; }
+.fl-legend b { font-weight: 500; color: var(--bone); }
+.fl-legend .num-soft { color: var(--muted); font-family: var(--font-num); font-size: 12.5px; min-width: 44px; text-align: right; }
+.fl-dot { width: 10px; height: 10px; border-radius: 3px; }
+
+.legend-bar { height: 10px; border-radius: 5px; background: linear-gradient(90deg, var(--cool) 0%, #1e2b33 50%, var(--warm) 100%); }
+.legend-ticks { display: flex; justify-content: space-between; margin-top: 4px; font: 12px var(--font-num); color: var(--muted); font-variant-numeric: tabular-nums; }
+.legend-caps { display: flex; justify-content: space-between; gap: 12px; margin-top: 2px; font-size: 13px; }
+.legend-keys { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; font-size: 13px; color: var(--muted); }
+.legend-keys li { display: flex; align-items: center; gap: 10px; }
+.pulse { width: 10px; height: 10px; border-radius: 50%; background: var(--work); box-shadow: 0 0 0 0 var(--work); flex: none; animation: pulse 1.5s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--work) 70%, transparent); } 50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--work) 0%, transparent); } }
+@media (prefers-reduced-motion: reduce) { .pulse { animation: none; } .hint { transition: none; } }
+
+.card { position: relative; background: var(--raise); border: 1px solid var(--line); border-radius: 14px; padding: 16px; min-width: 0; }
+.card-eyebrow { margin: 0 0 4px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding-right: 40px; }
+.card-title { margin: 0; font-size: 20px; line-height: 1.2; font-weight: 600; text-wrap: balance; padding-right: 40px; }
+.card-sub { margin: 16px 0 8px; font-size: 13px; font-weight: 500; color: var(--muted); }
+.latin { margin: 4px 0 0; font: italic 500 18px/1.2 var(--font-latin); color: #c9bfa9; }
+.card-close { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 9px; border: 1px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; }
+.card-close:hover { color: var(--bone); border-color: var(--muted); }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.tag { font-size: 12px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); }
+.tag-active { color: var(--work); border-color: color-mix(in srgb, var(--work) 50%, transparent); }
+.tag-warm { color: var(--warm); border-color: color-mix(in srgb, var(--warm) 45%, transparent); }
+.tag-cool { color: var(--cool); border-color: color-mix(in srgb, var(--cool) 45%, transparent); }
+.meter { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 14px; }
+.meter-label { font-size: 13px; color: var(--muted); }
+.big { font-size: 26px; font-weight: 500; }
+.meter-foot { margin: 6px 0 0; font-size: 13px; color: var(--muted); }
+.bar { position: relative; height: 6px; margin-top: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.bar-zero { position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: #4b5a63; }
+.bar-fill { position: absolute; top: 0; bottom: 0; border-radius: 3px; }
+.bar-fill.warm { background: var(--warm); } .bar-fill.cool { background: var(--cool); } .bar-fill.gold { background: var(--gold); } .bar-fill.work { background: var(--work); }
+.role { margin: 14px 0 0; max-width: 62ch; }
+.rank, .joints { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 4px; }
+.rank-row { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; align-items: baseline; text-align: left; padding: 8px 10px; border-radius: 10px; border: 1px solid transparent; background: transparent; cursor: pointer; }
+.rank-row:hover { border-color: var(--line); background: color-mix(in srgb, var(--ink) 40%, transparent); }
+.rank-row .bar { grid-column: 1 / -1; }
+.rank-name { font-size: 14px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip-sm { font-size: 13px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line); background: transparent; cursor: pointer; text-align: left; }
+.chip-sm:hover { border-color: var(--muted); }
+.card-hint { margin: 14px 0 0; font-size: 13px; color: var(--muted); }
+.parts { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 8px; }
+.parts li { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; align-items: baseline; font-size: 13.5px; }
+.parts li .bar { grid-column: 1 / -1; margin-top: 3px; }
+.parts.comps li { font-size: 14px; }
+.part-note { grid-column: 1 / -1; font-size: 12.5px; color: var(--muted); }
+.bar.rom { background: var(--line); }
+.bar-fill.over { background: var(--warm); }
+.bar-mark { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--bone); opacity: 0.8; }
+.rank-sub { grid-column: 1 / -1; font-size: 12.5px; color: var(--muted); }
+.muted-t { color: var(--muted); }
+.btn-sm { height: 32px; padding: 0 12px; font-size: 13px; margin-top: 14px; }
+.zones { display: grid; gap: 10px; }
+.zone { display: grid; gap: 6px; }
+.zone-label { font-size: 12px; color: var(--muted); }
+body.no-light .legend-wrap { opacity: 0.45; }
+.note { margin: 0; font-size: 12.5px; color: var(--muted); max-width: 62ch; }
+.card-sub.first { margin-top: 8px; }
+.card-sub + .role { margin-top: 0; }
+.word { font-size: 13.5px; text-align: right; }
+.cues { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 10px; counter-reset: cue; }
+.cues li { display: grid; gap: 3px; padding-left: 18px; position: relative; }
+.cues li::before { content: ""; position: absolute; left: 2px; top: 0.6em; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
+.cues-num li { padding-left: 26px; counter-increment: cue; }
+.cues-num li::before { content: counter(cue); top: 0.1em; left: 0; width: 18px; height: 18px; display: grid; place-items: center; font: 500 11px/1 var(--font-num); color: var(--ink); background: var(--gold); }
+.cue-t { font-size: 14.5px; }
+.cue-m { font-size: 13px; color: var(--muted); }
+.cue-m::before { content: "модель: "; color: #6c7a82; }
+.load { margin-top: 10px; display: grid; gap: 6px; }
+.load-bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: color-mix(in srgb, var(--cool) 55%, var(--line)); }
+.load-a { display: block; height: 100%; background: var(--gold); }
+.load-legend { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; color: var(--muted); }
+.load-legend b { color: var(--bone); font-weight: 500; }
+.foot-bar { position: relative; height: 10px; border-radius: 5px; background: var(--line); }
+.foot-mid { position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: #4b5a63; }
+.foot-mark { position: absolute; top: -4px; width: 18px; height: 18px; margin-left: -9px; border-radius: 50%; background: var(--gold); border: 3px solid var(--raise); }
+
+/* the round: player, marks under the time line, statistics for one round */
+.pose-tab-cycle .num svg { display: block; }
+.cyc[hidden], #pose-player[hidden] { display: none; }
+.cyc-marks { position: relative; height: 30px; margin-top: 2px; }
+.cyc-tick { position: absolute; top: 0; width: 1px; height: 7px; background: #4b5a63; transform: translateX(-50%); }
+.cyc-pose { position: absolute; top: 6px; transform: translateX(-50%); display: grid; place-items: center; width: 22px; height: 22px; padding: 0; border-radius: 50%; background: var(--raise); border: 1px solid var(--line); color: var(--bone); font: 500 11px/1 var(--font-num); cursor: pointer; }
+.cyc-pose:hover { border-color: var(--muted); }
+.cyc-pose[aria-current="true"] { background: var(--gold); color: var(--ink); border-color: var(--gold); }
+.cyc-phase { margin: 0; font-size: 15px; line-height: 1.35; min-height: 2.7em; color: var(--bone); }
+.cyc-phase .muted-t { font-size: 13px; }
+.cyc-actions { flex-wrap: wrap; margin-top: 6px; }
+.seg-inline { margin: 0; }
+.seg-inline button { padding: 6px 11px; font-family: var(--font-num); font-size: 13px; }
+#cyc-play .i-pause { display: none; }
+#cyc-play[aria-pressed="true"] .i-pause { display: block; }
+#cyc-play[aria-pressed="true"] .i-play { display: none; }
+#view { transition: opacity .28s; }
+.kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
+.kpi { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: color-mix(in srgb, var(--ink) 35%, transparent); min-width: 0; }
+.kpi-v { font: 500 22px/1.1 var(--font-num); font-variant-numeric: tabular-nums; color: var(--bone); }
+.kpi-v small { font-size: 13px; color: var(--muted); font-weight: 400; }
+.kpi-l { margin-top: 4px; font-size: 12.5px; line-height: 1.35; color: var(--muted); }
+.seg-hold { flex-wrap: wrap; margin: 0; }
+.seg-hold button[aria-pressed="true"], .seg-inline button[aria-pressed="true"] { background: var(--ink); color: var(--bone); box-shadow: inset 0 0 0 1px var(--gold); }
+.seg-hold button { padding: 6px 11px; font-family: var(--font-num); font-size: 13px; }
+.hold-row { margin-top: 12px; }
+.bar-peak { position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px; border-radius: 1px; background: var(--bone); opacity: 0.85; }
+.filter-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.filter-chips .chip-sm[aria-pressed="true"] { border-color: var(--gold); color: var(--bone); }
+.filter-chips .chip-sm { color: var(--muted); }
+.more-btn { margin-top: 6px; }
+.cyc-curve { margin-top: 10px; }
+.cyc-curve svg { display: block; width: 100%; height: auto; overflow: visible; }
+.curve-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 4px; font-size: 12.5px; color: var(--muted); }
+.lg-line { display: inline-block; width: 18px; height: 0; margin-right: 6px; vertical-align: middle; border-top: 2px solid var(--warm); }
+.lg-line.r { border-top: 2px dashed #ffd29a; }
+.lg-line.now { width: 0; height: 12px; border-top: 0; border-left: 2px solid var(--gold); }
+.callout { margin: 12px 0 0; padding: 10px 12px; border-radius: 10px; border: 1px solid color-mix(in srgb, var(--gold) 40%, var(--line)); background: color-mix(in srgb, var(--gold) 6%, transparent); font-size: 13px; color: var(--bone); }
+.stat-line { margin: 10px 0 0; font-size: 13.5px; color: var(--bone); }
+.rank-row .num-pair { font-family: var(--font-num); font-size: 13px; white-space: nowrap; }
+
+@media (min-width: 900px) {
+  .app { height: 100%; grid-template-areas: "stage head" "stage panel"; grid-template-columns: minmax(0, 1fr) 390px; grid-template-rows: auto minmax(0, 1fr); }
+  .stage { height: 100%; border-block: 0; border-right: 1px solid var(--line); }
+  .top { background: var(--panel); padding-block: 20px 4px; display: block; }
+  .top-meta { margin-top: 6px; }
+  .panel { overflow-y: auto; padding-block: 14px 24px; }
+}
+</style>
+
+<div class="app">
+  <header class="top gutter">
+    <div class="top-title">
+      <p class="eyebrow" id="pose-sanskrit">Адхо мукха шванасана</p>
+      <h1 id="pose-name">Горка</h1>
+      <p class="top-meta">Кости, суставы, связки и мышцы в 3D</p>
+    </div>
+    <nav class="poses" aria-label="Позы">
+      <button class="pose-tab" data-pose="dog" aria-pressed="true"><span class="num">1</span>Горка</button>
+      <button class="pose-tab" data-pose="plank" aria-pressed="false"><span class="num">2</span>Планка на предплечьях</button>
+      <button class="pose-tab" data-pose="half" aria-pressed="false"><span class="num">3</span>Полупрогиб</button>
+      <button class="pose-tab" data-pose="bow" aria-pressed="false"><span class="num">4</span>Корзинка</button>
+      <button class="pose-tab" data-pose="fold" aria-pressed="false"><span class="num">5</span>Наклон</button>
+      <button class="pose-tab" data-pose="handstand" aria-pressed="false"><span class="num">6</span>Стойка на руках</button>
+      <button class="pose-tab pose-tab-cycle" id="cycle-tab" aria-pressed="false" hidden><span class="num"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v4.5h-4.5"/></svg></span>Круг: все переходы</button>
+    </nav>
+  </header>
+
+  <div class="stage" id="stage">
+    <canvas id="view" aria-label="3D-модель выбранной позы. Вращай, приближай и нажимай на мышцы, связки и суставы."></canvas>
+    <p class="loading">Собираю модель…</p>
+    <div class="stage-tools">
+      <button class="icon-btn" id="reset" aria-label="Вернуть исходный вид">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4.5h4.5"/></svg>
+      </button>
+    </div>
+    <p class="hint" id="hint">Крути пальцем, щипком приближай</p>
+  </div>
+
+  <aside class="panel gutter">
+    <div id="cycle-player" class="cyc" hidden>
+      <div class="pose-top"><label for="cyc-t">Круг: пять поз и переходы</label><output id="cyc-out" class="num" for="cyc-t">0,0 с</output></div>
+      <div class="cyc-track">
+        <input id="cyc-t" type="range" min="0" max="1000" step="1" value="0" aria-label="Время в круге">
+        <div class="cyc-marks" id="cyc-marks" aria-hidden="true"></div>
+      </div>
+      <p class="cyc-phase" id="cyc-phase"></p>
+      <div class="pose-actions cyc-actions">
+        <button class="btn" id="cyc-play" aria-pressed="false">
+          <svg class="i-play" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 5l12 7-12 7z" fill="currentColor"/></svg>
+          <svg class="i-pause" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" fill="currentColor"/></svg>
+          <span>Пуск</span>
+        </button>
+        <div class="seg seg-inline" role="group" aria-label="Скорость">
+          <button data-speed="0.5" aria-pressed="false">0,5×</button>
+          <button data-speed="1" aria-pressed="true">1×</button>
+          <button data-speed="2" aria-pressed="false">2×</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="pose-player">
+      <div class="pose-top"><label for="pose">Из стойки в позу</label><output id="pose-out" class="num" for="pose">100%</output></div>
+      <div class="pose-row">
+        <span class="pose-end">Стойка</span>
+        <input id="pose" type="range" min="0" max="100" step="1" value="100">
+        <span class="pose-end" id="pose-end">Горка</span>
+      </div>
+      <div class="pose-actions">
+        <button class="btn" id="play" aria-pressed="false">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 5l12 7-12 7z" fill="currentColor"/></svg>
+          <span>Переход</span>
+        </button>
+        <p class="pose-caption" id="pose-caption">Свет показывает отличие от обычной стойки</p>
+      </div>
+    </div>
+
+    <div>
+      <p class="block-label">Слои</p>
+      <div class="layers" role="group" aria-label="Слои модели">
+        <button class="chip" data-layer="bones" aria-pressed="true"><i class="dot dot-bone"></i>Кости</button>
+        <button class="chip" data-layer="joints" aria-pressed="true"><i class="dot dot-joint"></i>Суставы</button>
+        <button class="chip" data-layer="ligs" aria-pressed="true"><i class="dot dot-lig"></i>Связки</button>
+        <button class="chip" data-layer="fascia" aria-pressed="false"><i class="dot dot-fascia"></i>Фасции</button>
+        <button class="chip" data-layer="flines" aria-pressed="false"><i class="dot dot-flines"></i>Линии Майерса</button>
+        <button class="chip" data-layer="musclesOuter" aria-pressed="true"><i class="dot dot-muscle"></i>Мышцы внешние</button>
+        <button class="chip" data-layer="musclesDeep" aria-pressed="true"><i class="dot dot-deep"></i>Мышцы глубокие</button>
+        <button class="chip" data-layer="light" aria-pressed="true"><i class="dot dot-light"></i>Свет</button>
+        <button class="chip" data-layer="forces" aria-pressed="false"><i class="dot dot-force"></i>Силы</button>
+      </div>
+    </div>
+
+    <div class="legend-wrap">
+      <p class="block-label">Свет показывает</p>
+      <div class="seg" role="group" aria-label="Что показывает свет">
+        <button data-lightmode="length" aria-pressed="true">Длину мышц</button>
+        <button data-lightmode="effort" aria-pressed="false">Усилие</button>
+      </div>
+      <div class="legend-length">
+        <p class="block-label">Длина мышцы по сравнению со стойкой</p>
+        <div class="legend-bar" aria-hidden="true"></div>
+        <div class="legend-ticks" aria-hidden="true"><span>−40%</span><span>−20</span><span>0</span><span>+20</span><span>+40%</span></div>
+        <div class="legend-caps"><span class="cool-t">короче</span><span class="warm-t">длиннее</span></div>
+        <ul class="legend-keys">
+          <li><i class="pulse" aria-hidden="true"></i>Зелёная и пульсирует — мышца работает</li>
+          <li><i class="dot dot-joint" aria-hidden="true"></i>Золото на хряще — насколько повернулся сустав</li>
+          <li><i class="dot dot-lig" aria-hidden="true"></i>Связки и капсулы светятся тёплым там, где берут натяжение</li>
+        </ul>
+      </div>
+      <div class="legend-effort">
+        <p class="block-label">Усилие мышцы, доля её максимальной силы</p>
+        <div class="legend-bar effort" aria-hidden="true"></div>
+        <div class="legend-ticks" aria-hidden="true"><span>0</span><span>10</span><span>20</span><span>30</span><span>40</span><span>50%+</span></div>
+        <ul class="legend-keys">
+          <li><i class="pulse" aria-hidden="true"></i>Зелёная и пульсирует — мышца работает сильнее 8%</li>
+          <li><i class="dot dot-joint" aria-hidden="true"></i><span id="legend-joint-effort">Золото на хряще — нагрузка на сустав, доля силы мышц вокруг него</span></li>
+          <li><i class="dot dot-force" aria-hidden="true"></i>Слой «Силы»: стрелки опоры, центр масс и площадь опоры</li>
+        </ul>
+      </div>
+    </div>
+
+    <section class="card card-cues" id="cues" aria-live="polite"></section>
+
+    <section class="card" id="info" aria-live="polite"></section>
+
+    <p class="note">Схематичная модель мужчины ростом около 176 см и весом 70 кг. Толщина мышц взята по типичной площади поперечного сечения; при удлинении мышца становится тоньше, потому что её объём не меняется. Длины мышц и связок посчитаны по точкам прикрепления с огибанием костей, углы суставов сравниваются с нормами подвижности взрослого. Силы посчитаны как статика: каждый сустав и всё тело должны быть в равновесии, а мышцы делят работу так, чтобы общее усилие было наименьшим, как в моделях OpenSim. Максимальные силы мышц взяты из опубликованных моделей опорно-двигательного аппарата, рычаги мышц посчитаны по изменению их длины в каждой позе. Учтены вес сегментов тела, мягкость тканей под опорой, трение о коврик, хват руками (руки могут только тянуть), пассивное натяжение растянутых мышц, жёсткость дисков и связок позвоночника, упор суставов в конце подвижности, давление лопатки на рёбра. Усилия, о которых просят подсказки (ягодицы в тонусе, пресс включён), заданы как минимальный тонус, остальное следует из равновесия. Цифры показывают направление и порядок величин, у каждого тела они свои. Череп — настоящие кости из анатомической базы BodyParts3D (© The Database Center for Life Science, лицензия CC BY 4.0), упрощённые и подогнанные к модели; зубы достроены по ширинам коронок взрослого.</p>
+  </aside>
+</div>
+
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script type="module">
+/*__APP__*/
+</script>
+<script>
+setTimeout(function () {
+  var st = document.getElementById('stage');
+  if (st && !st.classList.contains('ready')) {
+    var l = st.querySelector('.loading');
+    if (l) l.textContent = 'Не получилось загрузить 3D. Проверь интернет и обнови страницу.';
+  }
+}, 20000);
+</script>

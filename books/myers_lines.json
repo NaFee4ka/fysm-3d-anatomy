@@ -1,0 +1,7462 @@
+{
+ "source": "Т. Майерс «Анатомические поезда» — карта линий; переходы — Wilke et al. 2016; точки — модель (координаты стойки)",
+ "generated": "2026-10-19T04:23:43.650Z",
+ "poses": [
+  "dog",
+  "plank",
+  "half",
+  "bow",
+  "fold"
+ ],
+ "lines": [
+  {
+   "id": "SBL",
+   "ru": "Поверхностная задняя линия",
+   "abbr": "ПЗЛ",
+   "en": "Superficial Back Line",
+   "crossing": false,
+   "sideNote": null,
+   "fn": "держит тело выпрямленным против сгибания вперёд, разгибает (кроме колена — его сгибает); в стойке — постоянная «осанка» сзади; растягивается в наклонах вперёд, укорачивается в прогибах",
+   "evidence": "сильная: все три перехода (подошвенная фасция → икроножная → задняя поверхность бедра → поясничная фасция/выпрямитель) подтверждены на вскрытиях (Wilke 2016)",
+   "tracks": [
+    {
+     "n": 1,
+     "ru": "Подошвенная фасция и короткий сгибатель пальцев",
+     "lat": "aponeurosis plantaris; m. flexor digitorum brevis",
+     "side": "A",
+     "model": {
+      "units": [
+       "fdb"
+      ],
+      "related": [],
+      "ligs": [
+       "plantar"
+      ],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "full",
+     "note": null,
+     "path": [
+      {
+       "lig": "plantar",
+       "k": 1
+      }
+     ],
+     "from": {
+      "ru": "подошвенная поверхность фаланг пальцев стопы",
+      "at": {
+       "seg": "toes_L",
+       "p": [
+        0.106,
+        0.008,
+        0.155
+       ]
+      }
+     },
+     "to": {
+      "ru": "пяточный бугор снизу",
+      "at": {
+       "seg": "foot_L",
+       "p": [
+        0.094,
+        0.012,
+        -0.062
+       ]
+      }
+     },
+     "standLength": 0.193
+    },
+    {
+     "n": 2,
+     "ru": "Икроножная мышца и ахиллово сухожилие (камбаловидная — глубже, в общем сухожилии)",
+     "lat": "m. gastrocnemius; tendo calcaneus",
+     "side": "A",
+     "model": {
+      "units": [
+       "gastroM",
+       "gastroL"
+      ],
+      "related": [
+       "soleus",
+       "plantaris"
+      ],
+      "ligs": [],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "full",
+     "note": null,
+     "path": [
+      {
+       "unit": "gastroM"
+      }
+     ],
+     "from": {
+      "ru": "пяточный бугор сзади",
+      "at": {
+       "seg": "foot_L",
+       "p": [
+        0.094,
+        0.04,
+        -0.07
+       ]
+      }
+     },
+     "to": {
+      "ru": "мыщелки бедра сзади",
+      "at": {
+       "seg": "thigh_L",
+       "p": [
+        0.078,
+        0.535,
+        -0.032
+       ]
+      }
+     },
+     "standLength": 0.506
+    },
+    {
+     "n": 3,
+     "ru": "Мышцы задней поверхности бедра",
+     "lat": "m. biceps femoris (caput longum), m. semitendinosus, m. semimembranosus",
+     "side": "A",
+     "model": {
+      "units": [
+       "bicFemL",
+       "semiT",
+       "semiM"
+      ],
+      "related": [
+       "bicFemS"
+      ],
+      "ligs": [],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "full",
+     "note": null,
+     "path": [
+      {
+       "unit": "bicFemL"
+      }
+     ],
+     "from": {
+      "ru": "мыщелки большеберцовой, головка малоберцовой (головки икроножной и сухожилия задней группы перекрываются у колена)",
+      "at": {
+       "seg": "shank_L",
+       "p": [
+        0.131,
+        0.465,
+        -0.024
+       ]
+      }
+     },
+     "to": {
+      "ru": "седалищный бугор",
+      "at": {
+       "seg": "pelvis",
+       "p": [
+        0.066,
+        0.858,
+        -0.064
+       ]
+      }
+     },
+     "standLength": 0.406
+    },
+    {
+     "n": 4,
+     "ru": "Крестцово-бугорная связка",
+     "lat": "lig. sacrotuberale",
+     "side": "A",
+     "model": {
+      "units": [],
+      "related": [],
+      "ligs": [
+       "sacrotub"
+      ],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "static",
+     "note": "в модели таз и крестец — одно жёсткое тело, длина связки не меняется",
+     "path": [
+      {
+       "lig": "sacrotub"
+      }
+     ],
+     "from": {
+      "ru": "седалищный бугор",
+      "at": {
+       "seg": "pelvis",
+       "p": [
+        0.062,
+        0.862,
+        -0.06
+       ]
+      }
+     },
+     "to": {
+      "ru": "крестец",
+      "at": {
+       "seg": "pelvis",
+       "p": [
+        0.024,
+        0.95,
+        -0.1
+       ]
+      }
+     },
+     "standLength": 0.104
+    },
+    {
+     "n": 5,
+     "ru": "Пояснично-крестцовая фасция и мышца, выпрямляющая позвоночник",
+     "lat": "fascia thoracolumbalis; m. erector spinae",
+     "side": "A",
+     "model": {
+      "units": [
+       "erector"
+      ],
+      "related": [
+       "multifidus"
+      ],
+      "ligs": [],
+      "caps": [],
+      "fascia": [
+       "thoracolumbarFascia"
+      ]
+     },
+     "cov": "partial",
+     "note": "нет фасции; выпрямитель доходит до шеи, а не до затылка",
+     "path": [
+      {
+       "unit": "erector",
+       "k": 0
+      }
+     ],
+     "from": {
+      "ru": "крестец",
+      "at": {
+       "seg": "pelvis",
+       "p": [
+        0.018,
+        0.985,
+        -0.108
+       ]
+      }
+     },
+     "to": {
+      "ru": "нижнешейный отдел (в модели выпрямитель заканчивается на C7–T1)",
+      "at": {
+       "seg": "neckA",
+       "p": [
+        0.022,
+        1.47,
+        -0.105
+       ]
+      }
+     },
+     "standLength": 0.49
+    },
+    {
+     "n": 6,
+     "ru": "Шейный отрезок: полуостистая и ременная мышцы головы, выйная связка",
+     "lat": "m. semispinalis capitis; m. splenius capitis; lig. nuchae",
+     "side": "A",
+     "model": {
+      "units": [
+       "semispinalis"
+      ],
+      "related": [
+       "splenius"
+      ],
+      "ligs": [
+       "nuchal"
+      ],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "partial",
+     "note": "нет подзатылочных мышц («глубокий экспресс» шеи)",
+     "path": [
+      {
+       "unit": "semispinalis"
+      }
+     ],
+     "from": {
+      "ru": "остистые и поперечные отростки верхнегрудных позвонков",
+      "at": {
+       "seg": "thB",
+       "p": [
+        0.03,
+        1.33,
+        -0.098
+       ]
+      }
+     },
+     "to": {
+      "ru": "затылочный гребень",
+      "at": {
+       "seg": "head",
+       "p": [
+        0.024,
+        1.612,
+        -0.075
+       ]
+      }
+     },
+     "standLength": 0.285
+    },
+    {
+     "n": 7,
+     "ru": "Сухожильный шлем (надчерепной апоневроз)",
+     "lat": "galea aponeurotica",
+     "side": "C",
+     "model": {
+      "units": [],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": [
+       "galea"
+      ]
+     },
+     "cov": "missing",
+     "note": "голова — одно тело, фасция статична",
+     "path": [
+      {
+       "fascia": "galea"
+      }
+     ],
+     "from": {
+      "ru": "затылочный гребень",
+      "at": {
+       "seg": "head",
+       "p": [
+        0,
+        1.6,
+        -0.092
+       ]
+      }
+     },
+     "to": {
+      "ru": "лобная кость, надбровная дуга",
+      "at": {
+       "seg": "head",
+       "p": [
+        0,
+        1.755,
+        0
+       ]
+      }
+     },
+     "standLength": 0.32
+    }
+   ],
+   "coverage": {
+    "full": 3,
+    "static": 1,
+    "partial": 2,
+    "missing": 1,
+    "tracks": 7,
+    "structuralPct": 71,
+    "dynamicPct": 57
+   },
+   "missing": [
+    "thoracolumbarFascia",
+    "galea",
+    "suboccipitals"
+   ],
+   "poses": {
+    "dog": {
+     "myers": "lengthened",
+     "ru": "главная растягиваемая линия: подошва, икры, задняя поверхность бедра; с прогибом в спине верхний отрезок (выпрямитель) укорочен и работает"
+    },
+    "plank": {
+     "myers": "neutral",
+     "ru": "почти нейтральна по длине; держит не она, а передние линии"
+    },
+    "half": {
+     "myers": "shortened-active",
+     "ru": "укорачивается и работает: выпрямитель, полуостистая поднимают грудь, ягодичные и задняя группа бедра держат таз и ноги"
+    },
+    "bow": {
+     "myers": "shortened-active",
+     "ru": "сильно укорочена и работает по всей длине: спина, ягодичные, задняя группа бедра; колено согнуто — нижний отрезок свободен"
+    },
+    "fold": {
+     "myers": "lengthened",
+     "ru": "растягивается целиком, от подошвы до затылка — классический наклон для ПЗЛ"
+    }
+   },
+   "model": {
+    "length": {
+     "dog": {
+      "totalPct": 6.2,
+      "tracksPct": [
+       0,
+       3.5,
+       38,
+       0,
+       -5.8,
+       -0.2,
+       0
+      ]
+     },
+     "plank": {
+      "totalPct": 0.3,
+      "tracksPct": [
+       0,
+       1.8,
+       -2.1,
+       0,
+       1.5,
+       0,
+       0
+      ]
+     },
+     "half": {
+      "totalPct": -2.3,
+      "tracksPct": [
+       0,
+       -5.7,
+       1.1,
+       0,
+       -5.1,
+       -1.4,
+       0
+      ]
+     },
+     "bow": {
+      "totalPct": -5.8,
+      "tracksPct": [
+       0,
+       -3.9,
+       -16.7,
+       0,
+       -8.4,
+       -1.6,
+       0
+      ]
+     },
+     "fold": {
+      "totalPct": 7.9,
+      "tracksPct": [
+       0,
+       -0.6,
+       41.8,
+       0,
+       2.9,
+       0.3,
+       0
+      ]
+     }
+    },
+    "activation": {
+     "dog": {
+      "mean": 0.047,
+      "max": 0.138,
+      "top": [
+       "gastroM 14%",
+       "gastroL 13%",
+       "erector 11%"
+      ]
+     },
+     "plank": {
+      "mean": 0.028,
+      "max": 0.081,
+      "top": [
+       "semispinalis 8%",
+       "gastroL 6%",
+       "gastroM 6%"
+      ]
+     },
+     "half": {
+      "mean": 0.053,
+      "max": 0.18,
+      "top": [
+       "erector 18%",
+       "semispinalis 12%",
+       "gastroM 7%"
+      ]
+     },
+     "bow": {
+      "mean": 0.034,
+      "max": 0.109,
+      "top": [
+       "semispinalis 11%",
+       "erector 7%",
+       "gastroM 5%"
+      ]
+     },
+     "fold": {
+      "mean": 0.073,
+      "max": 0.204,
+      "top": [
+       "gastroM 20%",
+       "gastroL 20%",
+       "erector 10%"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "SFL",
+   "ru": "Поверхностная фронтальная линия",
+   "abbr": "ПФЛ",
+   "en": "Superficial Front Line",
+   "crossing": false,
+   "sideNote": null,
+   "fn": "антагонист ПЗЛ по сагиттали: сгибает туловище и бедро, разгибает колено, тянет стопу вверх; защищает переднюю поверхность; растягивается в прогибах",
+   "evidence": "не подтверждена: переходы прямая бедра → прямая живота не найдены на вскрытиях (Wilke 2016) — линия функциональная, не сплошная",
+   "tracks": [
+    {
+     "n": 1,
+     "ru": "Длинный и короткий разгибатели пальцев, передняя большеберцовая, передний отдел фасции голени",
+     "lat": "m. extensor digitorum longus et brevis, m. extensor hallucis longus, m. tibialis anterior; fascia cruris",
+     "side": "A",
+     "model": {
+      "units": [
+       "edl",
+       "ehl",
+       "tibAnt"
+      ],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": [
+       "cruralFasciaAnt"
+      ]
+     },
+     "cov": "partial",
+     "note": "нет короткого разгибателя и фасции голени",
+     "path": [
+      {
+       "unit": "tibAnt"
+      }
+     ],
+     "from": {
+      "ru": "тыльная поверхность фаланг пальцев",
+      "at": {
+       "seg": "toes_L",
+       "p": [
+        0.107,
+        0.015,
+        0.167
+       ]
+      }
+     },
+     "to": {
+      "ru": "бугристость большеберцовой кости",
+      "at": {
+       "seg": "shank_L",
+       "p": [
+        0.098,
+        0.452,
+        0.03
+       ]
+      }
+     },
+     "standLength": 0.399
+    },
+    {
+     "n": 2,
+     "ru": "Связка надколенника",
+     "lat": "lig. patellae",
+     "side": "A",
+     "model": {
+      "units": [],
+      "related": [],
+      "ligs": [
+       "patTend"
+      ],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "static",
+     "note": "надколенник в модели жёстко связан с голенью",
+     "path": [
+      {
+       "lig": "patTend"
+      }
+     ],
+     "from": {
+      "ru": "бугристость большеберцовой",
+      "at": {
+       "seg": "shank_L",
+       "p": [
+        0.098,
+        0.452,
+        0.03
+       ]
+      }
+     },
+     "to": {
+      "ru": "надколенник",
+      "at": {
+       "seg": "shank_L",
+       "p": [
+        0.098,
+        0.508,
+        0.036
+       ]
+      }
+     },
+     "standLength": 0.056
+    },
+    {
+     "n": 3,
+     "ru": "Прямая мышца бедра и вся четырёхглавая",
+     "lat": "m. rectus femoris; m. quadriceps femoris",
+     "side": "A",
+     "model": {
+      "units": [
+       "rectFem"
+      ],
+      "related": [
+       "vastLat",
+       "vastMed",
+       "vastInt"
+      ],
+      "ligs": [],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "full",
+     "note": null,
+     "path": [
+      {
+       "unit": "rectFem"
+      }
+     ],
+     "from": {
+      "ru": "надколенник",
+      "at": {
+       "seg": "shank_L",
+       "p": [
+        0.098,
+        0.448,
+        0.03
+       ]
+      }
+     },
+     "to": {
+      "ru": "передняя нижняя подвздошная ость",
+      "at": {
+       "seg": "pelvis",
+       "p": [
+        0.103,
+        0.985,
+        0.06
+       ]
+      }
+     },
+     "standLength": 0.541
+    },
+    {
+     "n": 4,
+     "ru": "Прямая мышца живота и её влагалище",
+     "lat": "m. rectus abdominis; vagina m. recti abdominis",
+     "side": "A",
+     "model": {
+      "units": [
+       "rectAbd"
+      ],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": [
+       "rectusSheath"
+      ]
+     },
+     "cov": "partial",
+     "note": "нет влагалища прямой мышцы",
+     "path": [
+      {
+       "unit": "rectAbd",
+       "k": 2
+      }
+     ],
+     "from": {
+      "ru": "лобковый бугорок (переход с ПНПО — «соединение» линии)",
+      "at": {
+       "seg": "pelvis",
+       "p": [
+        0.04,
+        0.898,
+        0.072
+       ]
+      }
+     },
+     "to": {
+      "ru": "5-е ребро",
+      "at": {
+       "seg": "thB",
+       "p": [
+        0.078,
+        1.3,
+        0.102
+       ]
+      }
+     },
+     "standLength": 0.41
+    },
+    {
+     "n": 5,
+     "ru": "Грудинная мышца и грудино-хрящевая фасция",
+     "lat": "m. sternalis; fascia sternalis",
+     "side": "C",
+     "model": {
+      "units": [],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": [
+       "sternalFascia"
+      ]
+     },
+     "cov": "missing",
+     "note": null,
+     "path": [
+      {
+       "fascia": "sternalFascia"
+      }
+     ],
+     "from": {
+      "ru": "5-е ребро",
+      "at": {
+       "seg": "thB",
+       "p": [
+        0,
+        1.3,
+        0.112
+       ]
+      }
+     },
+     "to": {
+      "ru": "рукоятка грудины",
+      "at": {
+       "seg": "thC",
+       "p": [
+        0,
+        1.4,
+        0.077
+       ]
+      }
+     },
+     "standLength": 0.107
+    },
+    {
+     "n": 6,
+     "ru": "Грудино-ключично-сосцевидная мышца",
+     "lat": "m. sternocleidomastoideus",
+     "side": "A",
+     "model": {
+      "units": [
+       "scm"
+      ],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "full",
+     "note": null,
+     "path": [
+      {
+       "unit": "scm",
+       "k": 0
+      }
+     ],
+     "from": {
+      "ru": "рукоятка грудины",
+      "at": {
+       "seg": "thC",
+       "p": [
+        0.016,
+        1.405,
+        0.062
+       ]
+      }
+     },
+     "to": {
+      "ru": "сосцевидный отросток",
+      "at": {
+       "seg": "head",
+       "p": [
+        0.06,
+        1.602,
+        -0.02
+       ]
+      }
+     },
+     "standLength": 0.218
+    },
+    {
+     "n": 7,
+     "ru": "Фасция волосистой части головы",
+     "lat": "fascia epicranialis",
+     "side": "A",
+     "model": {
+      "units": [],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": [
+       "galea"
+      ]
+     },
+     "cov": "missing",
+     "note": "статична",
+     "path": [],
+     "from": {
+      "ru": "сосцевидный отросток",
+      "at": {
+       "seg": "head",
+       "p": [
+        0.06,
+        1.602,
+        -0.02
+       ]
+      }
+     },
+     "to": {
+      "ru": "височная область",
+      "at": {
+       "seg": "head",
+       "p": [
+        0.075,
+        1.7,
+        -0.02
+       ]
+      }
+     },
+     "standLength": 0
+    }
+   ],
+   "coverage": {
+    "full": 2,
+    "static": 1,
+    "partial": 2,
+    "missing": 2,
+    "tracks": 7,
+    "structuralPct": 57,
+    "dynamicPct": 43
+   },
+   "missing": [
+    "cruralFasciaAnt",
+    "rectusSheath",
+    "sternalFascia",
+    "galea",
+    "edb",
+    "sternalis"
+   ],
+   "poses": {
+    "dog": {
+     "myers": "mixed",
+     "ru": "нижний отрезок работает (четырёхглавая выпрямляет колени, передняя большеберцовая — тыльное сгибание); живот и грудь слегка удлинены прогибом спины"
+    },
+    "plank": {
+     "myers": "loaded",
+     "ru": "главная несущая линия планки: держит живот и таз от провисания (прямая живота, четырёхглавая, передняя большеберцовая), ГКС держит голову"
+    },
+    "half": {
+     "myers": "lengthened",
+     "ru": "удлиняется: передняя поверхность бёдер, живота, груди, шеи"
+    },
+    "bow": {
+     "myers": "lengthened",
+     "ru": "растягивается сильнее всего в круге: от голени через бедро и живот до горла; четырёхглавая при этом работает, выжимая голени в руки"
+    },
+    "fold": {
+     "myers": "shortened",
+     "ru": "укорочена; четырёхглавая работает, чтобы держать колени прямыми (и по Лонгу — расслабляет заднюю поверхность бедра)"
+    }
+   },
+   "model": {
+    "length": {
+     "dog": {
+      "totalPct": -3.2,
+      "tracksPct": [
+       -6.6,
+       0,
+       -21.8,
+       18.6,
+       15.7,
+       -2,
+       null
+      ]
+     },
+     "plank": {
+      "totalPct": -1.5,
+      "tracksPct": [
+       -2.7,
+       0,
+       1.1,
+       -5.4,
+       0,
+       0,
+       null
+      ]
+     },
+     "half": {
+      "totalPct": 7.5,
+      "tracksPct": [
+       11.6,
+       0,
+       -0.8,
+       13.3,
+       31.7,
+       0,
+       null
+      ]
+     },
+     "bow": {
+      "totalPct": 12.8,
+      "tracksPct": [
+       -3.3,
+       0,
+       19.6,
+       24.2,
+       21,
+       3.1,
+       null
+      ]
+     },
+     "fold": {
+      "totalPct": -9.5,
+      "tracksPct": [
+       0.9,
+       0,
+       -22.6,
+       -9.5,
+       -7.6,
+       0,
+       null
+      ]
+     }
+    },
+    "activation": {
+     "dog": {
+      "mean": 0.005,
+      "max": 0.02,
+      "top": [
+       "rectAbd 2%",
+       "rectFem 1%",
+       "edl 0%"
+      ]
+     },
+     "plank": {
+      "mean": 0.082,
+      "max": 0.246,
+      "top": [
+       "rectAbd 25%",
+       "rectFem 24%",
+       "edl 0%"
+      ]
+     },
+     "half": {
+      "mean": 0.036,
+      "max": 0.12,
+      "top": [
+       "rectFem 12%",
+       "rectAbd 10%",
+       "edl 0%"
+      ]
+     },
+     "bow": {
+      "mean": 0.077,
+      "max": 0.195,
+      "top": [
+       "tibAnt 20%",
+       "edl 12%",
+       "ehl 12%"
+      ]
+     },
+     "fold": {
+      "mean": 0,
+      "max": 0,
+      "top": [
+       "edl 0%",
+       "ehl 0%",
+       "tibAnt 0%"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "LL",
+   "ru": "Латеральная линия",
+   "abbr": "ЛЛ",
+   "en": "Lateral Line",
+   "crossing": false,
+   "sideNote": null,
+   "fn": "держит баланс справа–слева, тормозит наклоны и скручивания вбок, стабилизирует туловище над ногами при ходьбе и на одной ноге",
+   "evidence": "умеренная: подтверждены 2 из 5 переходов (Wilke 2016)",
+   "tracks": [
+    {
+     "n": 1,
+     "ru": "Длинная и короткая малоберцовые, латеральный отдел фасции голени",
+     "lat": "mm. fibulares longus et brevis; fascia cruris",
+     "side": "A",
+     "model": {
+      "units": [
+       "fibL",
+       "fibB"
+      ],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": [
+       "cruralFasciaLat"
+      ]
+     },
+     "cov": "partial",
+     "note": "нет фасции голени",
+     "path": [
+      {
+       "unit": "fibL"
+      }
+     ],
+     "from": {
+      "ru": "основания 1-й и 5-й плюсневых",
+      "at": {
+       "seg": "foot_L",
+       "p": [
+        0.08,
+        0.026,
+        0.068
+       ]
+      }
+     },
+     "to": {
+      "ru": "головка малоберцовой кости",
+      "at": {
+       "seg": "shank_L",
+       "p": [
+        0.13,
+        0.455,
+        -0.02
+       ]
+      }
+     },
+     "standLength": 0.525
+    },
+    {
+     "n": 2,
+     "ru": "Передняя связка головки малоберцовой кости",
+     "lat": "lig. capitis fibulae anterius",
+     "side": "A",
+     "model": {
+      "units": [],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": [
+       "fibularHeadLig"
+      ]
+     },
+     "cov": "missing",
+     "note": "обе кости голени — одно тело модели",
+     "path": [],
+     "from": {
+      "ru": "головка малоберцовой",
+      "at": {
+       "seg": "shank_L",
+       "p": [
+        0.13,
+        0.455,
+        -0.02
+       ]
+      }
+     },
+     "to": {
+      "ru": "латеральный мыщелок большеберцовой",
+      "at": {
+       "seg": "shank_L",
+       "p": [
+        0.118,
+        0.468,
+        0.018
+       ]
+      }
+     },
+     "standLength": 0
+    },
+    {
+     "n": 3,
+     "ru": "Подвздошно-большеберцовый тракт, напрягатель широкой фасции, большая (верхние волокна) и средняя ягодичные",
+     "lat": "tractus iliotibialis; m. tensor fasciae latae; m. gluteus maximus (pars superior); m. gluteus medius",
+     "side": "A",
+     "model": {
+      "units": [
+       "tfl",
+       "gluteMed"
+      ],
+      "related": [
+       "gluteMax"
+      ],
+      "ligs": [
+       "itb"
+      ],
+      "caps": [],
+      "fascia": [
+       "fasciaLata"
+      ]
+     },
+     "cov": "full",
+     "note": null,
+     "path": [
+      {
+       "lig": "itb"
+      },
+      {
+       "unit": "tfl"
+      }
+     ],
+     "from": {
+      "ru": "латеральный мыщелок большеберцовой",
+      "at": {
+       "seg": "shank_L",
+       "p": [
+        0.118,
+        0.468,
+        0.018
+       ]
+      }
+     },
+     "to": {
+      "ru": "гребень подвздошной кости, ПВПО, ЗВПО",
+      "at": {
+       "seg": "pelvis",
+       "p": [
+        0.125,
+        1.03,
+        0.055
+       ]
+      }
+     },
+     "standLength": 0.571
+    },
+    {
+     "n": 4,
+     "ru": "Наружная и внутренняя косые мышцы живота («латеральный X»)",
+     "lat": "mm. obliqui externus et internus abdominis",
+     "side": "A",
+     "model": {
+      "units": [
+       "intObl",
+       "extObl"
+      ],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "full",
+     "note": null,
+     "path": [
+      {
+       "unit": "intObl",
+       "k": 0
+      }
+     ],
+     "from": {
+      "ru": "гребень подвздошной кости",
+      "at": {
+       "seg": "pelvis",
+       "p": [
+        0.128,
+        1.072,
+        -0.04
+       ]
+      }
+     },
+     "to": {
+      "ru": "нижние рёбра",
+      "at": {
+       "seg": "thA",
+       "p": [
+        0.112,
+        1.215,
+        0.058
+       ]
+      }
+     },
+     "standLength": 0.176
+    },
+    {
+     "n": 5,
+     "ru": "Наружные и внутренние межрёберные мышцы",
+     "lat": "mm. intercostales",
+     "side": "A",
+     "model": {
+      "units": [],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": [
+       "intercostals"
+      ]
+     },
+     "cov": "missing",
+     "note": null,
+     "path": [
+      {
+       "fascia": "intercostals"
+      }
+     ],
+     "from": {
+      "ru": "нижние рёбра",
+      "at": {
+       "seg": "thA",
+       "p": [
+        0.137,
+        1.21,
+        0.035
+       ]
+      }
+     },
+     "to": {
+      "ru": "1-е и 2-е рёбра",
+      "at": {
+       "seg": "thC",
+       "p": [
+        0.125,
+        1.38,
+        0.025
+       ]
+      }
+     },
+     "standLength": 0.173
+    },
+    {
+     "n": 6,
+     "ru": "Ременная мышца головы и грудино-ключично-сосцевидная (шейный «X»)",
+     "lat": "m. splenius capitis; m. sternocleidomastoideus",
+     "side": "A",
+     "model": {
+      "units": [
+       "splenius",
+       "scm"
+      ],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "full",
+     "note": null,
+     "path": [
+      {
+       "unit": "scm",
+       "k": 1
+      }
+     ],
+     "from": {
+      "ru": "1-е и 2-е рёбра, ключица",
+      "at": {
+       "seg": "clav_L",
+       "p": [
+        0.045,
+        1.395,
+        0.068
+       ]
+      }
+     },
+     "to": {
+      "ru": "затылочный гребень, сосцевидный отросток",
+      "at": {
+       "seg": "head",
+       "p": [
+        0.058,
+        1.6,
+        -0.024
+       ]
+      }
+     },
+     "standLength": 0.225
+    }
+   ],
+   "coverage": {
+    "full": 3,
+    "static": 0,
+    "partial": 1,
+    "missing": 2,
+    "tracks": 6,
+    "structuralPct": 58,
+    "dynamicPct": 58
+   },
+   "missing": [
+    "cruralFasciaLat",
+    "fibularHeadLig",
+    "fasciaLata",
+    "intercostals"
+   ],
+   "poses": {
+    "dog": {
+     "myers": "stabilizing",
+     "ru": "обе стороны в равновесии; удерживает таз и колени от заваливания, бока груди немного удлинены руками над головой"
+    },
+    "plank": {
+     "myers": "stabilizing",
+     "ru": "обе стороны работают одинаково, не давая туловищу провернуться или наклониться"
+    },
+    "half": {
+     "myers": "neutral",
+     "ru": "сагиттальная поза, линия почти нейтральна; межрёберные удлиняются с прогибом и вдохом"
+    },
+    "bow": {
+     "myers": "stabilizing",
+     "ru": "отводящие бедра и тракт держат колени, чтобы не разъезжались; бока груди удлинены"
+    },
+    "fold": {
+     "myers": "neutral",
+     "ru": "почти нейтральна; малоберцовые и тракт держат стопу и колено ровно"
+    }
+   },
+   "model": {
+    "length": {
+     "dog": {
+      "totalPct": 3.8,
+      "tracksPct": [
+       1.4,
+       null,
+       6,
+       6.2,
+       14.5,
+       -6.1
+      ]
+     },
+     "plank": {
+      "totalPct": 0.3,
+      "tracksPct": [
+       0.6,
+       null,
+       1.4,
+       -0.8,
+       -1.1,
+       -0.9
+      ]
+     },
+     "half": {
+      "totalPct": 0.9,
+      "tracksPct": [
+       -4.5,
+       null,
+       -0.4,
+       2,
+       25.7,
+       -2.8
+      ]
+     },
+     "bow": {
+      "totalPct": 4.4,
+      "tracksPct": [
+       0.8,
+       null,
+       3.1,
+       8,
+       18.3,
+       3
+      ]
+     },
+     "fold": {
+      "totalPct": 1.3,
+      "tracksPct": [
+       -0.4,
+       null,
+       6.8,
+       -2.2,
+       -6.4,
+       0.2
+      ]
+     }
+    },
+    "activation": {
+     "dog": {
+      "mean": 0.056,
+      "max": 0.131,
+      "top": [
+       "extObl 13%",
+       "splenius 13%",
+       "intObl 12%"
+      ]
+     },
+     "plank": {
+      "mean": 0.121,
+      "max": 0.326,
+      "top": [
+       "tfl 33%",
+       "splenius 28%",
+       "extObl 19%"
+      ]
+     },
+     "half": {
+      "mean": 0.093,
+      "max": 0.268,
+      "top": [
+       "splenius 27%",
+       "tfl 18%",
+       "extObl 12%"
+      ]
+     },
+     "bow": {
+      "mean": 0.066,
+      "max": 0.228,
+      "top": [
+       "splenius 23%",
+       "gluteMed 15%",
+       "intObl 7%"
+      ]
+     },
+     "fold": {
+      "mean": 0.031,
+      "max": 0.1,
+      "top": [
+       "splenius 10%",
+       "intObl 9%",
+       "extObl 5%"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "SPL",
+   "ru": "Спиральная линия",
+   "abbr": "СЛ",
+   "en": "Spiral Line",
+   "crossing": true,
+   "sideNote": "название по стороне головы: СЛ левая начинается левой ременной мышцей, идёт через правые ромбовидные, переднюю зубчатую и наружную косую, пересекает живот к левой внутренней косой и спускается по левой ноге обратно к затылку слева",
+   "fn": "двойная спираль вокруг тела: создаёт и тормозит скручивание, держит баланс между сторонами, «стремя» стопы (передняя большеберцовая + длинная малоберцовая) держит свод и колено",
+   "evidence": "умеренная: подтверждены 5 из 9 переходов (Wilke 2016)",
+   "tracks": [
+    {
+     "n": 1,
+     "ru": "Ременные мышцы головы и шеи",
+     "lat": "mm. splenius capitis et cervicis",
+     "side": "A",
+     "model": {
+      "units": [
+       "splenius"
+      ],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "full",
+     "note": null,
+     "path": [
+      {
+       "unit": "splenius",
+       "k": 1
+      }
+     ],
+     "from": {
+      "ru": "затылочный гребень, сосцевидный отросток, поперечные отростки C1–C3",
+      "at": {
+       "seg": "head",
+       "p": [
+        0.04,
+        1.6,
+        -0.06
+       ]
+      }
+     },
+     "to": {
+      "ru": "остистые отростки C7–T5 (переход на другую сторону)",
+      "at": {
+       "seg": "thC",
+       "p": [
+        0,
+        1.4,
+        -0.128
+       ]
+      }
+     },
+     "standLength": 0.215
+    },
+    {
+     "n": 2,
+     "ru": "Большая и малая ромбовидные (другая сторона)",
+     "lat": "mm. rhomboidei",
+     "side": "B",
+     "model": {
+      "units": [
+       "rhomb"
+      ],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "full",
+     "note": null,
+     "path": [
+      {
+       "unit": "rhomb",
+       "k": 2
+      }
+     ],
+     "from": {
+      "ru": "остистые отростки C7–T5",
+      "at": {
+       "seg": "thB",
+       "p": [
+        0,
+        1.37,
+        -0.128
+       ]
+      }
+     },
+     "to": {
+      "ru": "медиальный край лопатки",
+      "at": {
+       "seg": "scap_L",
+       "p": [
+        0.085,
+        1.31,
+        -0.107
+       ]
+      }
+     },
+     "standLength": 0.106
+    },
+    {
+     "n": 3,
+     "ru": "Передняя зубчатая",
+     "lat": "m. serratus anterior",
+     "side": "B",
+     "model": {
+      "units": [
+       "serratus"
+      ],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "full",
+     "note": null,
+     "path": [
+      {
+       "unit": "serratus",
+       "k": 4
+      }
+     ],
+     "from": {
+      "ru": "медиальный край лопатки",
+      "at": {
+       "seg": "scap_L",
+       "p": [
+        0.087,
+        1.284,
+        -0.103
+       ]
+      }
+     },
+     "to": {
+      "ru": "боковые поверхности рёбер",
+      "at": {
+       "seg": "thA",
+       "p": [
+        0.139,
+        1.266,
+        0.049
+       ]
+      }
+     },
+     "standLength": 0.176
+    },
+    {
+     "n": 4,
+     "ru": "Наружная косая мышца живота",
+     "lat": "m. obliquus externus abdominis",
+     "side": "B",
+     "model": {
+      "units": [
+       "extObl"
+      ],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "full",
+     "note": null,
+     "path": [
+      {
+       "unit": "extObl",
+       "k": 1
+      }
+     ],
+     "from": {
+      "ru": "рёбра",
+      "at": {
+       "seg": "thA",
+       "p": [
+        0.128,
+        1.248,
+        0.057
+       ]
+      }
+     },
+     "to": {
+      "ru": "апоневроз живота",
+      "at": {
+       "seg": "pelvis",
+       "p": [
+        0.054,
+        1.015,
+        0.102
+       ]
+      }
+     },
+     "standLength": 0.25
+    },
+    {
+     "n": 5,
+     "ru": "Апоневроз живота и белая линия (перекрёст)",
+     "lat": "aponeurosis abdominis; linea alba",
+     "side": "C",
+     "model": {
+      "units": [],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": [
+       "lineaAlba"
+      ]
+     },
+     "cov": "missing",
+     "note": null,
+     "path": [
+      {
+       "fascia": "lineaAlba"
+      }
+     ],
+     "from": {
+      "ru": "апоневроз другой стороны",
+      "at": {
+       "seg": "pelvis",
+       "p": [
+        0,
+        1,
+        0.1
+       ]
+      }
+     },
+     "to": {
+      "ru": "апоневроз своей стороны",
+      "at": {
+       "seg": "lumA",
+       "p": [
+        0,
+        1.05,
+        0.103
+       ]
+      }
+     },
+     "standLength": 0.315
+    },
+    {
+     "n": 6,
+     "ru": "Внутренняя косая мышца живота",
+     "lat": "m. obliquus internus abdominis",
+     "side": "A",
+     "model": {
+      "units": [
+       "intObl"
+      ],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "full",
+     "note": null,
+     "path": [
+      {
+       "unit": "intObl",
+       "k": 3
+      }
+     ],
+     "from": {
+      "ru": "белая линия",
+      "at": {
+       "seg": "lumA",
+       "p": [
+        0.012,
+        1.07,
+        0.11
+       ]
+      }
+     },
+     "to": {
+      "ru": "гребень подвздошной кости, ПВПО",
+      "at": {
+       "seg": "pelvis",
+       "p": [
+        0.12,
+        1.03,
+        0.058
+       ]
+      }
+     },
+     "standLength": 0.13
+    },
+    {
+     "n": 7,
+     "ru": "Напрягатель широкой фасции и подвздошно-большеберцовый тракт",
+     "lat": "m. tensor fasciae latae; tractus iliotibialis",
+     "side": "A",
+     "model": {
+      "units": [
+       "tfl"
+      ],
+      "related": [],
+      "ligs": [
+       "itb"
+      ],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "full",
+     "note": null,
+     "path": [
+      {
+       "unit": "tfl"
+      },
+      {
+       "lig": "itb"
+      }
+     ],
+     "from": {
+      "ru": "ПВПО",
+      "at": {
+       "seg": "pelvis",
+       "p": [
+        0.125,
+        1.03,
+        0.055
+       ]
+      }
+     },
+     "to": {
+      "ru": "латеральный мыщелок большеберцовой",
+      "at": {
+       "seg": "shank_L",
+       "p": [
+        0.118,
+        0.468,
+        0.018
+       ]
+      }
+     },
+     "standLength": 0.571
+    },
+    {
+     "n": 8,
+     "ru": "Передняя большеберцовая",
+     "lat": "m. tibialis anterior",
+     "side": "A",
+     "model": {
+      "units": [
+       "tibAnt"
+      ],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "full",
+     "note": null,
+     "path": [
+      {
+       "unit": "tibAnt"
+      }
+     ],
+     "from": {
+      "ru": "латеральный мыщелок большеберцовой",
+      "at": {
+       "seg": "shank_L",
+       "p": [
+        0.118,
+        0.43,
+        0.022
+       ]
+      }
+     },
+     "to": {
+      "ru": "основание 1-й плюсневой, медиальная клиновидная",
+      "at": {
+       "seg": "foot_L",
+       "p": [
+        0.078,
+        0.04,
+        0.062
+       ]
+      }
+     },
+     "standLength": 0.399
+    },
+    {
+     "n": 9,
+     "ru": "Длинная малоберцовая («стремя» под сводом стопы)",
+     "lat": "m. fibularis longus",
+     "side": "A",
+     "model": {
+      "units": [
+       "fibL"
+      ],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "full",
+     "note": null,
+     "path": [
+      {
+       "unit": "fibL"
+      }
+     ],
+     "from": {
+      "ru": "основание 1-й плюсневой",
+      "at": {
+       "seg": "foot_L",
+       "p": [
+        0.08,
+        0.026,
+        0.068
+       ]
+      }
+     },
+     "to": {
+      "ru": "головка малоберцовой",
+      "at": {
+       "seg": "shank_L",
+       "p": [
+        0.13,
+        0.455,
+        -0.02
+       ]
+      }
+     },
+     "standLength": 0.525
+    },
+    {
+     "n": 10,
+     "ru": "Двуглавая мышца бедра, длинная головка",
+     "lat": "m. biceps femoris, caput longum",
+     "side": "A",
+     "model": {
+      "units": [
+       "bicFemL"
+      ],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "full",
+     "note": null,
+     "path": [
+      {
+       "unit": "bicFemL"
+      }
+     ],
+     "from": {
+      "ru": "головка малоберцовой",
+      "at": {
+       "seg": "shank_L",
+       "p": [
+        0.131,
+        0.465,
+        -0.024
+       ]
+      }
+     },
+     "to": {
+      "ru": "седалищный бугор",
+      "at": {
+       "seg": "pelvis",
+       "p": [
+        0.066,
+        0.858,
+        -0.064
+       ]
+      }
+     },
+     "standLength": 0.406
+    },
+    {
+     "n": 11,
+     "ru": "Крестцово-бугорная связка",
+     "lat": "lig. sacrotuberale",
+     "side": "A",
+     "model": {
+      "units": [],
+      "related": [],
+      "ligs": [
+       "sacrotub"
+      ],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "static",
+     "note": null,
+     "path": [
+      {
+       "lig": "sacrotub"
+      }
+     ],
+     "from": {
+      "ru": "седалищный бугор",
+      "at": {
+       "seg": "pelvis",
+       "p": [
+        0.062,
+        0.862,
+        -0.06
+       ]
+      }
+     },
+     "to": {
+      "ru": "крестец",
+      "at": {
+       "seg": "pelvis",
+       "p": [
+        0.024,
+        0.95,
+        -0.1
+       ]
+      }
+     },
+     "standLength": 0.104
+    },
+    {
+     "n": 12,
+     "ru": "Крестцово-поясничная фасция, мышца, выпрямляющая позвоночник",
+     "lat": "fascia thoracolumbalis; m. erector spinae",
+     "side": "A",
+     "model": {
+      "units": [
+       "erector"
+      ],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": [
+       "thoracolumbarFascia"
+      ]
+     },
+     "cov": "partial",
+     "note": null,
+     "path": [
+      {
+       "unit": "erector",
+       "k": 1
+      }
+     ],
+     "from": {
+      "ru": "крестец",
+      "at": {
+       "seg": "pelvis",
+       "p": [
+        0.035,
+        1.007,
+        -0.104
+       ]
+      }
+     },
+     "to": {
+      "ru": "затылочный гребень (в модели — до верхнегрудного отдела)",
+      "at": {
+       "seg": "thC",
+       "p": [
+        0.037,
+        1.453,
+        -0.107
+       ]
+      }
+     },
+     "standLength": 0.451
+    }
+   ],
+   "coverage": {
+    "full": 9,
+    "static": 1,
+    "partial": 1,
+    "missing": 1,
+    "tracks": 12,
+    "structuralPct": 88,
+    "dynamicPct": 79
+   },
+   "missing": [
+    "lineaAlba",
+    "thoracolumbarFascia"
+   ],
+   "poses": {
+    "dog": {
+     "myers": "balanced",
+     "ru": "обе спирали уравновешены; задний отрезок (двуглавая бедра) растянут вместе с ПЗЛ, передняя зубчатая держит лопатки"
+    },
+    "plank": {
+     "myers": "loaded",
+     "ru": "передний отрезок (передняя зубчатая → косые) работает изометрически, держит рёбра и таз; «стремя» не нагружено"
+    },
+    "half": {
+     "myers": "mixed",
+     "ru": "ромбовидные укорачиваются (сводим лопатки), передняя зубчатая и косые удлиняются прогибом"
+    },
+    "bow": {
+     "myers": "mixed",
+     "ru": "ромбовидные укорочены, косые и передняя зубчатая удлинены; задний отрезок ноги свободен (колено согнуто)"
+    },
+    "fold": {
+     "myers": "balanced",
+     "ru": "задний отрезок ноги удлинён, «стремя» стопы держит свод и колено"
+    }
+   },
+   "model": {
+    "length": {
+     "dog": {
+      "totalPct": 6,
+      "tracksPct": [
+       0.9,
+       52.8,
+       -45.6,
+       17.6,
+       16.8,
+       3.5,
+       6,
+       -6.6,
+       1.4,
+       38,
+       0,
+       -6.4
+      ]
+     },
+     "plank": {
+      "totalPct": -1.4,
+      "tracksPct": [
+       0,
+       42.2,
+       -33.9,
+       -6.1,
+       -5.8,
+       -0.9,
+       1.4,
+       -2.7,
+       0.6,
+       -2.1,
+       0,
+       1.6
+      ]
+     },
+     "half": {
+      "totalPct": 1.4,
+      "tracksPct": [
+       0,
+       12.4,
+       2.5,
+       6.1,
+       5.8,
+       0.8,
+       -0.4,
+       11.6,
+       -4.5,
+       1.1,
+       0,
+       -5.4
+      ]
+     },
+     "bow": {
+      "totalPct": 1.4,
+      "tracksPct": [
+       -1.6,
+       -18.4,
+       18.9,
+       23.8,
+       22.5,
+       5.6,
+       3.1,
+       -3.3,
+       0.8,
+       -16.7,
+       0,
+       -8.4
+      ]
+     },
+     "fold": {
+      "totalPct": 4.7,
+      "tracksPct": [
+       0,
+       25.9,
+       -14.3,
+       -9,
+       -9.2,
+       -1.1,
+       6.8,
+       0.9,
+       -0.4,
+       41.8,
+       0,
+       3.1
+      ]
+     }
+    },
+    "activation": {
+     "dog": {
+      "mean": 0.07,
+      "max": 0.131,
+      "top": [
+       "extObl 13%",
+       "splenius 13%",
+       "rhomb 13%"
+      ]
+     },
+     "plank": {
+      "mean": 0.115,
+      "max": 0.326,
+      "top": [
+       "tfl 33%",
+       "splenius 28%",
+       "serratus 23%"
+      ]
+     },
+     "half": {
+      "mean": 0.113,
+      "max": 0.268,
+      "top": [
+       "splenius 27%",
+       "rhomb 19%",
+       "tfl 18%"
+      ]
+     },
+     "bow": {
+      "mean": 0.087,
+      "max": 0.228,
+      "top": [
+       "splenius 23%",
+       "tibAnt 20%",
+       "rhomb 14%"
+      ]
+     },
+     "fold": {
+      "mean": 0.04,
+      "max": 0.1,
+      "top": [
+       "splenius 10%",
+       "erector 10%",
+       "intObl 9%"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "DFL",
+   "ru": "Глубокая фронтальная линия",
+   "abbr": "ГФЛ",
+   "en": "Deep Front Line",
+   "crossing": false,
+   "sideNote": null,
+   "fn": "«кор» в трёхмерном смысле: от свода стопы через внутреннюю поверхность ноги, тазовое дно, поясничную мышцу, диафрагму и средостение до основания черепа; стабилизирует, держит свод, связывает дыхание с ходьбой",
+   "evidence": "отдельно не проверялась (Wilke 2016 — нет данных)",
+   "tracks": [
+    {
+     "n": 1,
+     "ru": "Задняя большеберцовая, длинные сгибатели пальцев",
+     "lat": "m. tibialis posterior; mm. flexores digitorum et hallucis longi",
+     "side": "A",
+     "model": {
+      "units": [
+       "tibPost",
+       "fdl",
+       "fhl"
+      ],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "full",
+     "note": null,
+     "path": [
+      {
+       "unit": "tibPost"
+      }
+     ],
+     "from": {
+      "ru": "подошвенные кости предплюсны, подошвенная поверхность пальцев",
+      "at": {
+       "seg": "foot_L",
+       "p": [
+        0.078,
+        0.046,
+        0.024
+       ]
+      }
+     },
+     "to": {
+      "ru": "задняя поверхность большеберцовой и малоберцовой",
+      "at": {
+       "seg": "shank_L",
+       "p": [
+        0.105,
+        0.36,
+        -0.03
+       ]
+      }
+     },
+     "standLength": 0.335
+    },
+    {
+     "n": 2,
+     "ru": "Фасция подколенной мышцы, капсула коленного сустава",
+     "lat": "m. popliteus; capsula articularis genus",
+     "side": "A",
+     "model": {
+      "units": [
+       "popliteus"
+      ],
+      "related": [],
+      "ligs": [],
+      "caps": [
+       "kn"
+      ],
+      "fascia": []
+     },
+     "cov": "full",
+     "note": null,
+     "path": [
+      {
+       "unit": "popliteus"
+      }
+     ],
+     "from": {
+      "ru": "верхняя задняя часть голени",
+      "at": {
+       "seg": "shank_L",
+       "p": [
+        0.082,
+        0.425,
+        -0.03
+       ]
+      }
+     },
+     "to": {
+      "ru": "медиальный надмыщелок бедра",
+      "at": {
+       "seg": "thigh_L",
+       "p": [
+        0.13,
+        0.512,
+        -0.012
+       ]
+      }
+     },
+     "standLength": 0.105
+    },
+    {
+     "n": 3,
+     "ru": "Задняя межмышечная перегородка, большая и малая приводящие",
+     "lat": "septum intermusculare posterius; mm. adductores magnus et minimus",
+     "side": "A",
+     "model": {
+      "units": [
+       "addMag"
+      ],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "partial",
+     "note": "перегородки нет",
+     "path": [
+      {
+       "unit": "addMag",
+       "k": 2
+      }
+     ],
+     "from": {
+      "ru": "медиальный надмыщелок бедра",
+      "at": {
+       "seg": "thigh_L",
+       "p": [
+        0.072,
+        0.54,
+        -0.004
+       ]
+      }
+     },
+     "to": {
+      "ru": "ветвь седалищной кости",
+      "at": {
+       "seg": "pelvis",
+       "p": [
+        0.062,
+        0.862,
+        -0.05
+       ]
+      }
+     },
+     "standLength": 0.325
+    },
+    {
+     "n": 4,
+     "ru": "Медиальная межмышечная перегородка, короткая и длинная приводящие (передний вариант)",
+     "lat": "septum intermusculare mediale; mm. adductores brevis et longus",
+     "side": "A",
+     "model": {
+      "units": [
+       "addLong",
+       "addBrev"
+      ],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "partial",
+     "note": null,
+     "path": [
+      {
+       "unit": "addLong"
+      }
+     ],
+     "from": {
+      "ru": "шероховатая линия бедра",
+      "at": {
+       "seg": "thigh_L",
+       "p": [
+        0.09,
+        0.73,
+        -0.016
+       ]
+      }
+     },
+     "to": {
+      "ru": "лобковая ветвь",
+      "at": {
+       "seg": "pelvis",
+       "p": [
+        0.03,
+        0.892,
+        0.066
+       ]
+      }
+     },
+     "standLength": 0.191
+    },
+    {
+     "n": 5,
+     "ru": "Тазовое дно, фасция внутренней запирательной мышцы",
+     "lat": "diaphragma pelvis; m. levator ani; fascia obturatoria",
+     "side": "A",
+     "model": {
+      "units": [
+       "obtInt"
+      ],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": [
+       "pelvicFloor"
+      ]
+     },
+     "cov": "partial",
+     "note": "нет мышц тазового дна",
+     "path": [
+      {
+       "unit": "obtInt"
+      }
+     ],
+     "from": {
+      "ru": "седалищная ветвь",
+      "at": {
+       "seg": "pelvis",
+       "p": [
+        0.048,
+        0.89,
+        0.012
+       ]
+      }
+     },
+     "to": {
+      "ru": "копчик",
+      "at": {
+       "seg": "pelvis",
+       "p": [
+        0,
+        0.885,
+        -0.06
+       ]
+      }
+     },
+     "standLength": 0.158
+    },
+    {
+     "n": 6,
+     "ru": "Большая поясничная, подвздошная, гребенчатая (бедренный треугольник)",
+     "lat": "m. psoas major; m. iliacus; m. pectineus",
+     "side": "A",
+     "model": {
+      "units": [
+       "psoas",
+       "iliacus",
+       "pectineus"
+      ],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "full",
+     "note": null,
+     "path": [
+      {
+       "unit": "psoas",
+       "k": 0
+      }
+     ],
+     "from": {
+      "ru": "малый вертел",
+      "at": {
+       "seg": "thigh_L",
+       "p": [
+        0.106,
+        0.865,
+        -0.006
+       ]
+      }
+     },
+     "to": {
+      "ru": "тела и поперечные отростки поясничных позвонков",
+      "at": {
+       "seg": "thA",
+       "p": [
+        0.025,
+        1.2,
+        -0.03
+       ]
+      }
+     },
+     "standLength": 0.382
+    },
+    {
+     "n": 7,
+     "ru": "Квадратная мышца поясницы, подвздошно-поясничная связка (задняя сторона ГФЛ)",
+     "lat": "m. quadratus lumborum; lig. iliolumbale",
+     "side": "A",
+     "model": {
+      "units": [
+       "ql"
+      ],
+      "related": [],
+      "ligs": [
+       "iliolum"
+      ],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "full",
+     "note": null,
+     "path": [
+      {
+       "unit": "ql",
+       "k": 0
+      }
+     ],
+     "from": {
+      "ru": "гребень подвздошной кости",
+      "at": {
+       "seg": "pelvis",
+       "p": [
+        0.075,
+        1.065,
+        -0.085
+       ]
+      }
+     },
+     "to": {
+      "ru": "12-е ребро, поперечные отростки L1–L4",
+      "at": {
+       "seg": "thA",
+       "p": [
+        0.055,
+        1.22,
+        -0.1
+       ]
+      }
+     },
+     "standLength": 0.157
+    },
+    {
+     "n": 8,
+     "ru": "Передняя крестцовая фасция и передняя продольная связка",
+     "lat": "fascia presacralis; lig. longitudinale anterius",
+     "side": "C",
+     "model": {
+      "units": [],
+      "related": [],
+      "ligs": [
+       "all"
+      ],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "full",
+     "note": null,
+     "path": [
+      {
+       "lig": "all"
+      }
+     ],
+     "from": {
+      "ru": "копчик, крестец",
+      "at": {
+       "seg": "pelvis",
+       "p": [
+        0,
+        1,
+        -0.038
+       ]
+      }
+     },
+     "to": {
+      "ru": "основание затылочной кости",
+      "at": {
+       "seg": "neckB",
+       "p": [
+        0,
+        1.585,
+        -0.026
+       ]
+      }
+     },
+     "standLength": 0.6
+    },
+    {
+     "n": 9,
+     "ru": "Длинные мышцы шеи и головы",
+     "lat": "m. longus colli; m. longus capitis",
+     "side": "A",
+     "model": {
+      "units": [
+       "longusColli"
+      ],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "partial",
+     "note": "нет длинной мышцы головы",
+     "path": [
+      {
+       "unit": "longusColli"
+      }
+     ],
+     "from": {
+      "ru": "тела верхнегрудных позвонков",
+      "at": {
+       "seg": "thC",
+       "p": [
+        0.008,
+        1.404,
+        -0.062
+       ]
+      }
+     },
+     "to": {
+      "ru": "основание затылочной кости",
+      "at": {
+       "seg": "neckB",
+       "p": [
+        0.008,
+        1.585,
+        -0.024
+       ]
+      }
+     },
+     "standLength": 0.186
+    },
+    {
+     "n": 10,
+     "ru": "Диафрагма, перикард, средостение, предпозвоночная фасция, лестничные (средний путь)",
+     "lat": "diaphragma; pericardium; fascia prevertebralis; mm. scaleni",
+     "side": "A",
+     "model": {
+      "units": [
+       "scalene"
+      ],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": [
+       "diaphragm"
+      ]
+     },
+     "cov": "partial",
+     "note": "есть только лестничные; диафрагмы и средостения нет",
+     "path": [
+      {
+       "unit": "scalene",
+       "k": 0
+      }
+     ],
+     "from": {
+      "ru": "поясничные позвонки (ножки диафрагмы)",
+      "at": {
+       "seg": "lumA",
+       "p": [
+        0,
+        1.06,
+        -0.03
+       ]
+      }
+     },
+     "to": {
+      "ru": "поперечные отростки шейных позвонков, основание черепа",
+      "at": {
+       "seg": "neckB",
+       "p": [
+        0.028,
+        1.56,
+        -0.04
+       ]
+      }
+     },
+     "standLength": 0.19
+    },
+    {
+     "n": 11,
+     "ru": "Передняя диафрагма, внутригрудная фасция, поперечная мышца груди, подъязычные (передний путь)",
+     "lat": "fascia endothoracica; m. transversus thoracis; mm. infra- et suprahyoidei",
+     "side": "A",
+     "model": {
+      "units": [],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "missing",
+     "note": null,
+     "path": [],
+     "from": {
+      "ru": "мечевидный отросток",
+      "at": {
+       "seg": "thA",
+       "p": [
+        0,
+        1.22,
+        0.117
+       ]
+      }
+     },
+     "to": {
+      "ru": "подъязычная кость, нижняя челюсть",
+      "at": {
+       "seg": "head",
+       "p": [
+        0,
+        1.56,
+        0.088
+       ]
+      }
+     },
+     "standLength": 0
+    }
+   ],
+   "coverage": {
+    "full": 5,
+    "static": 0,
+    "partial": 5,
+    "missing": 1,
+    "tracks": 11,
+    "structuralPct": 68,
+    "dynamicPct": 68
+   },
+   "missing": [
+    "pelvicFloor",
+    "diaphragm",
+    "longusCapitis",
+    "hyoids",
+    "transversusThoracis"
+   ],
+   "poses": {
+    "dog": {
+     "myers": "mixed",
+     "ru": "поясничная укорочена (бедро согнуто), приводящие и задняя большеберцовая удлинены; глубокий кор держит поясницу в прогибе"
+    },
+    "plank": {
+     "myers": "loaded",
+     "ru": "работает как стабилизатор: поясничная и подвздошная не дают тазу провиснуть, вместе с поперечной живота"
+    },
+    "half": {
+     "myers": "neutral",
+     "ru": "в нашем полупрогибе бёдра лежат на полу (разгибания бедра нет) — поясничная почти нейтральна; удлиняется передняя продольная связка с прогибом груди"
+    },
+    "bow": {
+     "myers": "lengthened",
+     "ru": "растягивается сильнее всего: передняя капсула бедра, поясничная, передняя продольная связка; живот на полу ограничивает дыхание"
+    },
+    "fold": {
+     "myers": "mixed",
+     "ru": "поясничная укорочена, задние волокна большой приводящей удлинены вместе с задней поверхностью бедра"
+    }
+   },
+   "model": {
+    "length": {
+     "dog": {
+      "totalPct": 3.1,
+      "tracksPct": [
+       -0.7,
+       -0.3,
+       43.2,
+       -8.1,
+       16.5,
+       -16,
+       -8.6,
+       1.9,
+       -0.4,
+       -1.4,
+       null
+      ]
+     },
+     "plank": {
+      "totalPct": -0.3,
+      "tracksPct": [
+       -0.2,
+       0,
+       -2.1,
+       0.9,
+       -1.5,
+       -0.6,
+       3.1,
+       -0.5,
+       0,
+       0,
+       null
+      ]
+     },
+     "half": {
+      "totalPct": 0.2,
+      "tracksPct": [
+       -0.6,
+       0,
+       1.3,
+       -2.6,
+       0.2,
+       0.4,
+       -3.3,
+       1.7,
+       0,
+       0,
+       null
+      ]
+     },
+     "bow": {
+      "totalPct": 1.8,
+      "tracksPct": [
+       -0.3,
+       7.3,
+       -5.4,
+       13.4,
+       -1.1,
+       7.9,
+       -10.9,
+       2.8,
+       0.7,
+       2,
+       null
+      ]
+     },
+     "fold": {
+      "totalPct": 3.6,
+      "tracksPct": [
+       0.2,
+       0,
+       44.5,
+       -2.2,
+       18.1,
+       -20.4,
+       5.2,
+       -1.1,
+       0,
+       0,
+       null
+      ]
+     }
+    },
+    "activation": {
+     "dog": {
+      "mean": 0.033,
+      "max": 0.142,
+      "top": [
+       "fhl 14%",
+       "fdl 12%",
+       "iliacus 8%"
+      ]
+     },
+     "plank": {
+      "mean": 0.093,
+      "max": 0.299,
+      "top": [
+       "psoas 30%",
+       "addLong 26%",
+       "iliacus 24%"
+      ]
+     },
+     "half": {
+      "mean": 0.033,
+      "max": 0.083,
+      "top": [
+       "psoas 8%",
+       "iliacus 8%",
+       "scalene 7%"
+      ]
+     },
+     "bow": {
+      "mean": 0.044,
+      "max": 0.193,
+      "top": [
+       "addMag 19%",
+       "addBrev 14%",
+       "ql 13%"
+      ]
+     },
+     "fold": {
+      "mean": 0.047,
+      "max": 0.153,
+      "top": [
+       "addLong 15%",
+       "addBrev 13%",
+       "ql 9%"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "SFAL",
+   "ru": "Поверхностная фронтальная линия руки",
+   "abbr": "ПФЛР",
+   "en": "Superficial Front Arm Line",
+   "crossing": false,
+   "sideNote": null,
+   "fn": "приводит руку и сгибает кисть, держит руку при опоре и хвате; связывает грудь и спину (широчайшая) с ладонью",
+   "evidence": "отдельно не проверялась",
+   "tracks": [
+    {
+     "n": 1,
+     "ru": "Большая грудная и широчайшая мышцы",
+     "lat": "m. pectoralis major; m. latissimus dorsi",
+     "side": "A",
+     "model": {
+      "units": [
+       "pecMaj",
+       "lat"
+      ],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "full",
+     "note": null,
+     "path": [
+      {
+       "unit": "pecMaj",
+       "k": 2
+      }
+     ],
+     "from": {
+      "ru": "медиальная треть ключицы, рёберные хрящи, грудопоясничная фасция, гребень подвздошной",
+      "at": {
+       "seg": "thB",
+       "p": [
+        0.015,
+        1.289,
+        0.095
+       ]
+      }
+     },
+     "to": {
+      "ru": "медиальная линия плечевой кости",
+      "at": {
+       "seg": "hum_L",
+       "p": [
+        0.204,
+        1.341,
+        -0.004
+       ]
+      }
+     },
+     "standLength": 0.22
+    },
+    {
+     "n": 2,
+     "ru": "Медиальная межмышечная перегородка плеча",
+     "lat": "septum intermusculare brachii mediale",
+     "side": "A",
+     "model": {
+      "units": [],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": [
+       "medialSeptumArm"
+      ]
+     },
+     "cov": "missing",
+     "note": "статична — вся на плечевой кости",
+     "path": [
+      {
+       "fascia": "medialSeptumArm"
+      }
+     ],
+     "from": {
+      "ru": "медиальная линия плеча",
+      "at": {
+       "seg": "hum_L",
+       "p": [
+        0.195,
+        1.33,
+        -0.008
+       ]
+      }
+     },
+     "to": {
+      "ru": "медиальный надмыщелок",
+      "at": {
+       "seg": "hum_L",
+       "p": [
+        0.179,
+        1.077,
+        -0.035
+       ]
+      }
+     },
+     "standLength": 0.254
+    },
+    {
+     "n": 3,
+     "ru": "Сгибатели запястья и пальцев (общее сгибательное начало), длинная ладонная",
+     "lat": "mm. flexores carpi et digitorum; m. palmaris longus",
+     "side": "A",
+     "model": {
+      "units": [
+       "wristFlex",
+       "fingerFlex",
+       "palmaris"
+      ],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "full",
+     "note": null,
+     "path": [
+      {
+       "unit": "wristFlex",
+       "k": 1
+      }
+     ],
+     "from": {
+      "ru": "медиальный надмыщелок",
+      "at": {
+       "seg": "hum_L",
+       "p": [
+        0.179,
+        1.077,
+        -0.035
+       ]
+      }
+     },
+     "to": {
+      "ru": "ладонная сторона запястья",
+      "at": {
+       "seg": "hand_L",
+       "p": [
+        0.199,
+        0.76,
+        -0.028
+       ]
+      }
+     },
+     "standLength": 0.319
+    },
+    {
+     "n": 4,
+     "ru": "Запястный канал, ладонный апоневроз — до ладонной поверхности пальцев",
+     "lat": "canalis carpi; aponeurosis palmaris",
+     "side": "A",
+     "model": {
+      "units": [],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": [
+       "palmarAponeurosis"
+      ]
+     },
+     "cov": "partial",
+     "note": "сухожилия сгибателей пальцев есть, апоневроза нет",
+     "path": [
+      {
+       "fascia": "palmarAponeurosis"
+      }
+     ],
+     "from": {
+      "ru": "запястье",
+      "at": {
+       "seg": "hand_L",
+       "p": [
+        0.2,
+        0.77,
+        -0.026
+       ]
+      }
+     },
+     "to": {
+      "ru": "ладонная поверхность пальцев",
+      "at": {
+       "seg": "f2c_L",
+       "p": [
+        0.208,
+        0.648,
+        -0.002
+       ]
+      }
+     },
+     "standLength": 0.083
+    }
+   ],
+   "coverage": {
+    "full": 2,
+    "static": 0,
+    "partial": 1,
+    "missing": 1,
+    "tracks": 4,
+    "structuralPct": 63,
+    "dynamicPct": 63
+   },
+   "missing": [
+    "medialSeptumArm",
+    "palmarAponeurosis"
+   ],
+   "poses": {
+    "dog": {
+     "myers": "lengthened-loaded",
+     "ru": "руки над головой — грудная и широчайшая удлинены; кисть разогнута на 90° — сгибатели предплечья растянуты и одновременно держат вес"
+    },
+    "plank": {
+     "myers": "loaded",
+     "ru": "грудная и широчайшая держат плечо, сгибатели пальцев сжимают кулаки"
+    },
+    "half": {
+     "myers": "lengthened",
+     "ru": "руки назад в W — большая грудная удлинена"
+    },
+    "bow": {
+     "myers": "lengthened-loaded",
+     "ru": "руки назад к голеням — грудная удлинена, сгибатели пальцев держат хват"
+    },
+    "fold": {
+     "myers": "loaded",
+     "ru": "хват за голени: работают сгибатели пальцев"
+    }
+   },
+   "model": {
+    "length": {
+     "dog": {
+      "totalPct": 13.2,
+      "tracksPct": [
+       48.9,
+       0,
+       2.9,
+       -1.5
+      ]
+     },
+     "plank": {
+      "totalPct": 0.6,
+      "tracksPct": [
+       14.8,
+       0,
+       -0.5,
+       -30.3
+      ]
+     },
+     "half": {
+      "totalPct": 7.7,
+      "tracksPct": [
+       31,
+       0,
+       0.8,
+       -4.1
+      ]
+     },
+     "bow": {
+      "totalPct": 6,
+      "tracksPct": [
+       29,
+       0,
+       0.5,
+       -15.6
+      ]
+     },
+     "fold": {
+      "totalPct": -0.8,
+      "tracksPct": [
+       2.8,
+       0,
+       -0.2,
+       -15.6
+      ]
+     }
+    },
+    "activation": {
+     "dog": {
+      "mean": 0.021,
+      "max": 0.058,
+      "top": [
+       "wristFlex 6%",
+       "fingerFlex 3%",
+       "pecMaj 2%"
+      ]
+     },
+     "plank": {
+      "mean": 0.006,
+      "max": 0.026,
+      "top": [
+       "fingerFlex 3%",
+       "pecMaj 0%",
+       "lat 0%"
+      ]
+     },
+     "half": {
+      "mean": 0.011,
+      "max": 0.031,
+      "top": [
+       "wristFlex 3%",
+       "palmaris 2%",
+       "fingerFlex 1%"
+      ]
+     },
+     "bow": {
+      "mean": 0.067,
+      "max": 0.128,
+      "top": [
+       "palmaris 13%",
+       "fingerFlex 13%",
+       "wristFlex 6%"
+      ]
+     },
+     "fold": {
+      "mean": 0.018,
+      "max": 0.046,
+      "top": [
+       "pecMaj 5%",
+       "fingerFlex 3%",
+       "lat 2%"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "DFAL",
+   "ru": "Глубокая фронтальная линия руки",
+   "abbr": "ГФЛР",
+   "en": "Deep Front Arm Line",
+   "crossing": false,
+   "sideNote": null,
+   "fn": "от рёбер через малую грудную и двуглавую к большому пальцу: тянет и стабилизирует плечо спереди, держит «лучевую» сторону кисти при опоре",
+   "evidence": "отдельно не проверялась",
+   "tracks": [
+    {
+     "n": 1,
+     "ru": "Малая грудная, ключично-грудная фасция (и подключичная)",
+     "lat": "m. pectoralis minor; fascia clavipectoralis; m. subclavius",
+     "side": "A",
+     "model": {
+      "units": [
+       "pecMin"
+      ],
+      "related": [
+       "subclavius"
+      ],
+      "ligs": [],
+      "caps": [],
+      "fascia": [
+       "clavipectoral"
+      ]
+     },
+     "cov": "partial",
+     "note": "нет фасции",
+     "path": [
+      {
+       "unit": "pecMin",
+       "k": 1
+      }
+     ],
+     "from": {
+      "ru": "3–5-е рёбра",
+      "at": {
+       "seg": "thB",
+       "p": [
+        0.075,
+        1.29,
+        0.094
+       ]
+      }
+     },
+     "to": {
+      "ru": "клювовидный отросток",
+      "at": {
+       "seg": "scap_L",
+       "p": [
+        0.155,
+        1.407,
+        -0.001
+       ]
+      }
+     },
+     "standLength": 0.171
+    },
+    {
+     "n": 2,
+     "ru": "Двуглавая мышца плеча и клювовидно-плечевая",
+     "lat": "m. biceps brachii; m. coracobrachialis",
+     "side": "A",
+     "model": {
+      "units": [
+       "bicShort",
+       "bicLong"
+      ],
+      "related": [
+       "coracobr"
+      ],
+      "ligs": [],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "full",
+     "note": null,
+     "path": [
+      {
+       "unit": "bicShort"
+      }
+     ],
+     "from": {
+      "ru": "клювовидный отросток",
+      "at": {
+       "seg": "scap_L",
+       "p": [
+        0.156,
+        1.405,
+        0.002
+       ]
+      }
+     },
+     "to": {
+      "ru": "бугристость лучевой кости",
+      "at": {
+       "seg": "fore_L",
+       "p": [
+        0.212,
+        1.037,
+        -0.014
+       ]
+      }
+     },
+     "standLength": 0.375
+    },
+    {
+     "n": 3,
+     "ru": "Надкостница лучевой кости",
+     "lat": "periosteum radii",
+     "side": "A",
+     "model": {
+      "units": [],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": [
+       "radialPeriosteum"
+      ]
+     },
+     "cov": "missing",
+     "note": "статична",
+     "path": [],
+     "from": {
+      "ru": "бугристость лучевой",
+      "at": {
+       "seg": "fore_L",
+       "p": [
+        0.212,
+        1.037,
+        -0.014
+       ]
+      }
+     },
+     "to": {
+      "ru": "шиловидный отросток лучевой",
+      "at": {
+       "seg": "fore_L",
+       "p": [
+        0.216,
+        0.836,
+        0
+       ]
+      }
+     },
+     "standLength": 0
+    },
+    {
+     "n": 4,
+     "ru": "Лучевые коллатеральные связки запястья, мышцы возвышения большого пальца",
+     "lat": "lig. collaterale carpi radiale; mm. thenaris",
+     "side": "A",
+     "model": {
+      "units": [
+       "thenar"
+      ],
+      "related": [
+       "apl"
+      ],
+      "ligs": [],
+      "caps": [
+       "wr"
+      ],
+      "fascia": []
+     },
+     "cov": "partial",
+     "note": "связки запястья — только общей капсулой",
+     "path": [
+      {
+       "unit": "thenar"
+      }
+     ],
+     "from": {
+      "ru": "ладьевидная, трапеция",
+      "at": {
+       "seg": "hand_L",
+       "p": [
+        0.204,
+        0.795,
+        -0.01
+       ]
+      }
+     },
+     "to": {
+      "ru": "наружная сторона большого пальца",
+      "at": {
+       "seg": "f1a_L",
+       "p": [
+        0.202,
+        0.752,
+        0.02
+       ]
+      }
+     },
+     "standLength": 0.054
+    }
+   ],
+   "coverage": {
+    "full": 1,
+    "static": 0,
+    "partial": 2,
+    "missing": 1,
+    "tracks": 4,
+    "structuralPct": 50,
+    "dynamicPct": 50
+   },
+   "missing": [
+    "clavipectoral",
+    "radialPeriosteum"
+   ],
+   "poses": {
+    "dog": {
+     "myers": "loaded",
+     "ru": "держит опору через основание указательного и большого пальцев; малая грудная удлинена поднятыми руками"
+    },
+    "plank": {
+     "myers": "loaded",
+     "ru": "двуглавая держит локоть под 90°, малая грудная — лопатку"
+    },
+    "half": {
+     "myers": "mixed",
+     "ru": "малая грудная удлинена (плечо назад), двуглавая укорочена согнутым локтем"
+    },
+    "bow": {
+     "myers": "lengthened",
+     "ru": "прямые руки назад — двуглавая растянута сильнее всего в круге"
+    },
+    "fold": {
+     "myers": "mixed",
+     "ru": "руки держат голени согнутыми локтями — двуглавая укорочена"
+    }
+   },
+   "model": {
+    "length": {
+     "dog": {
+      "totalPct": 9.2,
+      "tracksPct": [
+       25.9,
+       2.6,
+       null,
+       2.8
+      ]
+     },
+     "plank": {
+      "totalPct": -10.7,
+      "tracksPct": [
+       7.4,
+       -19.5,
+       null,
+       -6.7
+      ]
+     },
+     "half": {
+      "totalPct": -1.1,
+      "tracksPct": [
+       21,
+       -11.6,
+       null,
+       1.3
+      ]
+     },
+     "bow": {
+      "totalPct": 6.5,
+      "tracksPct": [
+       1.9,
+       9.7,
+       null,
+       -1.2
+      ]
+     },
+     "fold": {
+      "totalPct": -9.8,
+      "tracksPct": [
+       -2.1,
+       -14.5,
+       null,
+       -1.2
+      ]
+     }
+    },
+    "activation": {
+     "dog": {
+      "mean": 0.037,
+      "max": 0.149,
+      "top": [
+       "thenar 15%",
+       "pecMin 0%",
+       "bicShort 0%"
+      ]
+     },
+     "plank": {
+      "mean": 0.043,
+      "max": 0.173,
+      "top": [
+       "pecMin 17%",
+       "bicShort 0%",
+       "bicLong 0%"
+      ]
+     },
+     "half": {
+      "mean": 0.039,
+      "max": 0.067,
+      "top": [
+       "pecMin 7%",
+       "bicLong 7%",
+       "bicShort 2%"
+      ]
+     },
+     "bow": {
+      "mean": 0.018,
+      "max": 0.074,
+      "top": [
+       "pecMin 7%",
+       "bicShort 0%",
+       "bicLong 0%"
+      ]
+     },
+     "fold": {
+      "mean": 0.018,
+      "max": 0.043,
+      "top": [
+       "bicLong 4%",
+       "pecMin 3%",
+       "bicShort 0%"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "SBAL",
+   "ru": "Поверхностная задняя линия руки",
+   "abbr": "ПЗЛР",
+   "en": "Superficial Back Arm Line",
+   "crossing": false,
+   "sideNote": null,
+   "fn": "поднимает и отводит руку, разгибает кисть и пальцы; от затылка и грудных остистых к тылу пальцев",
+   "evidence": "отдельно не проверялась",
+   "tracks": [
+    {
+     "n": 1,
+     "ru": "Трапециевидная мышца",
+     "lat": "m. trapezius",
+     "side": "A",
+     "model": {
+      "units": [
+       "trapUp",
+       "trapMid",
+       "trapLow"
+      ],
+      "related": [],
+      "ligs": [
+       "nuchal"
+      ],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "full",
+     "note": null,
+     "path": [
+      {
+       "unit": "trapUp",
+       "k": 0
+      }
+     ],
+     "from": {
+      "ru": "затылочный гребень, выйная связка, грудные остистые",
+      "at": {
+       "seg": "head",
+       "p": [
+        0,
+        1.6,
+        -0.085
+       ]
+      }
+     },
+     "to": {
+      "ru": "ость лопатки, акромион, латеральная треть ключицы",
+      "at": {
+       "seg": "clav_L",
+       "p": [
+        0.125,
+        1.415,
+        0.007
+       ]
+      }
+     },
+     "standLength": 0.242
+    },
+    {
+     "n": 2,
+     "ru": "Дельтовидная мышца",
+     "lat": "m. deltoideus",
+     "side": "A",
+     "model": {
+      "units": [
+       "deltAnt",
+       "deltMid",
+       "deltPost"
+      ],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "full",
+     "note": null,
+     "path": [
+      {
+       "unit": "deltMid",
+       "k": 1
+      }
+     ],
+     "from": {
+      "ru": "ость лопатки, акромион, ключица",
+      "at": {
+       "seg": "scap_L",
+       "p": [
+        0.181,
+        1.435,
+        -0.047
+       ]
+      }
+     },
+     "to": {
+      "ru": "дельтовидная бугристость",
+      "at": {
+       "seg": "hum_L",
+       "p": [
+        0.212,
+        1.27,
+        -0.028
+       ]
+      }
+     },
+     "standLength": 0.18
+    },
+    {
+     "n": 3,
+     "ru": "Латеральная межмышечная перегородка плеча",
+     "lat": "septum intermusculare brachii laterale",
+     "side": "A",
+     "model": {
+      "units": [],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": [
+       "lateralSeptumArm"
+      ]
+     },
+     "cov": "missing",
+     "note": "статична",
+     "path": [
+      {
+       "fascia": "lateralSeptumArm"
+      }
+     ],
+     "from": {
+      "ru": "дельтовидная бугристость",
+      "at": {
+       "seg": "hum_L",
+       "p": [
+        0.212,
+        1.27,
+        -0.028
+       ]
+      }
+     },
+     "to": {
+      "ru": "латеральный надмыщелок",
+      "at": {
+       "seg": "hum_L",
+       "p": [
+        0.232,
+        1.078,
+        -0.031
+       ]
+      }
+     },
+     "standLength": 0.189
+    },
+    {
+     "n": 4,
+     "ru": "Разгибатели запястья и пальцев (общее разгибательное начало)",
+     "lat": "mm. extensores carpi et digitorum",
+     "side": "A",
+     "model": {
+      "units": [
+       "wristExt"
+      ],
+      "related": [
+       "brachiorad"
+      ],
+      "ligs": [],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "partial",
+     "note": "в модели — до пясти, сухожилий на пальцах нет",
+     "path": [
+      {
+       "unit": "wristExt",
+       "k": 1
+      }
+     ],
+     "from": {
+      "ru": "латеральный надмыщелок",
+      "at": {
+       "seg": "hum_L",
+       "p": [
+        0.232,
+        1.078,
+        -0.031
+       ]
+      }
+     },
+     "to": {
+      "ru": "тыльная поверхность пальцев",
+      "at": {
+       "seg": "hand_L",
+       "p": [
+        0.226,
+        0.775,
+        -0.028
+       ]
+      }
+     },
+     "standLength": 0.303
+    }
+   ],
+   "coverage": {
+    "full": 2,
+    "static": 0,
+    "partial": 1,
+    "missing": 1,
+    "tracks": 4,
+    "structuralPct": 63,
+    "dynamicPct": 63
+   },
+   "missing": [
+    "lateralSeptumArm",
+    "fingerExtTendons"
+   ],
+   "poses": {
+    "dog": {
+     "myers": "loaded",
+     "ru": "нижняя и средняя трапеции поворачивают лопатки вверх, дельтовидные держат руки над головой под весом; разгибатели кисти укорочены"
+    },
+    "plank": {
+     "myers": "loaded",
+     "ru": "дельтовидные и трапеции держат плечо над локтем"
+    },
+    "half": {
+     "myers": "shortened-active",
+     "ru": "главная рабочая линия W-рук: средняя и нижняя трапеции сводят лопатки, задняя дельта уводит руки назад"
+    },
+    "bow": {
+     "myers": "shortened",
+     "ru": "трапеции держат плечи раскрытыми; руки тянет хват, а не мышцы"
+    },
+    "fold": {
+     "myers": "neutral",
+     "ru": "руки держат голени — линия почти нейтральна"
+    }
+   },
+   "model": {
+    "length": {
+     "dog": {
+      "totalPct": -10.9,
+      "tracksPct": [
+       -16.2,
+       -32.6,
+       0,
+       -0.5
+      ]
+     },
+     "plank": {
+      "totalPct": -3.1,
+      "tracksPct": [
+       -3.3,
+       -7.9,
+       0,
+       -2.1
+      ]
+     },
+     "half": {
+      "totalPct": -9,
+      "tracksPct": [
+       -11.8,
+       -14.5,
+       0,
+       -9.2
+      ]
+     },
+     "bow": {
+      "totalPct": -3.8,
+      "tracksPct": [
+       0,
+       -23.9,
+       0,
+       2.7
+      ]
+     },
+     "fold": {
+      "totalPct": -1.7,
+      "tracksPct": [
+       0.8,
+       -10.8,
+       0,
+       0.7
+      ]
+     }
+    },
+    "activation": {
+     "dog": {
+      "mean": 0.159,
+      "max": 0.595,
+      "top": [
+       "deltAnt 60%",
+       "trapUp 19%",
+       "trapMid 19%"
+      ]
+     },
+     "plank": {
+      "mean": 0.028,
+      "max": 0.148,
+      "top": [
+       "deltMid 15%",
+       "wristExt 5%",
+       "trapUp 0%"
+      ]
+     },
+     "half": {
+      "mean": 0.097,
+      "max": 0.204,
+      "top": [
+       "deltMid 20%",
+       "deltPost 15%",
+       "trapMid 13%"
+      ]
+     },
+     "bow": {
+      "mean": 0.055,
+      "max": 0.205,
+      "top": [
+       "deltMid 21%",
+       "trapMid 13%",
+       "deltPost 4%"
+      ]
+     },
+     "fold": {
+      "mean": 0.02,
+      "max": 0.062,
+      "top": [
+       "trapUp 6%",
+       "wristExt 5%",
+       "trapMid 3%"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "DBAL",
+   "ru": "Глубокая задняя линия руки",
+   "abbr": "ГЗЛР",
+   "en": "Deep Back Arm Line",
+   "crossing": false,
+   "sideNote": null,
+   "fn": "от остистых отростков через ромбовидные, вращательную манжету и трёхглавую к мизинцу: держит лопатку и плечо сзади, разгибает локоть, держит «локтевую» сторону кисти",
+   "evidence": "отдельно не проверялась",
+   "tracks": [
+    {
+     "n": 1,
+     "ru": "Ромбовидные и мышца, поднимающая лопатку",
+     "lat": "mm. rhomboidei; m. levator scapulae",
+     "side": "A",
+     "model": {
+      "units": [
+       "rhomb",
+       "levScap"
+      ],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "full",
+     "note": null,
+     "path": [
+      {
+       "unit": "rhomb",
+       "k": 1
+      }
+     ],
+     "from": {
+      "ru": "остистые отростки C7–T5, поперечные отростки C1–C4",
+      "at": {
+       "seg": "thC",
+       "p": [
+        0,
+        1.41,
+        -0.127
+       ]
+      }
+     },
+     "to": {
+      "ru": "медиальный край лопатки",
+      "at": {
+       "seg": "scap_L",
+       "p": [
+        0.082,
+        1.35,
+        -0.107
+       ]
+      }
+     },
+     "standLength": 0.103
+    },
+    {
+     "n": 2,
+     "ru": "Вращательная манжета: подостная, малая круглая, надостная, подлопаточная",
+     "lat": "mm. infraspinatus, teres minor, supraspinatus, subscapularis",
+     "side": "A",
+     "model": {
+      "units": [
+       "infra",
+       "teresMin",
+       "supra",
+       "subscap"
+      ],
+      "related": [
+       "teresMaj"
+      ],
+      "ligs": [],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "full",
+     "note": null,
+     "path": [
+      {
+       "unit": "infra",
+       "k": 1
+      }
+     ],
+     "from": {
+      "ru": "медиальный край и ямки лопатки",
+      "at": {
+       "seg": "scap_L",
+       "p": [
+        0.1,
+        1.325,
+        -0.116
+       ]
+      }
+     },
+     "to": {
+      "ru": "головка плечевой кости",
+      "at": {
+       "seg": "hum_L",
+       "p": [
+        0.205,
+        1.397,
+        -0.044
+       ]
+      }
+     },
+     "standLength": 0.152
+    },
+    {
+     "n": 3,
+     "ru": "Трёхглавая мышца плеча",
+     "lat": "m. triceps brachii",
+     "side": "A",
+     "model": {
+      "units": [
+       "tricLong",
+       "tricLat",
+       "tricMed"
+      ],
+      "related": [
+       "anconeus"
+      ],
+      "ligs": [],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "full",
+     "note": null,
+     "path": [
+      {
+       "unit": "tricLong"
+      }
+     ],
+     "from": {
+      "ru": "головка плечевой (подсуставной бугорок лопатки)",
+      "at": {
+       "seg": "scap_L",
+       "p": [
+        0.158,
+        1.373,
+        -0.055
+       ]
+      }
+     },
+     "to": {
+      "ru": "локтевой отросток",
+      "at": {
+       "seg": "ulna_L",
+       "p": [
+        0.203,
+        1.093,
+        -0.062
+       ]
+      }
+     },
+     "standLength": 0.286
+    },
+    {
+     "n": 4,
+     "ru": "Фасция вдоль надкостницы локтевой кости",
+     "lat": "periosteum ulnae",
+     "side": "A",
+     "model": {
+      "units": [],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": [
+       "ulnarPeriosteum"
+      ]
+     },
+     "cov": "missing",
+     "note": "статична",
+     "path": [],
+     "from": {
+      "ru": "локтевой отросток",
+      "at": {
+       "seg": "ulna_L",
+       "p": [
+        0.203,
+        1.093,
+        -0.062
+       ]
+      }
+     },
+     "to": {
+      "ru": "шиловидный отросток локтевой",
+      "at": {
+       "seg": "ulna_L",
+       "p": [
+        0.21,
+        0.865,
+        -0.058
+       ]
+      }
+     },
+     "standLength": 0
+    },
+    {
+     "n": 5,
+     "ru": "Локтевые коллатеральные связки запястья, мышцы возвышения мизинца",
+     "lat": "lig. collaterale carpi ulnare; mm. hypothenaris",
+     "side": "A",
+     "model": {
+      "units": [
+       "hypothenar"
+      ],
+      "related": [],
+      "ligs": [],
+      "caps": [
+       "wr"
+      ],
+      "fascia": []
+     },
+     "cov": "partial",
+     "note": "связки — только общей капсулой",
+     "path": [
+      {
+       "unit": "hypothenar"
+      }
+     ],
+     "from": {
+      "ru": "трёхгранная, крючковидная",
+      "at": {
+       "seg": "hand_L",
+       "p": [
+        0.204,
+        0.8,
+        -0.048
+       ]
+      }
+     },
+     "to": {
+      "ru": "наружная сторона мизинца",
+      "at": {
+       "seg": "f5a_L",
+       "p": [
+        0.206,
+        0.722,
+        -0.06
+       ]
+      }
+     },
+     "standLength": 0.079
+    }
+   ],
+   "coverage": {
+    "full": 3,
+    "static": 0,
+    "partial": 1,
+    "missing": 1,
+    "tracks": 5,
+    "structuralPct": 70,
+    "dynamicPct": 70
+   },
+   "missing": [
+    "ulnarPeriosteum"
+   ],
+   "poses": {
+    "dog": {
+     "myers": "loaded",
+     "ru": "трёхглавая выпрямляет локти под весом, подостная и малая круглая разворачивают плечи наружу; ромбовидные удлинены (лопатки разведены и повёрнуты вверх)"
+    },
+    "plank": {
+     "myers": "loaded",
+     "ru": "ромбовидные с передней зубчатой держат лопатку на грудной клетке"
+    },
+    "half": {
+     "myers": "active",
+     "ru": "«свёл лопатки»: ромбовидные работают, подостная разворачивает плечи наружу; трёхглавая удлинена согнутым локтем"
+    },
+    "bow": {
+     "myers": "shortened-active",
+     "ru": "ромбовидные укорочены, трёхглавая держит локти прямыми в тяге"
+    },
+    "fold": {
+     "myers": "lengthened",
+     "ru": "руки держат голени: лопатки разведены, локти согнуты — ромбовидные и трёхглавая удлинены"
+    }
+   },
+   "model": {
+    "length": {
+     "dog": {
+      "totalPct": 17.7,
+      "tracksPct": [
+       38.3,
+       5.2,
+       22.4,
+       null,
+       -2.2
+      ]
+     },
+     "plank": {
+      "totalPct": 18.5,
+      "tracksPct": [
+       35.2,
+       -3.7,
+       32.3,
+       null,
+       -10.6
+      ]
+     },
+     "half": {
+      "totalPct": 13.6,
+      "tracksPct": [
+       1.2,
+       -2.1,
+       30.7,
+       null,
+       -1.8
+      ]
+     },
+     "bow": {
+      "totalPct": -7.3,
+      "tracksPct": [
+       -21.5,
+       -2.2,
+       -5.4,
+       null,
+       -5.8
+      ]
+     },
+     "fold": {
+      "totalPct": 13.3,
+      "tracksPct": [
+       23.9,
+       0.1,
+       21.7,
+       null,
+       -5.8
+      ]
+     }
+    },
+    "activation": {
+     "dog": {
+      "mean": 0.187,
+      "max": 0.398,
+      "top": [
+       "tricMed 40%",
+       "tricLat 39%",
+       "infra 28%"
+      ]
+     },
+     "plank": {
+      "mean": 0.021,
+      "max": 0.061,
+      "top": [
+       "infra 6%",
+       "tricLat 6%",
+       "supra 5%"
+      ]
+     },
+     "half": {
+      "mean": 0.035,
+      "max": 0.192,
+      "top": [
+       "rhomb 19%",
+       "supra 12%",
+       "levScap 4%"
+      ]
+     },
+     "bow": {
+      "mean": 0.023,
+      "max": 0.135,
+      "top": [
+       "rhomb 14%",
+       "levScap 9%",
+       "subscap 1%"
+      ]
+     },
+     "fold": {
+      "mean": 0.041,
+      "max": 0.167,
+      "top": [
+       "supra 17%",
+       "levScap 7%",
+       "teresMin 6%"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "BFL",
+   "ru": "Задняя функциональная линия",
+   "abbr": "ЗФЛ",
+   "en": "Back Functional Line",
+   "crossing": true,
+   "sideNote": "название по стороне широчайшей: ЗФЛ левая = левая широчайшая → правая большая ягодичная → правая латеральная широкая",
+   "fn": "диагональ спины: широчайшая одной стороны через грудопоясничную фасцию к большой ягодичной и латеральной широкой другой — передаёт силу рук ногам и наоборот (бросок, шаг, толчок)",
+   "evidence": "сильная: подтверждены все 3 перехода (Wilke 2016)",
+   "tracks": [
+    {
+     "n": 1,
+     "ru": "Широчайшая мышца спины",
+     "lat": "m. latissimus dorsi",
+     "side": "A",
+     "model": {
+      "units": [
+       "lat"
+      ],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "full",
+     "note": null,
+     "path": [
+      {
+       "unit": "lat",
+       "k": 3
+      }
+     ],
+     "from": {
+      "ru": "тело плечевой кости",
+      "at": {
+       "seg": "hum_L",
+       "p": [
+        0.189,
+        1.345,
+        -0.012
+       ]
+      }
+     },
+     "to": {
+      "ru": "грудопоясничная фасция",
+      "at": {
+       "seg": "lumA",
+       "p": [
+        0.026,
+        1.057,
+        -0.1
+       ]
+      }
+     },
+     "standLength": 0.409
+    },
+    {
+     "n": 2,
+     "ru": "Грудопоясничная и крестцовая фасции — переход через срединную линию",
+     "lat": "fascia thoracolumbalis; fascia sacralis",
+     "side": "X",
+     "model": {
+      "units": [],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": [
+       "tlfCross",
+       "thoracolumbarFascia"
+      ]
+     },
+     "cov": "missing",
+     "note": null,
+     "path": [
+      {
+       "fascia": "tlfCross"
+      }
+     ],
+     "from": {
+      "ru": "поясничная часть широчайшей",
+      "at": {
+       "seg": "lumA",
+       "p": [
+        0.026,
+        1.057,
+        -0.1
+       ]
+      }
+     },
+     "to": {
+      "ru": "крестец другой стороны",
+      "at": {
+       "seg": "pelvis",
+       "p": [
+        -0.042,
+        1.01,
+        -0.112
+       ]
+      }
+     },
+     "standLength": 0.144
+    },
+    {
+     "n": 3,
+     "ru": "Большая ягодичная мышца (другая сторона)",
+     "lat": "m. gluteus maximus",
+     "side": "B",
+     "model": {
+      "units": [
+       "gluteMax"
+      ],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "full",
+     "note": "берём средние (крестцовые) волокна: верхние в глубоком сгибании бедра модель укорачивает — путь перешагивает ось сустава",
+     "path": [
+      {
+       "unit": "gluteMax",
+       "k": 2
+      }
+     ],
+     "from": {
+      "ru": "крестец",
+      "at": {
+       "seg": "pelvis",
+       "p": [
+        0.025,
+        0.969,
+        -0.115
+       ]
+      }
+     },
+     "to": {
+      "ru": "ягодичная бугристость бедра",
+      "at": {
+       "seg": "thigh_L",
+       "p": [
+        0.145,
+        0.83,
+        -0.028
+       ]
+      }
+     },
+     "standLength": 0.203
+    },
+    {
+     "n": 4,
+     "ru": "Латеральная широкая мышца бедра",
+     "lat": "m. vastus lateralis",
+     "side": "B",
+     "model": {
+      "units": [
+       "vastLat"
+      ],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "full",
+     "note": null,
+     "path": [
+      {
+       "unit": "vastLat"
+      }
+     ],
+     "from": {
+      "ru": "тело бедра",
+      "at": {
+       "seg": "thigh_L",
+       "p": [
+        0.152,
+        0.87,
+        0.002
+       ]
+      }
+     },
+     "to": {
+      "ru": "надколенник",
+      "at": {
+       "seg": "shank_L",
+       "p": [
+        0.098,
+        0.448,
+        0.03
+       ]
+      }
+     },
+     "standLength": 0.436
+    },
+    {
+     "n": 5,
+     "ru": "Связка надколенника",
+     "lat": "lig. patellae",
+     "side": "B",
+     "model": {
+      "units": [],
+      "related": [],
+      "ligs": [
+       "patTend"
+      ],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "static",
+     "note": null,
+     "path": [
+      {
+       "lig": "patTend"
+      }
+     ],
+     "from": {
+      "ru": "надколенник",
+      "at": {
+       "seg": "shank_L",
+       "p": [
+        0.098,
+        0.508,
+        0.036
+       ]
+      }
+     },
+     "to": {
+      "ru": "бугристость большеберцовой",
+      "at": {
+       "seg": "shank_L",
+       "p": [
+        0.098,
+        0.452,
+        0.03
+       ]
+      }
+     },
+     "standLength": 0.056
+    }
+   ],
+   "coverage": {
+    "full": 3,
+    "static": 1,
+    "partial": 0,
+    "missing": 1,
+    "tracks": 5,
+    "structuralPct": 80,
+    "dynamicPct": 60
+   },
+   "missing": [
+    "tlfCross",
+    "thoracolumbarFascia"
+   ],
+   "poses": {
+    "dog": {
+     "myers": "lengthened",
+     "ru": "обе диагонали удлинены: руки над головой тянут широчайшие, согнутые бёдра — большие ягодичные"
+    },
+    "plank": {
+     "myers": "loaded",
+     "ru": "диагонали держат таз и плечи как единое целое — изометрия"
+    },
+    "half": {
+     "myers": "active",
+     "ru": "большая ягодичная и латеральная широкая держат таз и ноги на полу, широчайшая уводит руки назад"
+    },
+    "bow": {
+     "myers": "shortened-active",
+     "ru": "большая ягодичная работает сильно; широчайшую тянет хват"
+    },
+    "fold": {
+     "myers": "lengthened",
+     "ru": "большая ягодичная растянута глубоким сгибанием бедра"
+    }
+   },
+   "model": {
+    "length": {
+     "dog": {
+      "totalPct": 10.8,
+      "tracksPct": [
+       19.3,
+       -4.2,
+       26.3,
+       1.9,
+       0
+      ]
+     },
+     "plank": {
+      "totalPct": 4.6,
+      "tracksPct": [
+       15.3,
+       1.8,
+       -3.7,
+       0,
+       0
+      ]
+     },
+     "half": {
+      "totalPct": -0.7,
+      "tracksPct": [
+       -2.7,
+       -1.2,
+       2.1,
+       0,
+       0
+      ]
+     },
+     "bow": {
+      "totalPct": 1.3,
+      "tracksPct": [
+       -6.4,
+       -6.1,
+       -12.9,
+       17.9,
+       0
+      ]
+     },
+     "fold": {
+      "totalPct": 8.2,
+      "tracksPct": [
+       14.1,
+       2.4,
+       20.5,
+       0,
+       0
+      ]
+     }
+    },
+    "activation": {
+     "dog": {
+      "mean": 0.015,
+      "max": 0.046,
+      "top": [
+       "vastLat 5%",
+       "lat 0%",
+       "gluteMax 0%"
+      ]
+     },
+     "plank": {
+      "mean": 0.09,
+      "max": 0.15,
+      "top": [
+       "vastLat 15%",
+       "gluteMax 12%",
+       "lat 0%"
+      ]
+     },
+     "half": {
+      "mean": 0.08,
+      "max": 0.12,
+      "top": [
+       "gluteMax 12%",
+       "vastLat 12%",
+       "lat 0%"
+      ]
+     },
+     "bow": {
+      "mean": 0.103,
+      "max": 0.268,
+      "top": [
+       "vastLat 27%",
+       "lat 2%",
+       "gluteMax 2%"
+      ]
+     },
+     "fold": {
+      "mean": 0.007,
+      "max": 0.02,
+      "top": [
+       "lat 2%",
+       "gluteMax 0%",
+       "vastLat 0%"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "FFL",
+   "ru": "Фронтальная функциональная линия",
+   "abbr": "ФФЛ",
+   "en": "Front Functional Line",
+   "crossing": true,
+   "sideNote": "название по стороне большой грудной: ФФЛ левая = левая грудная → правая длинная приводящая",
+   "fn": "диагональ спереди: нижний край большой грудной через влагалище прямой мышцы живота и лобковый симфиз к длинной приводящей другой стороны",
+   "evidence": "сильная: подтверждены оба перехода (Wilke 2016)",
+   "tracks": [
+    {
+     "n": 1,
+     "ru": "Нижний край большой грудной мышцы",
+     "lat": "m. pectoralis major (pars abdominalis)",
+     "side": "A",
+     "model": {
+      "units": [
+       "pecMaj"
+      ],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "full",
+     "note": null,
+     "path": [
+      {
+       "unit": "pecMaj",
+       "k": 4
+      }
+     ],
+     "from": {
+      "ru": "тело плечевой кости",
+      "at": {
+       "seg": "hum_L",
+       "p": [
+        0.204,
+        1.35,
+        -0.006
+       ]
+      }
+     },
+     "to": {
+      "ru": "хрящи 5–6-го рёбер",
+      "at": {
+       "seg": "thA",
+       "p": [
+        0.06,
+        1.2,
+        0.1
+       ]
+      }
+     },
+     "standLength": 0.233
+    },
+    {
+     "n": 2,
+     "ru": "Полулунная линия, латеральный край влагалища прямой мышцы живота",
+     "lat": "linea semilunaris; vagina m. recti abdominis",
+     "side": "A",
+     "model": {
+      "units": [
+       "rectAbd"
+      ],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": [
+       "rectusSheath"
+      ]
+     },
+     "cov": "partial",
+     "note": null,
+     "path": [
+      {
+       "unit": "rectAbd",
+       "k": 2
+      }
+     ],
+     "from": {
+      "ru": "5–6-е рёбра",
+      "at": {
+       "seg": "thB",
+       "p": [
+        0.078,
+        1.3,
+        0.102
+       ]
+      }
+     },
+     "to": {
+      "ru": "лобковый бугорок и симфиз (переход на другую сторону)",
+      "at": {
+       "seg": "pelvis",
+       "p": [
+        0.04,
+        0.898,
+        0.072
+       ]
+      }
+     },
+     "standLength": 0.41
+    },
+    {
+     "n": 3,
+     "ru": "Длинная приводящая мышца (другая сторона)",
+     "lat": "m. adductor longus",
+     "side": "B",
+     "model": {
+      "units": [
+       "addLong"
+      ],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "full",
+     "note": null,
+     "path": [
+      {
+       "unit": "addLong"
+      }
+     ],
+     "from": {
+      "ru": "лобковый бугорок",
+      "at": {
+       "seg": "pelvis",
+       "p": [
+        0.03,
+        0.892,
+        0.066
+       ]
+      }
+     },
+     "to": {
+      "ru": "шероховатая линия бедра",
+      "at": {
+       "seg": "thigh_L",
+       "p": [
+        0.09,
+        0.73,
+        -0.016
+       ]
+      }
+     },
+     "standLength": 0.191
+    }
+   ],
+   "coverage": {
+    "full": 2,
+    "static": 0,
+    "partial": 1,
+    "missing": 0,
+    "tracks": 3,
+    "structuralPct": 83,
+    "dynamicPct": 83
+   },
+   "missing": [
+    "rectusSheath"
+   ],
+   "poses": {
+    "dog": {
+     "myers": "lengthened",
+     "ru": "руки над головой удлиняют нижний край грудной; линия натянута по диагонали спереди"
+    },
+    "plank": {
+     "myers": "loaded",
+     "ru": "передняя диагональ держит опору руки с противоположной ногой — изометрия"
+    },
+    "half": {
+     "myers": "lengthened",
+     "ru": "прогиб удлиняет переднюю диагональ"
+    },
+    "bow": {
+     "myers": "lengthened",
+     "ru": "растянута вместе с ПФЛ"
+    },
+    "fold": {
+     "myers": "shortened",
+     "ru": "укорочена"
+    }
+   },
+   "model": {
+    "length": {
+     "dog": {
+      "totalPct": 24.1,
+      "tracksPct": [
+       60.1,
+       18.6,
+       -8.1
+      ]
+     },
+     "plank": {
+      "totalPct": 4.3,
+      "tracksPct": [
+       23.8,
+       -5.4,
+       0.9
+      ]
+     },
+     "half": {
+      "totalPct": 16.2,
+      "tracksPct": [
+       36.8,
+       13.3,
+       -2.6
+      ]
+     },
+     "bow": {
+      "totalPct": 23,
+      "tracksPct": [
+       28.9,
+       24.2,
+       13.4
+      ]
+     },
+     "fold": {
+      "totalPct": -2.6,
+      "tracksPct": [
+       9.2,
+       -9.5,
+       -2.2
+      ]
+     }
+    },
+    "activation": {
+     "dog": {
+      "mean": 0.012,
+      "max": 0.02,
+      "top": [
+       "rectAbd 2%",
+       "pecMaj 2%",
+       "addLong 0%"
+      ]
+     },
+     "plank": {
+      "mean": 0.17,
+      "max": 0.262,
+      "top": [
+       "addLong 26%",
+       "rectAbd 25%",
+       "pecMaj 0%"
+      ]
+     },
+     "half": {
+      "mean": 0.041,
+      "max": 0.098,
+      "top": [
+       "rectAbd 10%",
+       "addLong 2%",
+       "pecMaj 0%"
+      ]
+     },
+     "bow": {
+      "mean": 0.05,
+      "max": 0.128,
+      "top": [
+       "addLong 13%",
+       "rectAbd 2%",
+       "pecMaj 0%"
+      ]
+     },
+     "fold": {
+      "mean": 0.066,
+      "max": 0.153,
+      "top": [
+       "addLong 15%",
+       "pecMaj 5%",
+       "rectAbd 0%"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "IFL",
+   "ru": "Ипсилатеральная функциональная линия",
+   "abbr": "ИФЛ",
+   "en": "Ipsilateral Functional Line",
+   "crossing": false,
+   "sideNote": null,
+   "fn": "боковая диагональ одной стороны: наружный край широчайшей → наружная косая → портняжная; стабилизирует при опоре на руку и при подтягивании",
+   "evidence": "отдельно не проверялась",
+   "tracks": [
+    {
+     "n": 1,
+     "ru": "Наружный край широчайшей мышцы спины",
+     "lat": "m. latissimus dorsi (margo lateralis)",
+     "side": "A",
+     "model": {
+      "units": [
+       "lat"
+      ],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "full",
+     "note": null,
+     "path": [
+      {
+       "unit": "lat",
+       "k": 4
+      }
+     ],
+     "from": {
+      "ru": "тело плечевой кости",
+      "at": {
+       "seg": "hum_L",
+       "p": [
+        0.189,
+        1.343,
+        -0.011
+       ]
+      }
+     },
+     "to": {
+      "ru": "10–12-е рёбра, гребень подвздошной",
+      "at": {
+       "seg": "pelvis",
+       "p": [
+        0.1,
+        1.075,
+        -0.065
+       ]
+      }
+     },
+     "standLength": 0.361
+    },
+    {
+     "n": 2,
+     "ru": "Наружная косая мышца живота",
+     "lat": "m. obliquus externus abdominis",
+     "side": "A",
+     "model": {
+      "units": [
+       "extObl"
+      ],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "full",
+     "note": null,
+     "path": [
+      {
+       "unit": "extObl",
+       "k": 3
+      }
+     ],
+     "from": {
+      "ru": "нижние рёбра",
+      "at": {
+       "seg": "lumB",
+       "p": [
+        0.118,
+        1.13,
+        -0.03
+       ]
+      }
+     },
+     "to": {
+      "ru": "ПВПО",
+      "at": {
+       "seg": "pelvis",
+       "p": [
+        0.11,
+        1.06,
+        0.03
+       ]
+      }
+     },
+     "standLength": 0.15
+    },
+    {
+     "n": 3,
+     "ru": "Портняжная мышца",
+     "lat": "m. sartorius",
+     "side": "A",
+     "model": {
+      "units": [
+       "sartorius"
+      ],
+      "related": [],
+      "ligs": [],
+      "caps": [],
+      "fascia": []
+     },
+     "cov": "full",
+     "note": null,
+     "path": [
+      {
+       "unit": "sartorius"
+      }
+     ],
+     "from": {
+      "ru": "ПВПО",
+      "at": {
+       "seg": "pelvis",
+       "p": [
+        0.124,
+        1.032,
+        0.06
+       ]
+      }
+     },
+     "to": {
+      "ru": "«гусиная лапка», медиальный мыщелок большеберцовой",
+      "at": {
+       "seg": "shank_L",
+       "p": [
+        0.08,
+        0.452,
+        0.02
+       ]
+      }
+     },
+     "standLength": 0.592
+    }
+   ],
+   "coverage": {
+    "full": 3,
+    "static": 0,
+    "partial": 0,
+    "missing": 0,
+    "tracks": 3,
+    "structuralPct": 100,
+    "dynamicPct": 100
+   },
+   "missing": [],
+   "poses": {
+    "dog": {
+     "myers": "mixed",
+     "ru": "широчайшая удлинена руками над головой, портняжная укорочена согнутым бедром"
+    },
+    "plank": {
+     "myers": "loaded",
+     "ru": "держит бок туловища от провисания"
+    },
+    "half": {
+     "myers": "neutral",
+     "ru": "бёдра на полу, линия почти нейтральна; наружная косая держит рёбра"
+    },
+    "bow": {
+     "myers": "lengthened",
+     "ru": "портняжная слегка удлинена (бедро разогнуто, колено согнуто), наружная косая — прогибом"
+    },
+    "fold": {
+     "myers": "shortened",
+     "ru": "портняжная укорочена сгибанием бедра"
+    }
+   },
+   "model": {
+    "length": {
+     "dog": {
+      "totalPct": -8.5,
+      "tracksPct": [
+       20.8,
+       7.2,
+       -30.4
+      ]
+     },
+     "plank": {
+      "totalPct": 5.2,
+      "tracksPct": [
+       15.6,
+       -3.5,
+       1.1
+      ]
+     },
+     "half": {
+      "totalPct": -1.3,
+      "tracksPct": [
+       -3.7,
+       2.3,
+       -0.7
+      ]
+     },
+     "bow": {
+      "totalPct": 0.6,
+      "tracksPct": [
+       -6.3,
+       9.8,
+       2.5
+      ]
+     },
+     "fold": {
+      "totalPct": -11.4,
+      "tracksPct": [
+       15.8,
+       -4.7,
+       -29.7
+      ]
+     }
+    },
+    "activation": {
+     "dog": {
+      "mean": 0.147,
+      "max": 0.309,
+      "top": [
+       "sartorius 31%",
+       "extObl 13%",
+       "lat 0%"
+      ]
+     },
+     "plank": {
+      "mean": 0.156,
+      "max": 0.275,
+      "top": [
+       "sartorius 28%",
+       "extObl 19%",
+       "lat 0%"
+      ]
+     },
+     "half": {
+      "mean": 0.051,
+      "max": 0.12,
+      "top": [
+       "extObl 12%",
+       "sartorius 3%",
+       "lat 0%"
+      ]
+     },
+     "bow": {
+      "mean": 0.009,
+      "max": 0.023,
+      "top": [
+       "lat 2%",
+       "extObl 1%",
+       "sartorius 0%"
+      ]
+     },
+     "fold": {
+      "mean": 0.022,
+      "max": 0.046,
+      "top": [
+       "extObl 5%",
+       "lat 2%",
+       "sartorius 0%"
+      ]
+     }
+    }
+   }
+  }
+ ],
+ "fascia": {
+  "thoracolumbarFascia": {
+   "ru": "Грудопоясничная фасция (задний листок), крестцовая фасция",
+   "lat": "fascia thoracolumbalis, lamina posterior; fascia sacralis",
+   "type": "sheet",
+   "side": "C",
+   "outline": [
+    {
+     "seg": "pelvis",
+     "p": [
+      0,
+      0.93,
+      -0.118
+     ]
+    },
+    {
+     "seg": "pelvis",
+     "p": [
+      0.05,
+      0.97,
+      -0.118
+     ]
+    },
+    {
+     "seg": "pelvis",
+     "p": [
+      0.1,
+      1.06,
+      -0.085
+     ]
+    },
+    {
+     "seg": "lumB",
+     "p": [
+      0.11,
+      1.15,
+      -0.095
+     ]
+    },
+    {
+     "seg": "thA",
+     "p": [
+      0.09,
+      1.21,
+      -0.128
+     ]
+    },
+    {
+     "seg": "thA",
+     "p": [
+      0,
+      1.2,
+      -0.152
+     ]
+    },
+    {
+     "seg": "thA",
+     "p": [
+      -0.09,
+      1.21,
+      -0.128
+     ]
+    },
+    {
+     "seg": "lumB",
+     "p": [
+      -0.11,
+      1.15,
+      -0.095
+     ]
+    },
+    {
+     "seg": "pelvis",
+     "p": [
+      -0.1,
+      1.06,
+      -0.085
+     ]
+    },
+    {
+     "seg": "pelvis",
+     "p": [
+      -0.05,
+      0.97,
+      -0.118
+     ]
+    }
+   ],
+   "band": [
+    {
+     "seg": "pelvis",
+     "p": [
+      0.015,
+      0.97,
+      -0.12
+     ]
+    },
+    {
+     "seg": "lumA",
+     "p": [
+      0.015,
+      1.05,
+      -0.122
+     ]
+    },
+    {
+     "seg": "lumB",
+     "p": [
+      0.015,
+      1.12,
+      -0.12
+     ]
+    },
+    {
+     "seg": "thA",
+     "p": [
+      0.015,
+      1.2,
+      -0.15
+     ]
+    }
+   ],
+   "links": "широчайшая (обе стороны), большая ягодичная (обе стороны), выпрямитель и многораздельная под ней, внутренняя косая и поперечная через латеральный шов, задняя нижняя зубчатая",
+   "lines": [
+    "SBL",
+    "SPL",
+    "BFL"
+   ],
+   "static": false
+  },
+  "tlfCross": {
+   "ru": "Перекрёст грудопоясничной фасции: широчайшая одной стороны → большая ягодичная другой",
+   "lat": "fascia thoracolumbalis (decussatio)",
+   "type": "band",
+   "side": "X",
+   "band": [
+    {
+     "seg": "lumA",
+     "p": [
+      0.026,
+      1.057,
+      -0.102
+     ]
+    },
+    {
+     "seg": "pelvis",
+     "p": [
+      0,
+      0.975,
+      -0.121
+     ]
+    },
+    {
+     "seg": "pelvis",
+     "p": [
+      -0.042,
+      1.01,
+      -0.112
+     ]
+    }
+   ],
+   "lines": [
+    "BFL"
+   ],
+   "static": false
+  },
+  "lineaAlba": {
+   "ru": "Белая линия живота и апоневроз косых мышц",
+   "lat": "linea alba; aponeuroses mm. obliquorum",
+   "type": "band",
+   "side": "C",
+   "band": [
+    {
+     "seg": "pelvis",
+     "p": [
+      0,
+      0.887,
+      0.095
+     ]
+    },
+    {
+     "seg": "pelvis",
+     "p": [
+      0,
+      0.95,
+      0.094
+     ]
+    },
+    {
+     "seg": "pelvis",
+     "p": [
+      0,
+      1,
+      0.1
+     ]
+    },
+    {
+     "seg": "lumA",
+     "p": [
+      0,
+      1.05,
+      0.103
+     ]
+    },
+    {
+     "seg": "lumB",
+     "p": [
+      0,
+      1.1,
+      0.104
+     ]
+    },
+    {
+     "seg": "lumB",
+     "p": [
+      0,
+      1.15,
+      0.104
+     ]
+    },
+    {
+     "seg": "thA",
+     "p": [
+      0,
+      1.2,
+      0.118
+     ]
+    }
+   ],
+   "lines": [
+    "SPL",
+    "SFL"
+   ],
+   "static": false
+  },
+  "rectusSheath": {
+   "ru": "Влагалище прямой мышцы живота, полулунная линия",
+   "lat": "vagina m. recti abdominis; linea semilunaris",
+   "type": "sheet",
+   "side": "L",
+   "outline": [
+    {
+     "seg": "pelvis",
+     "p": [
+      0.012,
+      0.888,
+      0.093
+     ]
+    },
+    {
+     "seg": "pelvis",
+     "p": [
+      0.05,
+      0.9,
+      0.087
+     ]
+    },
+    {
+     "seg": "pelvis",
+     "p": [
+      0.077,
+      0.95,
+      0.084
+     ]
+    },
+    {
+     "seg": "pelvis",
+     "p": [
+      0.08,
+      1,
+      0.088
+     ]
+    },
+    {
+     "seg": "lumA",
+     "p": [
+      0.082,
+      1.05,
+      0.091
+     ]
+    },
+    {
+     "seg": "lumB",
+     "p": [
+      0.085,
+      1.1,
+      0.092
+     ]
+    },
+    {
+     "seg": "lumB",
+     "p": [
+      0.085,
+      1.15,
+      0.092
+     ]
+    },
+    {
+     "seg": "thA",
+     "p": [
+      0.085,
+      1.2,
+      0.105
+     ]
+    },
+    {
+     "seg": "thB",
+     "p": [
+      0.08,
+      1.3,
+      0.1
+     ]
+    },
+    {
+     "seg": "thB",
+     "p": [
+      0.01,
+      1.3,
+      0.112
+     ]
+    },
+    {
+     "seg": "thA",
+     "p": [
+      0.008,
+      1.2,
+      0.118
+     ]
+    },
+    {
+     "seg": "lumB",
+     "p": [
+      0.008,
+      1.12,
+      0.104
+     ]
+    },
+    {
+     "seg": "pelvis",
+     "p": [
+      0.008,
+      0.95,
+      0.095
+     ]
+    }
+   ],
+   "band": [
+    {
+     "seg": "pelvis",
+     "p": [
+      0.05,
+      0.9,
+      0.087
+     ]
+    },
+    {
+     "seg": "pelvis",
+     "p": [
+      0.08,
+      1,
+      0.088
+     ]
+    },
+    {
+     "seg": "lumB",
+     "p": [
+      0.085,
+      1.1,
+      0.092
+     ]
+    },
+    {
+     "seg": "thA",
+     "p": [
+      0.085,
+      1.2,
+      0.105
+     ]
+    },
+    {
+     "seg": "thB",
+     "p": [
+      0.08,
+      1.3,
+      0.1
+     ]
+    }
+   ],
+   "lines": [
+    "SFL",
+    "FFL"
+   ],
+   "static": false
+  },
+  "sternalFascia": {
+   "ru": "Грудинная (грудино-хрящевая) фасция",
+   "lat": "fascia sternalis; membrana sterni",
+   "type": "band",
+   "side": "C",
+   "band": [
+    {
+     "seg": "thB",
+     "p": [
+      0,
+      1.3,
+      0.112
+     ]
+    },
+    {
+     "seg": "thB",
+     "p": [
+      0,
+      1.35,
+      0.104
+     ]
+    },
+    {
+     "seg": "thC",
+     "p": [
+      0,
+      1.4,
+      0.079
+     ]
+    }
+   ],
+   "lines": [
+    "SFL"
+   ],
+   "static": false
+  },
+  "galea": {
+   "ru": "Сухожильный шлем (надчерепной апоневроз) и височная фасция",
+   "lat": "galea aponeurotica; aponeurosis epicranialis; fascia temporalis",
+   "type": "sheet",
+   "side": "C",
+   "static": true,
+   "outline": [
+    {
+     "seg": "head",
+     "p": [
+      0,
+      1.6,
+      -0.092
+     ]
+    },
+    {
+     "seg": "head",
+     "p": [
+      0.05,
+      1.65,
+      -0.085
+     ]
+    },
+    {
+     "seg": "head",
+     "p": [
+      0.075,
+      1.7,
+      -0.02
+     ]
+    },
+    {
+     "seg": "head",
+     "p": [
+      0.065,
+      1.71,
+      0.06
+     ]
+    },
+    {
+     "seg": "head",
+     "p": [
+      0,
+      1.702,
+      0.097
+     ]
+    },
+    {
+     "seg": "head",
+     "p": [
+      -0.065,
+      1.71,
+      0.06
+     ]
+    },
+    {
+     "seg": "head",
+     "p": [
+      -0.075,
+      1.7,
+      -0.02
+     ]
+    },
+    {
+     "seg": "head",
+     "p": [
+      -0.05,
+      1.65,
+      -0.085
+     ]
+    }
+   ],
+   "band": [
+    {
+     "seg": "head",
+     "p": [
+      0,
+      1.6,
+      -0.092
+     ]
+    },
+    {
+     "seg": "head",
+     "p": [
+      0,
+      1.69,
+      -0.097
+     ]
+    },
+    {
+     "seg": "head",
+     "p": [
+      0,
+      1.757,
+      0
+     ]
+    },
+    {
+     "seg": "head",
+     "p": [
+      0,
+      1.702,
+      0.097
+     ]
+    }
+   ],
+   "lines": [
+    "SBL",
+    "SFL",
+    "LL"
+   ]
+  },
+  "intercostals": {
+   "ru": "Межрёберные мышцы и фасция боковой стенки груди",
+   "lat": "mm. intercostales externi et interni",
+   "type": "band",
+   "side": "L",
+   "band": [
+    {
+     "seg": "thA",
+     "p": [
+      0.137,
+      1.21,
+      0.035
+     ]
+    },
+    {
+     "seg": "thB",
+     "p": [
+      0.142,
+      1.29,
+      0.04
+     ]
+    },
+    {
+     "seg": "thB",
+     "p": [
+      0.137,
+      1.33,
+      0.036
+     ]
+    },
+    {
+     "seg": "thC",
+     "p": [
+      0.125,
+      1.38,
+      0.025
+     ]
+    }
+   ],
+   "lines": [
+    "LL"
+   ],
+   "static": false
+  },
+  "cruralFasciaAnt": {
+   "ru": "Фасция голени, передний отдел, удерживатели разгибателей",
+   "lat": "fascia cruris (compartimentum anterius); retinacula mm. extensorum",
+   "type": "band",
+   "side": "L",
+   "band": [
+    {
+     "seg": "shank_L",
+     "p": [
+      0.11,
+      0.43,
+      0.042
+     ]
+    },
+    {
+     "seg": "shank_L",
+     "p": [
+      0.105,
+      0.3,
+      0.038
+     ]
+    },
+    {
+     "seg": "shank_L",
+     "p": [
+      0.1,
+      0.12,
+      0.035
+     ]
+    },
+    {
+     "seg": "foot_L",
+     "p": [
+      0.095,
+      0.075,
+      0.05
+     ]
+    },
+    {
+     "seg": "foot_L",
+     "p": [
+      0.088,
+      0.05,
+      0.1
+     ]
+    }
+   ],
+   "lines": [
+    "SFL"
+   ],
+   "static": false
+  },
+  "cruralFasciaLat": {
+   "ru": "Фасция голени, латеральный отдел, удерживатели малоберцовых",
+   "lat": "fascia cruris (compartimentum laterale); retinacula mm. fibularium",
+   "type": "band",
+   "side": "L",
+   "band": [
+    {
+     "seg": "shank_L",
+     "p": [
+      0.135,
+      0.45,
+      -0.012
+     ]
+    },
+    {
+     "seg": "shank_L",
+     "p": [
+      0.136,
+      0.3,
+      -0.012
+     ]
+    },
+    {
+     "seg": "shank_L",
+     "p": [
+      0.13,
+      0.12,
+      -0.016
+     ]
+    },
+    {
+     "seg": "shank_L",
+     "p": [
+      0.127,
+      0.075,
+      -0.022
+     ]
+    },
+    {
+     "seg": "foot_L",
+     "p": [
+      0.122,
+      0.03,
+      0.04
+     ]
+    }
+   ],
+   "lines": [
+    "LL"
+   ],
+   "static": false
+  },
+  "fasciaLata": {
+   "ru": "Широкая фасция бедра (вместе с подвздошно-большеберцовым трактом)",
+   "lat": "fascia lata; tractus iliotibialis",
+   "type": "sheet",
+   "side": "L",
+   "outline": [
+    {
+     "seg": "pelvis",
+     "p": [
+      0.125,
+      1.03,
+      0.06
+     ]
+    },
+    {
+     "seg": "thigh_L",
+     "p": [
+      0.155,
+      0.9,
+      0.02
+     ]
+    },
+    {
+     "seg": "thigh_L",
+     "p": [
+      0.15,
+      0.7,
+      0.01
+     ]
+    },
+    {
+     "seg": "shank_L",
+     "p": [
+      0.118,
+      0.468,
+      0.018
+     ]
+    },
+    {
+     "seg": "shank_L",
+     "p": [
+      0.098,
+      0.5,
+      0.05
+     ]
+    },
+    {
+     "seg": "thigh_L",
+     "p": [
+      0.11,
+      0.7,
+      0.085
+     ]
+    },
+    {
+     "seg": "thigh_L",
+     "p": [
+      0.11,
+      0.88,
+      0.082
+     ]
+    }
+   ],
+   "band": [
+    {
+     "seg": "pelvis",
+     "p": [
+      0.125,
+      1.03,
+      0.06
+     ]
+    },
+    {
+     "seg": "thigh_L",
+     "p": [
+      0.155,
+      0.9,
+      0.02
+     ]
+    },
+    {
+     "seg": "thigh_L",
+     "p": [
+      0.15,
+      0.7,
+      0.01
+     ]
+    },
+    {
+     "seg": "shank_L",
+     "p": [
+      0.118,
+      0.468,
+      0.018
+     ]
+    }
+   ],
+   "lines": [
+    "LL",
+    "SPL"
+   ],
+   "static": false
+  },
+  "lateralSeptumArm": {
+   "ru": "Латеральная межмышечная перегородка плеча",
+   "lat": "septum intermusculare brachii laterale",
+   "type": "band",
+   "side": "L",
+   "static": true,
+   "band": [
+    {
+     "seg": "hum_L",
+     "p": [
+      0.213,
+      1.268,
+      -0.026
+     ]
+    },
+    {
+     "seg": "hum_L",
+     "p": [
+      0.226,
+      1.17,
+      -0.03
+     ]
+    },
+    {
+     "seg": "hum_L",
+     "p": [
+      0.232,
+      1.08,
+      -0.026
+     ]
+    }
+   ],
+   "lines": [
+    "SBAL"
+   ]
+  },
+  "medialSeptumArm": {
+   "ru": "Медиальная межмышечная перегородка плеча",
+   "lat": "septum intermusculare brachii mediale",
+   "type": "band",
+   "side": "L",
+   "static": true,
+   "band": [
+    {
+     "seg": "hum_L",
+     "p": [
+      0.195,
+      1.33,
+      -0.008
+     ]
+    },
+    {
+     "seg": "hum_L",
+     "p": [
+      0.185,
+      1.2,
+      -0.02
+     ]
+    },
+    {
+     "seg": "hum_L",
+     "p": [
+      0.18,
+      1.078,
+      -0.032
+     ]
+    }
+   ],
+   "lines": [
+    "SFAL"
+   ]
+  },
+  "palmarAponeurosis": {
+   "ru": "Ладонный апоневроз и удерживатель сгибателей (запястный канал)",
+   "lat": "aponeurosis palmaris; retinaculum mm. flexorum",
+   "type": "sheet",
+   "side": "L",
+   "outline": [
+    {
+     "seg": "hand_L",
+     "p": [
+      0.199,
+      0.78,
+      -0.026
+     ]
+    },
+    {
+     "seg": "f2a_L",
+     "p": [
+      0.206,
+      0.705,
+      -0.003
+     ]
+    },
+    {
+     "seg": "f3a_L",
+     "p": [
+      0.205,
+      0.698,
+      -0.022
+     ]
+    },
+    {
+     "seg": "f4a_L",
+     "p": [
+      0.203,
+      0.703,
+      -0.041
+     ]
+    },
+    {
+     "seg": "f5a_L",
+     "p": [
+      0.2,
+      0.715,
+      -0.057
+     ]
+    }
+   ],
+   "band": [
+    {
+     "seg": "hand_L",
+     "p": [
+      0.199,
+      0.78,
+      -0.026
+     ]
+    },
+    {
+     "seg": "hand_L",
+     "p": [
+      0.197,
+      0.745,
+      -0.024
+     ]
+    },
+    {
+     "seg": "f3a_L",
+     "p": [
+      0.205,
+      0.698,
+      -0.022
+     ]
+    }
+   ],
+   "lines": [
+    "SFAL"
+   ],
+   "static": false
+  },
+  "clavipectoral": {
+   "ru": "Ключично-грудная фасция",
+   "lat": "fascia clavipectoralis",
+   "type": "sheet",
+   "side": "L",
+   "outline": [
+    {
+     "seg": "clav_L",
+     "p": [
+      0.06,
+      1.392,
+      0.06
+     ]
+    },
+    {
+     "seg": "clav_L",
+     "p": [
+      0.118,
+      1.398,
+      0.022
+     ]
+    },
+    {
+     "seg": "scap_L",
+     "p": [
+      0.155,
+      1.405,
+      -0.002
+     ]
+    },
+    {
+     "seg": "thB",
+     "p": [
+      0.07,
+      1.33,
+      0.09
+     ]
+    }
+   ],
+   "band": [
+    {
+     "seg": "clav_L",
+     "p": [
+      0.09,
+      1.395,
+      0.04
+     ]
+    },
+    {
+     "seg": "scap_L",
+     "p": [
+      0.155,
+      1.405,
+      -0.002
+     ]
+    },
+    {
+     "seg": "thB",
+     "p": [
+      0.07,
+      1.33,
+      0.09
+     ]
+    }
+   ],
+   "lines": [
+    "DFAL"
+   ],
+   "static": false
+  },
+  "pelvicFloor": {
+   "ru": "Тазовое дно (мышца, поднимающая задний проход, и её фасция)",
+   "lat": "diaphragma pelvis; m. levator ani; fascia diaphragmatis pelvis",
+   "type": "sheet",
+   "side": "C",
+   "static": true,
+   "outline": [
+    {
+     "seg": "pelvis",
+     "p": [
+      0,
+      0.885,
+      -0.06
+     ]
+    },
+    {
+     "seg": "pelvis",
+     "p": [
+      0.045,
+      0.875,
+      -0.01
+     ]
+    },
+    {
+     "seg": "pelvis",
+     "p": [
+      0.03,
+      0.88,
+      0.05
+     ]
+    },
+    {
+     "seg": "pelvis",
+     "p": [
+      0,
+      0.885,
+      0.07
+     ]
+    },
+    {
+     "seg": "pelvis",
+     "p": [
+      -0.03,
+      0.88,
+      0.05
+     ]
+    },
+    {
+     "seg": "pelvis",
+     "p": [
+      -0.045,
+      0.875,
+      -0.01
+     ]
+    }
+   ],
+   "band": [
+    {
+     "seg": "pelvis",
+     "p": [
+      0,
+      0.885,
+      -0.06
+     ]
+    },
+    {
+     "seg": "pelvis",
+     "p": [
+      0,
+      0.878,
+      0
+     ]
+    },
+    {
+     "seg": "pelvis",
+     "p": [
+      0,
+      0.885,
+      0.07
+     ]
+    }
+   ],
+   "lines": [
+    "DFL"
+   ]
+  },
+  "diaphragm": {
+   "ru": "Диафрагма (ножки, сухожильный центр)",
+   "lat": "diaphragma; crura; centrum tendineum",
+   "type": "sheet",
+   "side": "C",
+   "planned": false,
+   "outline": [
+    {
+     "seg": "lumA",
+     "p": [
+      0,
+      1.06,
+      -0.03
+     ]
+    },
+    {
+     "seg": "thA",
+     "p": [
+      0.09,
+      1.22,
+      0.02
+     ]
+    },
+    {
+     "seg": "thB",
+     "p": [
+      0,
+      1.27,
+      0.07
+     ]
+    },
+    {
+     "seg": "thA",
+     "p": [
+      -0.09,
+      1.22,
+      0.02
+     ]
+    }
+   ],
+   "band": [
+    {
+     "seg": "lumA",
+     "p": [
+      0,
+      1.06,
+      -0.03
+     ]
+    },
+    {
+     "seg": "thA",
+     "p": [
+      0,
+      1.24,
+      0
+     ]
+    },
+    {
+     "seg": "thB",
+     "p": [
+      0,
+      1.27,
+      0.07
+     ]
+    }
+   ],
+   "lines": [
+    "DFL"
+   ],
+   "note": "дыхание в модели не считается — только как форма",
+   "static": false
+  },
+  "ulnarPeriosteum": {
+   "ru": "Фасция вдоль надкостницы локтевой кости",
+   "lat": "periosteum ulnae",
+   "type": "band",
+   "side": "L",
+   "static": true,
+   "band": [
+    {
+     "seg": "ulna_L",
+     "p": [
+      0.203,
+      1.093,
+      -0.062
+     ]
+    },
+    {
+     "seg": "ulna_L",
+     "p": [
+      0.208,
+      0.95,
+      -0.065
+     ]
+    },
+    {
+     "seg": "ulna_L",
+     "p": [
+      0.21,
+      0.865,
+      -0.058
+     ]
+    }
+   ],
+   "lines": [
+    "DBAL"
+   ]
+  },
+  "radialPeriosteum": {
+   "ru": "Надкостница лучевой кости (передний край)",
+   "lat": "periosteum radii",
+   "type": "band",
+   "side": "L",
+   "static": true,
+   "band": [
+    {
+     "seg": "fore_L",
+     "p": [
+      0.212,
+      1.037,
+      -0.014
+     ]
+    },
+    {
+     "seg": "fore_L",
+     "p": [
+      0.216,
+      0.95,
+      -0.006
+     ]
+    },
+    {
+     "seg": "fore_L",
+     "p": [
+      0.216,
+      0.84,
+      0
+     ]
+    }
+   ],
+   "lines": [
+    "DFAL"
+   ]
+  },
+  "fibularHeadLig": {
+   "ru": "Передняя связка головки малоберцовой кости",
+   "lat": "lig. capitis fibulae anterius",
+   "type": "band",
+   "side": "L",
+   "static": true,
+   "band": [
+    {
+     "seg": "shank_L",
+     "p": [
+      0.13,
+      0.455,
+      -0.02
+     ]
+    },
+    {
+     "seg": "shank_L",
+     "p": [
+      0.124,
+      0.47,
+      -0.004
+     ]
+    }
+   ],
+   "lines": [
+    "LL"
+   ]
+  }
+ },
+ "missingMuscles": {
+  "suboccipitals": {
+   "ru": "Подзатылочные мышцы",
+   "lat": "mm. recti capitis posteriores, obliqui capitis",
+   "lines": [
+    "SBL"
+   ]
+  },
+  "longusCapitis": {
+   "ru": "Длинная мышца головы",
+   "lat": "m. longus capitis",
+   "lines": [
+    "DFL"
+   ]
+  },
+  "hyoids": {
+   "ru": "Подъязычные и надподъязычные мышцы",
+   "lat": "mm. infrahyoidei et suprahyoidei",
+   "lines": [
+    "DFL"
+   ]
+  },
+  "transversusThoracis": {
+   "ru": "Поперечная мышца груди, внутригрудная фасция",
+   "lat": "m. transversus thoracis; fascia endothoracica",
+   "lines": [
+    "DFL"
+   ]
+  },
+  "edb": {
+   "ru": "Короткий разгибатель пальцев стопы",
+   "lat": "m. extensor digitorum brevis",
+   "lines": [
+    "SFL"
+   ]
+  },
+  "sternalis": {
+   "ru": "Грудинная мышца (непостоянная)",
+   "lat": "m. sternalis",
+   "lines": [
+    "SFL"
+   ]
+  },
+  "fingerExtTendons": {
+   "ru": "Сухожилия разгибателей на тыле пальцев (разгибательный аппарат)",
+   "lat": "aponeurosis dorsalis digitorum",
+   "lines": [
+    "SBAL"
+   ]
+  }
+ },
+ "coverage": {
+  "SBL": {
+   "full": 3,
+   "static": 1,
+   "partial": 2,
+   "missing": 1,
+   "tracks": 7,
+   "structuralPct": 71,
+   "dynamicPct": 57
+  },
+  "SFL": {
+   "full": 2,
+   "static": 1,
+   "partial": 2,
+   "missing": 2,
+   "tracks": 7,
+   "structuralPct": 57,
+   "dynamicPct": 43
+  },
+  "LL": {
+   "full": 3,
+   "static": 0,
+   "partial": 1,
+   "missing": 2,
+   "tracks": 6,
+   "structuralPct": 58,
+   "dynamicPct": 58
+  },
+  "SPL": {
+   "full": 9,
+   "static": 1,
+   "partial": 1,
+   "missing": 1,
+   "tracks": 12,
+   "structuralPct": 88,
+   "dynamicPct": 79
+  },
+  "DFL": {
+   "full": 5,
+   "static": 0,
+   "partial": 5,
+   "missing": 1,
+   "tracks": 11,
+   "structuralPct": 68,
+   "dynamicPct": 68
+  },
+  "SFAL": {
+   "full": 2,
+   "static": 0,
+   "partial": 1,
+   "missing": 1,
+   "tracks": 4,
+   "structuralPct": 63,
+   "dynamicPct": 63
+  },
+  "DFAL": {
+   "full": 1,
+   "static": 0,
+   "partial": 2,
+   "missing": 1,
+   "tracks": 4,
+   "structuralPct": 50,
+   "dynamicPct": 50
+  },
+  "SBAL": {
+   "full": 2,
+   "static": 0,
+   "partial": 1,
+   "missing": 1,
+   "tracks": 4,
+   "structuralPct": 63,
+   "dynamicPct": 63
+  },
+  "DBAL": {
+   "full": 3,
+   "static": 0,
+   "partial": 1,
+   "missing": 1,
+   "tracks": 5,
+   "structuralPct": 70,
+   "dynamicPct": 70
+  },
+  "BFL": {
+   "full": 3,
+   "static": 1,
+   "partial": 0,
+   "missing": 1,
+   "tracks": 5,
+   "structuralPct": 80,
+   "dynamicPct": 60
+  },
+  "FFL": {
+   "full": 2,
+   "static": 0,
+   "partial": 1,
+   "missing": 0,
+   "tracks": 3,
+   "structuralPct": 83,
+   "dynamicPct": 83
+  },
+  "IFL": {
+   "full": 3,
+   "static": 0,
+   "partial": 0,
+   "missing": 0,
+   "tracks": 3,
+   "structuralPct": 100,
+   "dynamicPct": 100
+  }
+ },
+ "transitions": {
+  "seg1": {
+   "from": "dog",
+   "to": "plank",
+   "duration": 4.2,
+   "lines": {
+    "SBL": {
+     "L": {
+      "minPct": 0.3,
+      "minT": 4,
+      "maxPct": 6.2,
+      "maxT": 0
+     },
+     "R": {
+      "minPct": 0.3,
+      "minT": 4,
+      "maxPct": 6.2,
+      "maxT": 0
+     }
+    },
+    "SFL": {
+     "L": {
+      "minPct": -4.3,
+      "minT": 2.6,
+      "maxPct": -1.5,
+      "maxT": 4
+     },
+     "R": {
+      "minPct": -3.7,
+      "minT": 2,
+      "maxPct": -1.5,
+      "maxT": 4
+     }
+    },
+    "LL": {
+     "L": {
+      "minPct": -0.3,
+      "minT": 2.8,
+      "maxPct": 3.8,
+      "maxT": 0
+     },
+     "R": {
+      "minPct": -0.5,
+      "minT": 3,
+      "maxPct": 3.8,
+      "maxT": 0
+     }
+    },
+    "SPL": {
+     "L": {
+      "minPct": -1.4,
+      "minT": 3.8,
+      "maxPct": 6,
+      "maxT": 0
+     },
+     "R": {
+      "minPct": -1.4,
+      "minT": 3.8,
+      "maxPct": 6,
+      "maxT": 0
+     }
+    },
+    "DFL": {
+     "L": {
+      "minPct": -0.8,
+      "minT": 3.2,
+      "maxPct": 3.1,
+      "maxT": 0
+     },
+     "R": {
+      "minPct": -0.8,
+      "minT": 2.8,
+      "maxPct": 3.1,
+      "maxT": 0
+     }
+    },
+    "SFAL": {
+     "L": {
+      "minPct": 0.6,
+      "minT": 4.2,
+      "maxPct": 13.2,
+      "maxT": 0
+     },
+     "R": {
+      "minPct": 0.6,
+      "minT": 4.2,
+      "maxPct": 13.2,
+      "maxT": 0
+     }
+    },
+    "DFAL": {
+     "L": {
+      "minPct": -10.7,
+      "minT": 3.8,
+      "maxPct": 9.2,
+      "maxT": 0
+     },
+     "R": {
+      "minPct": -10.7,
+      "minT": 3.8,
+      "maxPct": 9.2,
+      "maxT": 0
+     }
+    },
+    "SBAL": {
+     "L": {
+      "minPct": -10.9,
+      "minT": 0,
+      "maxPct": -3.1,
+      "maxT": 4
+     },
+     "R": {
+      "minPct": -10.9,
+      "minT": 0,
+      "maxPct": -3.1,
+      "maxT": 4
+     }
+    },
+    "DBAL": {
+     "L": {
+      "minPct": 17.7,
+      "minT": 0,
+      "maxPct": 22.1,
+      "maxT": 1
+     },
+     "R": {
+      "minPct": 17.7,
+      "minT": 0,
+      "maxPct": 22.1,
+      "maxT": 1
+     }
+    },
+    "BFL": {
+     "L": {
+      "minPct": 4.6,
+      "minT": 4.2,
+      "maxPct": 13.6,
+      "maxT": 2.2
+     },
+     "R": {
+      "minPct": 4.6,
+      "minT": 4.2,
+      "maxPct": 13,
+      "maxT": 2.2
+     }
+    },
+    "FFL": {
+     "L": {
+      "minPct": 3.8,
+      "minT": 3.4,
+      "maxPct": 24.2,
+      "maxT": 0.2
+     },
+     "R": {
+      "minPct": 3.4,
+      "minT": 3.2,
+      "maxPct": 24.2,
+      "maxT": 0.2
+     }
+    },
+    "IFL": {
+     "L": {
+      "minPct": -8.5,
+      "minT": 0,
+      "maxPct": 5.2,
+      "maxT": 4
+     },
+     "R": {
+      "minPct": -8.5,
+      "minT": 0,
+      "maxPct": 5.2,
+      "maxT": 4
+     }
+    }
+   }
+  },
+  "seg2": {
+   "from": "plank",
+   "to": "half",
+   "duration": 6.4,
+   "lines": {
+    "SBL": {
+     "L": {
+      "minPct": -3.1,
+      "minT": 2.2,
+      "maxPct": 0.3,
+      "maxT": 0
+     },
+     "R": {
+      "minPct": -3.1,
+      "minT": 2.2,
+      "maxPct": 0.3,
+      "maxT": 0
+     }
+    },
+    "SFL": {
+     "L": {
+      "minPct": -1.5,
+      "minT": 0,
+      "maxPct": 7.5,
+      "maxT": 2.8
+     },
+     "R": {
+      "minPct": -1.5,
+      "minT": 0,
+      "maxPct": 7.5,
+      "maxT": 2.8
+     }
+    },
+    "LL": {
+     "L": {
+      "minPct": -0.3,
+      "minT": 3.2,
+      "maxPct": 2,
+      "maxT": 1.8
+     },
+     "R": {
+      "minPct": -0.3,
+      "minT": 3.2,
+      "maxPct": 2,
+      "maxT": 1.8
+     }
+    },
+    "SPL": {
+     "L": {
+      "minPct": -1.4,
+      "minT": 0,
+      "maxPct": 2.8,
+      "maxT": 2.6
+     },
+     "R": {
+      "minPct": -1.4,
+      "minT": 0,
+      "maxPct": 2.8,
+      "maxT": 2.6
+     }
+    },
+    "DFL": {
+     "L": {
+      "minPct": -0.3,
+      "minT": 0,
+      "maxPct": 0.5,
+      "maxT": 1.6
+     },
+     "R": {
+      "minPct": -0.3,
+      "minT": 0,
+      "maxPct": 0.5,
+      "maxT": 1.6
+     }
+    },
+    "SFAL": {
+     "L": {
+      "minPct": -1.4,
+      "minT": 1.4,
+      "maxPct": 10.2,
+      "maxT": 5.4
+     },
+     "R": {
+      "minPct": -1.4,
+      "minT": 1.4,
+      "maxPct": 10.2,
+      "maxT": 5.4
+     }
+    },
+    "DFAL": {
+     "L": {
+      "minPct": -10.7,
+      "minT": 0,
+      "maxPct": 2.3,
+      "maxT": 4.6
+     },
+     "R": {
+      "minPct": -10.7,
+      "minT": 0,
+      "maxPct": 2.3,
+      "maxT": 4.6
+     }
+    },
+    "SBAL": {
+     "L": {
+      "minPct": -9,
+      "minT": 6.2,
+      "maxPct": -1.4,
+      "maxT": 1.6
+     },
+     "R": {
+      "minPct": -9,
+      "minT": 6.2,
+      "maxPct": -1.4,
+      "maxT": 1.6
+     }
+    },
+    "DBAL": {
+     "L": {
+      "minPct": 13.2,
+      "minT": 1.8,
+      "maxPct": 18.5,
+      "maxT": 0
+     },
+     "R": {
+      "minPct": 13.2,
+      "minT": 1.8,
+      "maxPct": 18.5,
+      "maxT": 0
+     }
+    },
+    "BFL": {
+     "L": {
+      "minPct": -0.7,
+      "minT": 6.2,
+      "maxPct": 8,
+      "maxT": 4.8
+     },
+     "R": {
+      "minPct": -0.7,
+      "minT": 6.2,
+      "maxPct": 8,
+      "maxT": 4.8
+     }
+    },
+    "FFL": {
+     "L": {
+      "minPct": 4.3,
+      "minT": 0,
+      "maxPct": 17.9,
+      "maxT": 5.4
+     },
+     "R": {
+      "minPct": 4.3,
+      "minT": 0,
+      "maxPct": 17.9,
+      "maxT": 5.4
+     }
+    },
+    "IFL": {
+     "L": {
+      "minPct": -1.3,
+      "minT": 6.4,
+      "maxPct": 8.1,
+      "maxT": 4.8
+     },
+     "R": {
+      "minPct": -1.3,
+      "minT": 6.4,
+      "maxPct": 8.1,
+      "maxT": 4.8
+     }
+    }
+   }
+  },
+  "seg3": {
+   "from": "half",
+   "to": "bow",
+   "duration": 4.9,
+   "lines": {
+    "SBL": {
+     "L": {
+      "minPct": -5.8,
+      "minT": 4.8,
+      "maxPct": -2.3,
+      "maxT": 0
+     },
+     "R": {
+      "minPct": -5.8,
+      "minT": 4.8,
+      "maxPct": -2.3,
+      "maxT": 0
+     }
+    },
+    "SFL": {
+     "L": {
+      "minPct": 7.5,
+      "minT": 0,
+      "maxPct": 12.8,
+      "maxT": 4.9
+     },
+     "R": {
+      "minPct": 7.5,
+      "minT": 0,
+      "maxPct": 12.8,
+      "maxT": 4.9
+     }
+    },
+    "LL": {
+     "L": {
+      "minPct": 0.9,
+      "minT": 0,
+      "maxPct": 4.4,
+      "maxT": 4.8
+     },
+     "R": {
+      "minPct": 0.9,
+      "minT": 0,
+      "maxPct": 4.4,
+      "maxT": 4.8
+     }
+    },
+    "SPL": {
+     "L": {
+      "minPct": 0.1,
+      "minT": 1.2,
+      "maxPct": 1.4,
+      "maxT": 0
+     },
+     "R": {
+      "minPct": 0.1,
+      "minT": 1.2,
+      "maxPct": 1.4,
+      "maxT": 0
+     }
+    },
+    "DFL": {
+     "L": {
+      "minPct": 0.2,
+      "minT": 0,
+      "maxPct": 1.8,
+      "maxT": 4.6
+     },
+     "R": {
+      "minPct": 0.2,
+      "minT": 0,
+      "maxPct": 1.8,
+      "maxT": 4.6
+     }
+    },
+    "SFAL": {
+     "L": {
+      "minPct": 3.7,
+      "minT": 3.4,
+      "maxPct": 9.4,
+      "maxT": 0.6
+     },
+     "R": {
+      "minPct": 3.7,
+      "minT": 3.4,
+      "maxPct": 9.4,
+      "maxT": 0.6
+     }
+    },
+    "DFAL": {
+     "L": {
+      "minPct": -1.1,
+      "minT": 0,
+      "maxPct": 6.5,
+      "maxT": 4.8
+     },
+     "R": {
+      "minPct": -1.1,
+      "minT": 0,
+      "maxPct": 6.5,
+      "maxT": 4.8
+     }
+    },
+    "SBAL": {
+     "L": {
+      "minPct": -9.6,
+      "minT": 0.4,
+      "maxPct": -3.8,
+      "maxT": 4.8
+     },
+     "R": {
+      "minPct": -9.6,
+      "minT": 0.4,
+      "maxPct": -3.8,
+      "maxT": 4.8
+     }
+    },
+    "DBAL": {
+     "L": {
+      "minPct": -7.3,
+      "minT": 4.8,
+      "maxPct": 14.3,
+      "maxT": 0.6
+     },
+     "R": {
+      "minPct": -7.3,
+      "minT": 4.8,
+      "maxPct": 14.3,
+      "maxT": 0.6
+     }
+    },
+    "BFL": {
+     "L": {
+      "minPct": -0.7,
+      "minT": 0,
+      "maxPct": 5.9,
+      "maxT": 1
+     },
+     "R": {
+      "minPct": -0.7,
+      "minT": 0,
+      "maxPct": 5.9,
+      "maxT": 1
+     }
+    },
+    "FFL": {
+     "L": {
+      "minPct": 9.6,
+      "minT": 1.8,
+      "maxPct": 23,
+      "maxT": 4.8
+     },
+     "R": {
+      "minPct": 9.6,
+      "minT": 1.8,
+      "maxPct": 23,
+      "maxT": 4.8
+     }
+    },
+    "IFL": {
+     "L": {
+      "minPct": -5.1,
+      "minT": 2.2,
+      "maxPct": 1.1,
+      "maxT": 0.8
+     },
+     "R": {
+      "minPct": -5.1,
+      "minT": 2.2,
+      "maxPct": 1.1,
+      "maxT": 0.8
+     }
+    }
+   }
+  },
+  "seg4": {
+   "from": "bow",
+   "to": "highplank",
+   "duration": 5,
+   "lines": {
+    "SBL": {
+     "L": {
+      "minPct": -5.9,
+      "minT": 0.6,
+      "maxPct": 0.8,
+      "maxT": 4
+     },
+     "R": {
+      "minPct": -5.9,
+      "minT": 0.6,
+      "maxPct": 0.8,
+      "maxT": 4
+     }
+    },
+    "SFL": {
+     "L": {
+      "minPct": -1.8,
+      "minT": 4.2,
+      "maxPct": 12.8,
+      "maxT": 0
+     },
+     "R": {
+      "minPct": -1.8,
+      "minT": 4.2,
+      "maxPct": 12.8,
+      "maxT": 0
+     }
+    },
+    "LL": {
+     "L": {
+      "minPct": -0.7,
+      "minT": 2,
+      "maxPct": 4.4,
+      "maxT": 0
+     },
+     "R": {
+      "minPct": -0.7,
+      "minT": 2,
+      "maxPct": 4.4,
+      "maxT": 0
+     }
+    },
+    "SPL": {
+     "L": {
+      "minPct": -1.2,
+      "minT": 4.2,
+      "maxPct": 1.4,
+      "maxT": 0
+     },
+     "R": {
+      "minPct": -1.2,
+      "minT": 4.2,
+      "maxPct": 1.4,
+      "maxT": 0
+     }
+    },
+    "DFL": {
+     "L": {
+      "minPct": -0.1,
+      "minT": 4.2,
+      "maxPct": 1.8,
+      "maxT": 0
+     },
+     "R": {
+      "minPct": -0.1,
+      "minT": 4.2,
+      "maxPct": 1.8,
+      "maxT": 0
+     }
+    },
+    "SFAL": {
+     "L": {
+      "minPct": 0.2,
+      "minT": 2.2,
+      "maxPct": 6.4,
+      "maxT": 0.4
+     },
+     "R": {
+      "minPct": 0.2,
+      "minT": 2.2,
+      "maxPct": 6.4,
+      "maxT": 0.4
+     }
+    },
+    "DFAL": {
+     "L": {
+      "minPct": -8.2,
+      "minT": 4,
+      "maxPct": 6.6,
+      "maxT": 0.2
+     },
+     "R": {
+      "minPct": -8.2,
+      "minT": 4,
+      "maxPct": 6.6,
+      "maxT": 0.2
+     }
+    },
+    "SBAL": {
+     "L": {
+      "minPct": -6.8,
+      "minT": 2.8,
+      "maxPct": 0.1,
+      "maxT": 2
+     },
+     "R": {
+      "minPct": -6.8,
+      "minT": 2.8,
+      "maxPct": 0.1,
+      "maxT": 2
+     }
+    },
+    "DBAL": {
+     "L": {
+      "minPct": -7.3,
+      "minT": 0,
+      "maxPct": 19.5,
+      "maxT": 4.4
+     },
+     "R": {
+      "minPct": -7.3,
+      "minT": 0,
+      "maxPct": 19.5,
+      "maxT": 4.4
+     }
+    },
+    "BFL": {
+     "L": {
+      "minPct": -1.7,
+      "minT": 2.6,
+      "maxPct": 4.4,
+      "maxT": 5
+     },
+     "R": {
+      "minPct": -1.7,
+      "minT": 2.6,
+      "maxPct": 4.4,
+      "maxT": 5
+     }
+    },
+    "FFL": {
+     "L": {
+      "minPct": 1.1,
+      "minT": 2.2,
+      "maxPct": 23,
+      "maxT": 0
+     },
+     "R": {
+      "minPct": 1.1,
+      "minT": 2.2,
+      "maxPct": 23,
+      "maxT": 0
+     }
+    },
+    "IFL": {
+     "L": {
+      "minPct": -2.6,
+      "minT": 2.6,
+      "maxPct": 4.5,
+      "maxT": 5
+     },
+     "R": {
+      "minPct": -2.6,
+      "minT": 2.6,
+      "maxPct": 4.5,
+      "maxT": 5
+     }
+    }
+   }
+  },
+  "seg5": {
+   "from": "highplank",
+   "to": "fold",
+   "duration": 5.6,
+   "lines": {
+    "SBL": {
+     "L": {
+      "minPct": 0.3,
+      "minT": 0.2,
+      "maxPct": 7.9,
+      "maxT": 5.6
+     },
+     "R": {
+      "minPct": 0.4,
+      "minT": 0,
+      "maxPct": 7.9,
+      "maxT": 5.6
+     }
+    },
+    "SFL": {
+     "L": {
+      "minPct": -13.3,
+      "minT": 3.4,
+      "maxPct": -1.3,
+      "maxT": 0
+     },
+     "R": {
+      "minPct": -13.3,
+      "minT": 3.4,
+      "maxPct": -1.3,
+      "maxT": 0
+     }
+    },
+    "LL": {
+     "L": {
+      "minPct": -2.7,
+      "minT": 2,
+      "maxPct": 2.1,
+      "maxT": 4.8
+     },
+     "R": {
+      "minPct": -0.3,
+      "minT": 0.4,
+      "maxPct": 2.1,
+      "maxT": 4.8
+     }
+    },
+    "SPL": {
+     "L": {
+      "minPct": -4.4,
+      "minT": 2.4,
+      "maxPct": 4.7,
+      "maxT": 5.4
+     },
+     "R": {
+      "minPct": -1.5,
+      "minT": 0.8,
+      "maxPct": 4.7,
+      "maxT": 5.4
+     }
+    },
+    "DFL": {
+     "L": {
+      "minPct": -0.9,
+      "minT": 1,
+      "maxPct": 4.1,
+      "maxT": 5
+     },
+     "R": {
+      "minPct": -0.3,
+      "minT": 0.2,
+      "maxPct": 4.1,
+      "maxT": 5
+     }
+    },
+    "SFAL": {
+     "L": {
+      "minPct": -1.9,
+      "minT": 4.6,
+      "maxPct": 7.2,
+      "maxT": 2.2
+     },
+     "R": {
+      "minPct": -1.9,
+      "minT": 4.6,
+      "maxPct": 6.8,
+      "maxT": 3.4
+     }
+    },
+    "DFAL": {
+     "L": {
+      "minPct": -14.1,
+      "minT": 4.2,
+      "maxPct": -2.1,
+      "maxT": 0
+     },
+     "R": {
+      "minPct": -14.1,
+      "minT": 4.2,
+      "maxPct": -2.1,
+      "maxT": 0
+     }
+    },
+    "SBAL": {
+     "L": {
+      "minPct": -7,
+      "minT": 3.4,
+      "maxPct": -1.6,
+      "maxT": 0
+     },
+     "R": {
+      "minPct": -7,
+      "minT": 3.4,
+      "maxPct": -1.6,
+      "maxT": 0
+     }
+    },
+    "DBAL": {
+     "L": {
+      "minPct": 10.2,
+      "minT": 0,
+      "maxPct": 21.6,
+      "maxT": 3.8
+     },
+     "R": {
+      "minPct": 10.2,
+      "minT": 0,
+      "maxPct": 21.6,
+      "maxT": 3.8
+     }
+    },
+    "BFL": {
+     "L": {
+      "minPct": 4.4,
+      "minT": 0,
+      "maxPct": 18.7,
+      "maxT": 2.8
+     },
+     "R": {
+      "minPct": 4.4,
+      "minT": 0,
+      "maxPct": 21,
+      "maxT": 2.6
+     }
+    },
+    "FFL": {
+     "L": {
+      "minPct": -14.8,
+      "minT": 1.8,
+      "maxPct": 3.5,
+      "maxT": 0
+     },
+     "R": {
+      "minPct": -17.5,
+      "minT": 2.6,
+      "maxPct": 3.5,
+      "maxT": 0
+     }
+    },
+    "IFL": {
+     "L": {
+      "minPct": -13.6,
+      "minT": 2.8,
+      "maxPct": 4.5,
+      "maxT": 0
+     },
+     "R": {
+      "minPct": -11.9,
+      "minT": 1.2,
+      "maxPct": 4.5,
+      "maxT": 0
+     }
+    }
+   }
+  }
+ }
+}

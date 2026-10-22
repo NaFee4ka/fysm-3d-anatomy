@@ -1,0 +1,11 @@
+import * as THREE from 'three';
+import fs from 'fs';
+import { createAnatomy } from './anatomy3.js';
+const A = createAnatomy(THREE);
+const data = JSON.parse(fs.readFileSync(process.argv[2] || 'poses.json', 'utf8'));
+const c = A.poseFromData(data.plank); const W = A.placeW(c.local, c.rootQ);
+const f = v => v.toArray().map(x => x.toFixed(3)).join(', ');
+console.log('elbow L', f(W.fore_L.p), 'wrist L', f(W.hand_L.p), '| elbow R', f(W.fore_R.p), 'wrist R', f(W.hand_R.p));
+const hl = A.pt(W, 'toes_L', new THREE.Vector3(0.064, 0.012, 0.188)), hr = A.pt(W, 'toes_R', new THREE.Vector3(-0.064, 0.012, 0.188));
+console.log('hallux L', f(hl), 'R', f(hr), 'gap', hl.distanceTo(hr).toFixed(3), '| heels', f(W.foot_L.p), f(W.foot_R.p));
+const m = A.measure('plank', c.local, W); console.log('elbowUnder', m.elbowUnder.toFixed(3), 'knee', m.knee.toFixed(1), 'line', m.line.toFixed(3));

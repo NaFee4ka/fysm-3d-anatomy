@@ -1,0 +1,35 @@
+import * as THREE from 'three';
+import fs from 'fs';
+import { createAnatomy } from './anatomy3.js';
+import { makePhysics } from './physics_core.mjs';
+import { CUE_TONE } from './physics_params.mjs';
+const A = createAnatomy(THREE);
+const PH = makePhysics(A, { mass: 70 });
+const data = JSON.parse(fs.readFileSync('poses.json', 'utf8'));
+const id = process.argv[2] || 'fold';
+const toneArg = process.argv[3] ? JSON.parse(process.argv[3]) : null;
+const conf = A.poseFromData(data[id]);
+const W = A.placeW(conf.local, conf.rootQ);
+const grips = (id === 'bow' || id === 'fold') ? ['L', 'R'].map(sd => { const l = A.LANDMARKS.find(x => x.tag === 'palm' && x.side === sd); return { hand: 'hand_' + sd, shank: 'shank_' + sd, P: A.pt(W, l.seg, l.p), side: sd }; }) : [];
+const tone = toneArg ? toneArg : (CUE_TONE[id] || {});
+const r = PH.solve({ local: conf.local, rootQ: conf.rootQ }, { tone, grips, iters: 16000 });
+const f1 = v => v.toFixed(1);
+for (const g of r.gripF) {
+  if (g.side !== 'L') continue;
+  const fa = r.W.hand_L.p.clone().sub(r.W.fore_L.p).normalize();
+  const qf = r.W.fore_L.q;
+  const ex = new THREE.Vector3(1,0,0).applyQuaternion(qf), ez = new THREE.Vector3(0,0,1).applyQuaternion(qf);
+  console.log('grip L F', g.F.toArray().map(f1).join(','), '|F|', f1(g.F.length()), 'along forearm(distal +)', f1(g.F.dot(fa)), 'foreX', f1(g.F.dot(ex)), 'foreZ', f1(g.F.dot(ez)));
+  const off = g.P.clone().sub(r.W.hand_L.p);
+  console.log('palm offset from wrist (world)', off.toArray().map(v=>v.toFixed(3)).join(','), 'along', (off.dot(fa)).toFixed(3), 'X', off.dot(ex).toFixed(3), 'Z', off.dot(ez).toFixed(3));
+}
+const show = re => r.dofOut.filter(d => re.test(d.id)).forEach(d => console.log(d.id.padEnd(10), 'ext', f1(d.ext), 'st', f1(d.st), 'mus', f1(d.mus), 'pas', f1(d.pas), 'res', f1(d.res), 'cap+', Math.round(d.capPos), 'cap-', Math.round(d.capNeg)));
+show(/^(wr_L|el_L|gh_L|hip_L|kn_L|an_L|ls_|tl_|sc_L)/);
+const mus = {};
+r.INST.forEach((s, j) => { if (s.side !== 'L') return; const m = (mus[s.unit] ||= { F: 0, Fmax: 0, Fp: 0 }); m.F += r.force[j]; m.Fmax += r.FMAX[j]; m.Fp += r.FP[j]; });
+const top = Object.entries(mus).map(([u, m]) => [u, m.F / m.Fmax, m.F, m.Fp]).sort((a, b) => b[1] - a[1]).slice(0, 28);
+console.log(top.map(([u, a, F, Fp]) => `${u} ${Math.round(a * 100)}% ${Math.round(F)}N${Fp > 5 ? ' p' + Math.round(Fp) : ''}`).join('\n'));
+const pasTop = Object.entries(mus).filter(([, m]) => m.Fp > 5).map(([u, m]) => u + ' ' + Math.round(m.Fp)).join(', ');
+console.log('passive:', pasTop);
+console.log('reserves', Object.entries(r.reserve).filter(([, v]) => Math.abs(v) > 0.3).map(([k, v]) => k + ' ' + f1(v)).join(', '));
+console.log('L5S1 comp', Math.round(r.jr.L5S1.compression), 'shear', Math.round(r.jr.L5S1.shear));

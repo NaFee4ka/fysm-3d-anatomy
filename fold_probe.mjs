@@ -1,0 +1,12 @@
+import * as THREE from 'three';
+import fs from 'fs';
+import { createAnatomy } from './anatomy3.js';
+const A = createAnatomy(THREE);
+const file = process.argv[2] || 'poses.json';
+const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+const c = A.poseFromData(data.fold);
+const W = A.placeW(c.local, c.rootQ);
+const crown = A.pt(W, 'head', A.V(0, 1.755, 0)), chin = A.pt(W, 'head', A.V(0, 1.56, 0.088));
+console.log('crown y', crown.y.toFixed(3), 'chin y', chin.y.toFixed(3), 'knee y', W.shank_L.p.y.toFixed(3), 'hip y', W.thigh_L.p.y.toFixed(3), 'shoulder y', W.hum_L.p.y.toFixed(3), 'elbow y', W.fore_L.p.y.toFixed(3), 'wrist y', W.hand_L.p.y.toFixed(3));
+const up = A.V(0, 1, 0).applyQuaternion(W.thC.q);
+console.log('upper chest axis angle from vertical-up', (Math.acos(up.y) * 180 / Math.PI).toFixed(1));

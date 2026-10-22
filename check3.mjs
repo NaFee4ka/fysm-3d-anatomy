@@ -1,0 +1,11 @@
+import * as THREE from 'three';
+import { createAnatomy } from './anatomy3.js';
+const A = createAnatomy(THREE);
+console.log('segs', A.SEG.length, 'bones', A.BONES.length, 'units', Object.keys(A.UNITS).length, 'landmarks', A.LANDMARKS.length);
+const inst = A.strandInstances();
+const units = new Set(inst.filter(i => i.kind === 'muscle').map(i => i.unit));
+console.log('strands', inst.length, 'muscle units used', units.size, 'missing', [...units].filter(u => !A.UNITS[u]), 'unused', Object.keys(A.UNITS).filter(u => !units.has(u)));
+let ms = 0; for (const x of A.MASS) ms += x.m; console.log('mass sum', ms.toFixed(4));
+for (const P of A.POSES) for (const u of P.active.concat(Object.keys(P.notes))) if (!A.UNITS[u]) console.log('pose', P.id, 'unknown unit', u);
+const W = A.computeWorld(A.STAND.local, A.STAND.rootQ, A.V(0, 0, 0));
+console.log('standing COM', A.comOf(W).toArray().map(v => v.toFixed(3)));
