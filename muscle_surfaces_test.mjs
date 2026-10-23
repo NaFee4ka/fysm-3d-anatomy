@@ -23,10 +23,11 @@ const point = new THREE.Vector3(), target = new THREE.Vector3();
 const partKey = p => p.unit + '_' + p.side;
 const summaries = [];
 
-function packSynthetic() {
+function packSynthetic(splitFaces = false) {
   const inst = instances.find(s => s.unit === 'bicLong' && s.side === 'L');
   const curve = new THREE.CatmullRomCurve3(A.strandPath(restW, inst), false, 'centripetal');
-  const centers = curve.getSpacedPoints(9), positions = [], indices = [];
+  const centers = curve.getSpacedPoints(9);
+  let positions = [], indices = [];
   for (let i = 0; i < 10; i++) for (let j = 0; j < 8; j++) {
     positions.push(centers[i].x + 0.006 * Math.cos(j * Math.PI / 4), centers[i].y, centers[i].z + 0.006 * Math.sin(j * Math.PI / 4));
     if (i < 9) {
@@ -34,16 +35,21 @@ function packSynthetic() {
       indices.push(a, b, a + 8, b, b + 8, a + 8);
     }
   }
+  if (splitFaces) {
+    positions = indices.flatMap(index => positions.slice(index * 3, index * 3 + 3));
+    indices = Array.from({ length: positions.length / 3 }, (_, k) => k);
+  }
+  return { original: positions, data: packArrays(inst.unit, inst.side, positions, indices) };
+}
+
+function packArrays(unit, side, positions, indices) {
   const lo = [0, 1, 2].map(axis => Math.min(...positions.filter((_, k) => k % 3 === axis)));
   const hi = [0, 1, 2].map(axis => Math.max(...positions.filter((_, k) => k % 3 === axis)));
   const q = Uint16Array.from(positions.map((v, k) => Math.round((v - lo[k % 3]) / (hi[k % 3] - lo[k % 3]) * 65535)));
   for (let k = q.length - 1; k >= 3; k--) q[k] = (q[k] - q[k - 3]) & 65535;
   const ind = Uint16Array.from(indices);
   for (let k = ind.length - 1; k > 0; k--) ind[k] = (ind[k] - ind[k - 1]) & 65535;
-  return {
-    original: positions,
-    data: { v: 1, src: 'synthetic test fixture', license: 'test fixture', parts: [{ unit: inst.unit, side: inst.side, source: 'reconstructed', ids: [], n: positions.length / 3, m: indices.length / 3, lo, hi }], data: gzipSync(Buffer.concat([Buffer.from(q.buffer), Buffer.from(ind.buffer)])).toString('base64') },
-  };
+  return { v: 1, src: 'synthetic test fixture', license: 'test fixture', parts: [{ unit, side, source: 'reconstructed', ids: [], n: positions.length / 3, m: indices.length / 3, lo, hi }], data: gzipSync(Buffer.concat([Buffer.from(q.buffer), Buffer.from(ind.buffer)])).toString('base64') };
 }
 
 function inspectPackage(data, actual) {
@@ -123,15 +129,21 @@ async function runSuite(label, data, stride) {
   try {
     assert.deepEqual(surfaces.covered, new Set(manifest.groups.keys()));
     assert.equal(surfaces.pickables.length, surfaces.covered.size, 'one skin per unit/side avoids duplicate rendering');
-    let maxRestError = 0, maxRigidError = 0, skinnedSamples = 0, maxProximalAttachmentError = 0;
-    const proximalSamples = [];
+    let maxRestError = 0, maxRigidError = 0, skinnedSamples = 0, maxProximalAttachmentError = 0, maxSourceSeamGap = 0;
+    const proximalSamples = [], sourceSeams = [];
     for (const mesh of surfaces.pickables) {
       assert(mesh.isSkinnedMesh); assert.equal(mesh.userData.kind, 'muscle');
       const partPositions = manifest.groups.get(partKey(mesh.userData));
       let vertex = 0;
-      for (const positions of partPositions) for (let k = 0; k < positions.length; k += 3, vertex++) {
-        target.fromArray(positions, k); mesh.getVertexPosition(vertex, point);
-        maxRestError = Math.max(maxRestError, target.distanceTo(point));
+      for (const positions of partPositions) {
+        const coincident = new Map();
+        for (let k = 0; k < positions.length; k += 3, vertex++) {
+          target.fromArray(positions, k); mesh.getVertexPosition(vertex, point);
+          maxRestError = Math.max(maxRestError, target.distanceTo(point));
+          const key = positions[k] + '|' + positions[k + 1] + '|' + positions[k + 2];
+          if (coincident.has(key)) sourceSeams.push({ mesh, a: coincident.get(key), b: vertex });
+          else coincident.set(key, vertex);
+        }
       }
       assert.equal(vertex, mesh.geometry.attributes.position.count);
       for (const name of ['position', 'normal', 'skinWeight']) assert(mesh.geometry.attributes[name].array.every(Number.isFinite));
@@ -203,7 +215,12 @@ async function runSuite(label, data, stride) {
         target.copy(A.pt(W, sample.seg, sample.rest));
         const error = point.distanceTo(target);
         maxProximalAttachmentError = Math.max(maxProximalAttachmentError, error);
-        assert(error < 0.04, `${name}: a proximal finger-flexor tendon flew away from its forearm attachment (${error} m)`);
+        assert(error < 0.002, `${name}: a proximal finger-flexor tendon flew away from its forearm attachment (${error} m)`);
+      }
+      for (const seam of sourceSeams) {
+        const gap = seam.mesh.getVertexPosition(seam.a, point).distanceTo(seam.mesh.getVertexPosition(seam.b, target));
+        maxSourceSeamGap = Math.max(maxSourceSeamGap, gap);
+        assert(gap < 2e-6, `${name}/${seam.mesh.userData.unit}: an exact source seam pulled apart (${gap} m)`);
       }
     }
     for (const pose of A.POSES) {
@@ -240,13 +257,45 @@ async function runSuite(label, data, stride) {
       assert.deepEqual(mesh.geometry.attributes.color.array, offColors[m]);
       assert.equal(mesh.material.transparent, false); assert.equal(mesh.material.depthWrite, true);
     }
-    summaries.push({ suite: label, units: manifest.real + manifest.reconstructed, bodyPartsUnits: manifest.real, reconstructedUnits: manifest.reconstructed, meshes: surfaces.pickables.length, triangles: data.parts.reduce((sum, p) => sum + p.m, 0), poseSliderStates: A.POSES.length * 3, cycleFrames: cycleIndices.length, asymmetricFrames, vertexStride: stride, skinnedSamples, maxRestError, maxRigidError, maxProximalAttachmentError });
+    summaries.push({ suite: label, units: manifest.real + manifest.reconstructed, bodyPartsUnits: manifest.real, reconstructedUnits: manifest.reconstructed, meshes: surfaces.pickables.length, triangles: data.parts.reduce((sum, p) => sum + p.m, 0), poseSliderStates: A.POSES.length * 3, cycleFrames: cycleIndices.length, asymmetricFrames, vertexStride: stride, skinnedSamples, maxRestError, maxRigidError, maxProximalAttachmentError, exactSourceSeams: sourceSeams.length, maxSourceSeamGap });
   } finally { surfaces.dispose(); }
 }
 
 const fixture = packSynthetic();
 if (!args.has('--actual')) {
   await runSuite('synthetic', fixture.data, 1);
+  // Identical source geometry with every face split into separate OBJ vertices
+  // must keep its seams closed through the entire pose/round suite.
+  await runSuite('synthetic-split-faces', packSynthetic(true).data, 1);
+  // A wide muscle has more than four anatomical supports. Four GPU influences
+  // per vertex must not mean dropping a spinal or pelvic support for the whole
+  // connected part.
+  const lat = instances.filter(s => s.unit === 'lat' && s.side === 'L');
+  const anchors = lat.map(s => s.pts[0]).concat(lat[0].pts.at(-1));
+  const anchorPoints = anchors.map(p => A.pt(restW, p.seg, p.p));
+  const center = anchorPoints.reduce((sum, p) => sum.add(p), new THREE.Vector3()).divideScalar(anchorPoints.length);
+  const widePositions = [center, ...anchorPoints].flatMap(p => p.toArray()), wideIndices = [];
+  for (let k = 1; k < anchorPoints.length; k++) wideIndices.push(0, k, k + 1);
+  const wide = await createMuscleSurfaces(A, THREE, packArrays('lat', 'L', widePositions, wideIndices));
+  try {
+    const mesh = wide.pickables[0], ids = mesh.geometry.attributes.skinIndex, weights = mesh.geometry.attributes.skinWeight;
+    for (let k = 0; k < anchors.length; k++) {
+      let own = 0;
+      for (let j = 0; j < 4; j++) if (mesh.skeleton.bones[ids.getComponent(k + 1, j)].name === anchors[k].seg) own += weights.getComponent(k + 1, j);
+      assert(own > .99, `wide fan lost its ${anchors[k].seg} attachment to a four-slot part palette`);
+    }
+  } finally { wide.dispose(); }
+  // Exact coincident front/back faces of a thin lamina must retain opposing,
+  // finite normals, rather than being averaged to a dark zero vector.
+  const a = center.clone(), b = center.clone().add(new THREE.Vector3(.01, 0, 0)), c = center.clone().add(new THREE.Vector3(0, .01, 0));
+  const lamina = await createMuscleSurfaces(A, THREE, packArrays('lat', 'L', [a, b, c, a, b, c].flatMap(p => p.toArray()), [0, 1, 2, 3, 5, 4]));
+  try {
+    const normal = lamina.pickables[0].geometry.attributes.normal;
+    for (let k = 0; k < 3; k++) {
+      const front = new THREE.Vector3().fromBufferAttribute(normal, k), back = new THREE.Vector3().fromBufferAttribute(normal, k + 3);
+      assert(front.length() > .99 && back.length() > .99 && front.dot(back) < -.99, 'opposing thin-lamina normals were cancelled');
+    }
+  } finally { lamina.dispose(); }
   const decoded = inspectPackage(fixture.data, false).groups.get('bicLong_L')[0];
   let quantisationError = 0;
   for (let k = 0; k < decoded.length; k++) quantisationError = Math.max(quantisationError, Math.abs(decoded[k] - fixture.original[k]));

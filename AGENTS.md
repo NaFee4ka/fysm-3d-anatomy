@@ -13,6 +13,7 @@
 - Node нужен, только если меняются позы или физика: `npm ci` (three 0.160), затем `node poses_build.mjs` → `poses.json`, `node physics_build.mjs` → `physics.json`. Круг: `./cycle_run.sh` (около 5 минут). Готовые данные поз и круга уже лежат в репозитории, для правки текстов и интерфейса Node не нужен.
 - Скрипты `ui_*_test.py` — Playwright с SwiftShader: открывают `dist/test.html` и делают скриншоты. Если в твоей среде нет браузера, проверку отрисовки пропусти и честно напиши об этом. После смены позы в тесте вызывай `window.__dbg.resetView(false)`: камера подгоняется плавно и в медленном рендере не успевает.
 - Мягкие ткани: `node muscle_paths_test.mjs`, `node connective_surface_check.mjs`, `node muscle_surfaces_test.mjs --actual --all-vertices`; целостность атласа — `python3 muscles/check.py` (нужен NumPy). Браузерная проверка — `python3 ui_soft_tissues_test.py --out /tmp/fysm-ui --browser /path/to/chromium`; особенности HTTPS-прокси описаны в начале скрипта.
+- Подготовка мышечного атласа: `python3 muscles/detail_test.py` проверяет точную сварку исходных швов и согласованное деление рёбер (NumPy, trimesh); `node muscle_surfaces_test.mjs --synthetic` — раскрытие швов, широкие веера и нормали тонких оболочек без исходных OBJ. Источник, параметры плотности и воспроизводимая пересборка — в `muscles/README.md`.
 
 ## Что в каких файлах
 

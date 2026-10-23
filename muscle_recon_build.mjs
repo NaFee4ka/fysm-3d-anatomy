@@ -27,6 +27,35 @@ function pathSampler(points) {
   };
 }
 
+function fanSamplers(insts, matchGuides) {
+  const paths = insts.map(inst => A.strandPath(W, inst));
+  if (!matchGuides) return paths.map(pathSampler);
+  const sections = insts.map((inst, i) => {
+    const path = paths[i], anchors = inst.pts.map(p => A.pt(W, p.seg, p.p));
+    const indices = []; let from = 0;
+    for (const anchor of anchors) {
+      let found = -1;
+      for (let j = from; j < path.length; j++) if (path[j].distanceToSquared(anchor) < 1e-18) { found = j; break; }
+      if (found < 0) throw Error(`${inst.unit}: missing original guide in the routed path`);
+      indices.push(found); from = found;
+    }
+    return indices.slice(1).map((to, k) => path.slice(indices[k], to + 1));
+  });
+  const stations = [0];
+  for (let k = 0; k < sections[0].length; k++) {
+    const mean = sections.reduce((s, paths) => s + A.pathLength(paths[k]), 0) / sections.length;
+    stations.push(stations.at(-1) + mean);
+  }
+  const total = stations.at(-1); for (let k = 1; k < stations.length; k++) stations[k] /= total;
+  return sections.map(section => {
+    const samplers = section.map(pathSampler);
+    return u => {
+      let k = 0; while (k < samplers.length - 1 && u > stations[k + 1]) k++;
+      return samplers[k]((u - stations[k]) / (stations[k + 1] - stations[k] || 1));
+    };
+  });
+}
+
 function across(samples, x) {
   // Catmull-Rom interpolation through the anatomical fan paths retains a wide
   // origin, convergent insertion, and intervening wrapping guides.
@@ -40,10 +69,15 @@ function across(samples, x) {
 }
 
 function profile(u, inst) {
-  const belly = inst.belly || 0.5;
-  const t = u < belly ? 0.5 * u / belly : 0.5 + 0.5 * (u - belly) / (1 - belly);
-  let p = 0.055 + 0.945 * Math.pow(Math.max(0, Math.sin(Math.PI * t)), 0.65);
-  for (const d of inst.dips || []) p *= 1 - 0.50 * Math.exp(-Math.pow((u - d) / 0.026, 2));
+  const ease = t => { const x = clamp(t, 0, 1); return x * x * (3 - 2 * x); };
+  // Broad trunk muscles do not have the long pinched cigar profile of a limb
+  // muscle. Keep a broad belly and ease into a thin aponeurosis at either end.
+  const inLength = inst.unit === 'rectAbd' ? 0.16 : 0.22;
+  const outLength = inst.unit === 'lat' ? 0.24 : 0.17;
+  let p = 0.11 + 0.89 * ease(u / inLength) * ease((1 - u) / outLength);
+  // The rectus intersections are shallow transverse transitions, not deep cuts
+  // that divide a strip into a stack of rigid rectangular blocks.
+  for (const d of inst.dips || []) p *= 1 - 0.14 * Math.exp(-Math.pow((u - d) / 0.040, 2));
   return p;
 }
 
@@ -63,39 +97,49 @@ function signedVolume(positions, indices) {
 }
 
 function solidSheet(rows, columns, centers, thickness) {
-  const positions = [], indices = [], size = (rows + 1) * (columns + 1);
+  const positions = [], indices = [], around = Math.max(12, columns * 2);
   const normals = [];
   const at = (i, j) => centers[clamp(i, 0, rows)][clamp(j, 0, columns)];
-  // Continuous surface normals give the two anatomical laminae of a closed
-  // muscle volume, rather than one tube for every numerical fascicle.
-  for (let i = 0; i <= rows; i++) for (let j = 0; j <= columns; j++) {
-    const du = at(i + 1, j).clone().sub(at(i - 1, j));
-    const dv = at(i, j + 1).clone().sub(at(i, j - 1));
-    let n = du.clone().cross(dv);
-    if (n.lengthSq() < 1e-16) n = normals.at(-1)?.clone() || V(0, 0, 1);
-    n.normalize(); normals.push(n);
+  for (let i = 0; i <= rows; i++) {
+    const row = [];
+    for (let j = 0; j <= columns; j++) {
+      const du = at(i + 1, j).clone().sub(at(i - 1, j));
+      const dv = at(i, j + 1).clone().sub(at(i, j - 1));
+      let n = du.clone().cross(dv);
+      if (n.lengthSq() < 1e-16) n = row.at(-1)?.clone() || normals.at(-1)?.[j].clone() || V(0, 0, 1);
+      row.push(n.normalize());
+    }
+    normals.push(row);
   }
-  for (const sign of [1, -1]) for (let i = 0; i <= rows; i++) for (let j = 0; j <= columns; j++) {
-    const k = i * (columns + 1) + j;
-    const p = centers[i][j].clone().addScaledVector(normals[k], sign * thickness(i / rows, j / columns));
+  // Follow the complete fan sheet across each section. Only its thickness uses
+  // an elliptical rim: v=(1-cos(theta))/2 and h*sin(theta). Unlike two stitched
+  // flat laminae this has no vertical sidewalls, cut edges, or UV seam vertices.
+  for (let i = 0; i <= rows; i++) for (let j = 0; j < around; j++) {
+    const angle = j / around * Math.PI * 2, v = (1 - Math.cos(angle)) * 0.5;
+    const f = v * columns, a = Math.min(columns - 1, Math.floor(f)), t = f - a;
+    const normal = normals[i][a].clone().lerp(normals[i][a + 1], t).normalize();
+    const p = across(centers[i], v).addScaledVector(normal, thickness(i / rows, v) * Math.sin(angle));
     positions.push(p.x, p.y, p.z);
   }
-  const top = [], boundaries = new Map();
-  for (let i = 0; i < rows; i++) for (let j = 0; j < columns; j++) {
-    const a = i * (columns + 1) + j, b = a + 1, c = a + columns + 1, d = c + 1;
-    top.push(a, c, b, b, c, d);
+  for (let i = 0; i < rows; i++) for (let j = 0; j < around; j++) {
+    const a = i * around + j, b = i * around + (j + 1) % around;
+    const c = a + around, d = b + around;
+    indices.push(a, c, b, b, c, d);
   }
-  for (let i = 0; i < top.length; i += 3) {
-    const a = top[i], b = top[i + 1], c = top[i + 2];
-    indices.push(a, b, c, a + size, c + size, b + size);
-    for (const [x, y] of [[a, b], [b, c], [c, a]]) {
-      const key = x < y ? `${x}/${y}` : `${y}/${x}`;
-      if (boundaries.has(key)) boundaries.delete(key); else boundaries.set(key, [x, y]);
+  // Close a curved attachment section with narrow upper/lower strips. A fan
+  // through the mean of a crescent section would bridge across the torso and
+  // create inverted triangles even if the total signed volume stayed positive.
+  for (const end of [0, rows]) {
+    const offset = end * around;
+    const face = (a, b, c) => { if (!end) indices.push(a, b, c); else indices.push(a, c, b); };
+    for (let j = 0; j < around / 2; j++) {
+      const a = offset + j, b = offset + j + 1;
+      const c = offset + (around - j) % around, d = offset + (around - j - 1) % around;
+      if (a === c) face(a, b, d);
+      else if (b === d) face(a, b, c);
+      else { face(a, b, c); face(b, d, c); }
     }
   }
-  // Stitch every boundary to the opposite lamina: watertight volume including
-  // the thin tendon/aponeurosis rims, without an open surface or a triangle fan.
-  for (const [a, b] of boundaries.values()) indices.push(b, a, a + size, b, a + size, b + size);
   let volume = signedVolume(positions, indices);
   if (volume < 0) {
     for (let i = 0; i < indices.length; i += 3) [indices[i + 1], indices[i + 2]] = [indices[i + 2], indices[i + 1]];
@@ -104,37 +148,63 @@ function solidSheet(rows, columns, centers, thickness) {
   return { positions, indices, volume };
 }
 
+function conformAcrossWrap(p, samples, v, wraps) {
+  const f = v * (samples.length - 1), a = Math.min(samples.length - 2, Math.floor(f)), t = f - a;
+  for (const wrap of wraps) {
+    // Only the torso's broad wrapping surfaces apply to the inter-fascicle
+    // sheet. Joint-sized obstacles remain controlled by the original paths.
+    if (wrap.r.x < 0.1 || wrap.r.y < 0.12) continue;
+    const center = A.pt(W, wrap.seg, wrap.c);
+    const qa = samples[a].clone().sub(center).divide(wrap.r);
+    const qb = samples[a + 1].clone().sub(center).divide(wrap.r);
+    const ra = qa.length(), rb = qb.length();
+    if (Math.min(ra, rb) < 0.92 || Math.max(ra, rb) > 1.15) continue;
+    const q = p.clone().sub(center).divide(wrap.r), r = q.length();
+    const wanted = ra + (rb - ra) * t;
+    // Radial interpolation avoids a chord through the belly wall. It preserves
+    // the source path radii (including their small geometric approximation),
+    // rather than claiming a newly measured contact surface.
+    if (r > 1e-8 && r < wanted) p.copy(q.multiplyScalar(wanted / r).multiply(wrap.r).add(center));
+  }
+  return p;
+}
+
 function fanVolume(unit, side, insts) {
-  const rows = unit === 'lat' ? 32 : 28, columns = unit === 'lat' ? 12 : 10;
-  const samplers = insts.map(inst => pathSampler(A.strandPath(W, inst)));
+  const rows = unit === 'rectAbd' ? 44 : unit === 'lat' ? 36 : 28;
+  const columns = unit === 'lat' ? 14 : 12;
+  // The latissimus paths have very different lengths before their common
+  // axillary guides. A single arc fraction joins unrelated anatomical stations
+  // and folds the broad sheet. Match each original guide interval instead.
+  const samplers = fanSamplers(insts, unit === 'lat');
   const centers = [];
   const meanRadius = insts.reduce((s, x) => s + x.r, 0) / insts.length;
   // These are display thickness estimates, documented as such; they are not
   // measured PCSA values and do not enter the force solver or its Fmax weights.
-  const halfThickness = { lat: 0.0035, ql: 0.009, rectAbd: 0.006, intObl: 0.0035, transAbd: 0.0025 }[unit];
+  const halfThickness = { lat: 0.0035, ql: 0.009, rectAbd: 0.0075, intObl: 0.0035, transAbd: 0.0025 }[unit];
   for (let i = 0; i <= rows; i++) {
     const u = i / rows, samples = samplers.map(f => f(u));
     const width = samples.at(-1).clone().sub(samples[0]).normalize();
-    const extension = meanRadius * (unit === 'ql' ? 0.9 : 0.42) * Math.pow(Math.sin(Math.PI * u), 0.7);
+    const spread = unit === 'ql' ? 0.9 : unit === 'rectAbd' ? 0.75 : unit === 'lat' ? 0.7 : 0.42;
+    const extension = meanRadius * spread * Math.pow(Math.sin(Math.PI * u), 0.7);
     const row = [];
     for (let j = 0; j <= columns; j++) {
       const v = j / columns;
-      row.push(across(samples, v).addScaledVector(width, (2 * v - 1) * extension));
+      const p = across(samples, v);
+      if (i && i < rows) conformAcrossWrap(p, samples, v, insts[0].wraps);
+      row.push(p.addScaledVector(width, (2 * v - 1) * extension));
     }
     centers.push(row);
   }
-  const mesh = solidSheet(rows, columns, centers, (u, v) => {
-    const edge = 0.12 + 0.88 * Math.pow(Math.sin(Math.PI * v), 0.6);
-    return Math.max(0.00018, halfThickness * profile(u, insts[0]) * edge);
-  });
+  const mesh = solidSheet(rows, columns, centers, u => halfThickness * profile(u, insts[0]));
   return {
     unit, side, source: 'reconstructed', ids: [], ...mesh,
-    method: 'Closed two-lamina surface interpolated through the existing anatomical fan paths, with a tapered belly, broad attachment rims, and thin tendinous ends.',
+    method: 'Closed rounded envelope across the existing anatomical fan paths, with torso-conforming inter-fascicle sections, a broad belly, and smooth aponeurotic transitions.',
     limitations: [
       'Model-derived reconstruction; this part is not a segmented BodyParts3D mesh.',
       'Attachment paths and wrapping guides are inherited from the existing rig; their anatomical limitations remain.',
       'Thickness and edge spread are display estimates, not measured tissue geometry, PCSA, or a tissue deformation law.',
-      ...(unit === 'rectAbd' ? ['Transverse grooves follow the existing modeled tendinous intersections.'] : []),
+      'The right surface mirrors the left because the underlying rest rig and reconstructed attachment paths are symmetric.',
+      ...(unit === 'rectAbd' ? ['Shallow transverse transitions follow the existing modeled tendinous intersections.'] : []),
     ],
   };
 }
@@ -161,8 +231,8 @@ function multifidusVolume(side, insts) {
         }
         centers.push(row);
       }
-      const mesh = solidSheet(rows, columns, centers, (u, v) =>
-        Math.max(0.00018, inst.r * 0.52 * (0.08 + 0.92 * Math.sin(Math.PI * u)) * (0.15 + 0.85 * Math.sin(Math.PI * v))));
+      const mesh = solidSheet(rows, columns, centers, u =>
+        inst.r * 0.52 * (0.08 + 0.92 * Math.sin(Math.PI * u)));
       const offset = positions.length / 3;
       positions.push(...mesh.positions); indices.push(...mesh.indices.map(i => i + offset));
       volume += mesh.volume; slips++;
@@ -182,6 +252,10 @@ function multifidusVolume(side, insts) {
 function validate(part) {
   if (!part.positions.every(Number.isFinite) || part.positions.length % 3) throw Error(`${part.unit}: invalid vertices`);
   if (!(part.volume > 1e-10)) throw Error(`${part.unit}: non-positive volume`);
+  const measuredVolume = signedVolume(part.positions, part.indices);
+  if (Math.abs(measuredVolume - part.volume) > Math.max(1e-12, part.volume * 1e-8)) {
+    throw Error(`${part.unit}: inconsistent surface orientation or enclosed volume`);
+  }
   const edges = new Map(), vertexCount = part.positions.length / 3;
   let minArea = Infinity;
   for (let i = 0; i < part.indices.length; i += 3) {
@@ -204,14 +278,29 @@ function validate(part) {
   reports.push({ unit: part.unit, side: part.side, vertices: vertexCount, triangles: part.indices.length / 3, volumeMl: +(part.volume * 1e6).toFixed(2), minArea });
 }
 
-for (const unit of targetUnits) for (const side of ['L', 'R']) {
-  const insts = all.filter(s => s.unit === unit && s.side === side);
-  if (!insts.length) throw Error(`No paths for ${unit}/${side}`);
-  const part = unit === 'multifidus' ? multifidusVolume(side, insts) : fanVolume(unit, side, insts);
-  validate(part);
-  // Keep adequate precision for the following uint16 atlas quantization.
-  part.positions = part.positions.map(v => +v.toFixed(7));
-  parts.push(part);
+for (const unit of targetUnits) {
+  const left = all.filter(s => s.unit === unit && s.side === 'L');
+  const right = all.filter(s => s.unit === unit && s.side === 'R');
+  if (!left.length || left.length !== right.length) throw Error(`Missing or asymmetric path sets for ${unit}`);
+  for (let i = 0; i < left.length; i++) {
+    const l = A.strandPath(W, left[i]), r = A.strandPath(W, right[i]);
+    if (l.length !== r.length || l.some((p, j) => Math.hypot(p.x + r[j].x, p.y - r[j].y, p.z - r[j].z) > 1e-12)) {
+      throw Error(`Cannot mirror an asymmetric reconstructed path: ${unit}`);
+    }
+  }
+  const l = unit === 'multifidus' ? multifidusVolume('L', left) : fanVolume(unit, 'L', left);
+  validate(l);
+  // Preserve an identical triangulation in the mirror. Re-triangulating a
+  // curved nonplanar quad along the opposite diagonal changes its displayed
+  // shape and enclosed volume despite sharing the same reflected vertices.
+  const r = { ...l, side: 'R', positions: l.positions.map((v, i) => i % 3 ? v : -v), indices: l.indices.slice() };
+  for (let i = 0; i < r.indices.length; i += 3) [r.indices[i + 1], r.indices[i + 2]] = [r.indices[i + 2], r.indices[i + 1]];
+  validate(r);
+  for (const part of [l, r]) {
+    // Keep adequate precision for the following uint16 atlas quantization.
+    part.positions = part.positions.map(v => +v.toFixed(7));
+    parts.push(part);
+  }
 }
 const outfile = process.argv[2] || '/tmp/fysm-bp3d/reconstructed-muscles.json';
 mkdirSync(dirname(outfile), { recursive: true });

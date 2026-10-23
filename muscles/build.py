@@ -10,6 +10,7 @@ import argparse
 import base64
 import contextlib
 import gzip
+import hashlib
 import io
 import json
 import os
@@ -25,6 +26,7 @@ from scipy.sparse import coo_matrix
 from scipy.sparse.csgraph import connected_components
 import fast_simplification
 import trimesh
+from detail import TORSO_UNITS, detail_target, weld_positions, refine_edges, sample_source, shape_error
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -142,12 +144,56 @@ def make_warp(registrations):
     return warp
 
 
+def make_scm_warp(registrations, side):
+    """Map the anterior neck surface through its actual attachment bones.
+
+    Independent clavicle and posterior cervical fits disagree when extended
+    into the anterior neck. SCM attaches to the skull, clavicle and sternum;
+    a continuous blend of those supports avoids pulling it towards vertebrae
+    that happen to be geometrically close but are not its attachments.
+    """
+    selected = [r for r in registrations if r['seg'] == 'head'
+                or r['seg'] == 'clav_' + side or r['name'] == 'Рукоятка грудины']
+    if len(selected) != 3:
+        raise ValueError('SCM attachment registration requires skull, clavicle and manubrium')
+    trees = [cKDTree(r['original']) for r in selected]
+    matrices = np.asarray([r['matrix'] for r in selected])
+
+    def warp(vertices):
+        distance = np.stack([tree.query(vertices, workers=1)[0] for tree in trees], axis=1)
+        weights = 1 / (distance ** 2 + .025 ** 2) ** 1.5
+        weights /= weights.sum(1, keepdims=True)
+        moved = np.einsum('ni,kij->nkj', np.c_[vertices, np.ones(len(vertices))], matrices)
+        return (moved * weights[:, :, None]).sum(1)
+
+    return warp, dict(method='attachment-bones', structures=['cranium', 'ipsilateral clavicle', 'manubrium'],
+                      sourceBoneIds=[fid for r in selected for fid in r['ids']],
+                      reason='SCM is an anterior superficial muscle; posterior cervical proximity is not an attachment')
+
+
 def simplify(v, f, target):
     if len(f) > target:
         v, f = fast_simplification.simplify(
             v.astype(np.float32), f.astype(np.int32),
             target_reduction=1 - target / len(f))
     return np.asarray(v), np.asarray(f)
+
+
+def unpack_parts(path):
+    data = json.loads(path.read_text())
+    raw = gzip.decompress(base64.b64decode(data['data']))
+    parts, offset = {}, 0
+    for meta in data['parts']:
+        q = np.frombuffer(raw, '<u2', meta['n'] * 3, offset).reshape(-1, 3)
+        offset += meta['n'] * 6
+        q = np.cumsum(q.astype(np.uint64), axis=0) & 65535
+        vertices = np.asarray(meta['lo']) + q / 65535 * (np.asarray(meta['hi']) - meta['lo'])
+        d = np.frombuffer(raw, '<u2', meta['m'] * 3, offset)
+        offset += meta['m'] * 6
+        faces = (np.cumsum(d.astype(np.uint64)) & 65535).reshape(-1, 3).astype(np.int32)
+        if meta['source'] == 'bp3d':
+            parts[(meta['unit'], meta['side'], meta['ids'][0])] = (vertices, faces)
+    return parts
 
 
 def edge_metrics(original, placed, faces):
@@ -235,6 +281,34 @@ def pack(parts, out):
     return data
 
 
+def complete_report(report, source, baseline=None, reconstructed=None, torso_detail=False, triangles=800):
+    """Record reproducible inputs and the aggregate sampled source audit."""
+    def checksum(path):
+        h = hashlib.sha256()
+        with path.open('rb') as stream:
+            for block in iter(lambda: stream.read(1024 * 1024), b''):
+                h.update(block)
+        return h.hexdigest()
+
+    report['buildParameters'] = dict(baseTriangles=triangles, torsoDetail=torso_detail,
+                                    torsoEdgeLimitMm=25 if torso_detail else None,
+                                    baselineSha256=checksum(baseline) if baseline else None,
+                                    reconstructionSha256=checksum(reconstructed) if reconstructed else None)
+    report['sourceArtifacts'] = {p.name: dict(bytes=p.stat().st_size, sha256=checksum(p))
+                                  for p in sorted(source.iterdir())
+                                  if p.name in {'partof_element_parts.txt', 'isa_element_parts.txt',
+                                                'partof_BP3D_4.0_obj_99.zip', 'isa_BP3D_4.0_obj_99.zip'}}
+    errors = [p['sourceDeviation'] for p in report['torsoDetail'] if 'sourceDeviation' in p]
+    if errors:
+        report['sourceDeviationSummary'] = dict(
+            reference='768 deterministic area-weighted samples per registered raw-source part; SCM uses its attachment-bone fit',
+            parts=len(errors),
+            meanOfPartP95BeforeMm=float(np.mean([e['before']['p95Mm'] for e in errors if 'before' in e])),
+            meanOfPartP95AfterMm=float(np.mean([e['after']['p95Mm'] for e in errors])),
+            allPartP95Improved=all(e['after']['p95Mm'] <= e['before']['p95Mm'] for e in errors if 'before' in e))
+    return report
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--source', type=Path, required=True)
@@ -242,13 +316,17 @@ def main():
     parser.add_argument('--out', type=Path, default=ROOT / 'muscles/muscles_bp3d.json')
     parser.add_argument('--triangles', type=int, default=800, help='target triangles per source piece (open surfaces may retain more)')
     parser.add_argument('--partial', action='store_true', help='preview only: skip missing source files and report partial coverage')
+    parser.add_argument('--torso-detail', action='store_true', help='area/length-adaptive torso LOD and conforming 25 mm edge refinement')
+    parser.add_argument('--baseline', type=Path, help='previous packed atlas, for sampled raw-source shape comparison on the torso')
     args = parser.parse_args()
     os.chdir(ROOT)
     source = args.source.resolve()
     mapping = json.loads((ROOT / 'muscles/source-map.json').read_text())
+    baseline = unpack_parts(args.baseline) if args.baseline else {}
     registration, load = bone_registration(source)
     print('Recovered', len(registration), 'bone fits', flush=True)
     warp = make_warp(registration)
+    scm_warp = {side: make_scm_warp(registration, side) for side in ('L', 'R')}
     parts, seen = [], set()
     coverage = {}
     for unit, u in mapping['units'].items():
@@ -274,9 +352,24 @@ def main():
                     raise ValueError('Duplicate muscle source volume: ' + repr(key))
                 seen.add(key)
                 v, f = load(fid)
-                v, f = simplify(v, f, args.triangles)
-                original = v
-                v = warp(original)
+                raw_count = len(v)
+                fit, policy = scm_warp[side] if unit == 'scm' else (warp, None)
+                watertight_before = bool(trimesh.Trimesh(vertices=v, faces=f, process=False).is_watertight)
+                v, f, merged = weld_positions(v, f)
+                topology = dict(rawVertices=raw_count, mergedExactVertices=merged,
+                                trianglesBefore=len(f), trianglesAfter=len(f),
+                                watertightBefore=watertight_before,
+                                watertightAfter=bool(trimesh.Trimesh(vertices=v, faces=f, process=False).is_watertight))
+                is_detailed = args.torso_detail and unit in TORSO_UNITS
+                reference = fit(sample_source(v, f)) if is_detailed and baseline else None
+                target = detail_target(v, f, args.triangles) if is_detailed else args.triangles
+                original, f = simplify(v, f, target)
+                if is_detailed:
+                    original, f, v, detail = refine_edges(original, f, fit)
+                    detail['lodTarget'] = target
+                else:
+                    v = fit(original)
+                    detail = None
                 v, f, kept_vertices, cleanup = clean_tiny_islands(v, f)
                 original = original[kept_vertices]
                 if mirrored:
@@ -288,7 +381,19 @@ def main():
                 if np.median(v[:, 0]) * (1 if side == 'L' else -1) < -.01:
                     raise ValueError(f'{unit}/{side}/{fid}: source geometry lies on the opposite side')
                 part = dict(unit=unit, side=side, ids=[fid], source='bp3d',
-                            mirrored=mirrored, positions=v, indices=f, _original=original)
+                            mirrored=mirrored, positions=v, indices=f, _original=original,
+                            topologyCleanup=topology)
+                if detail:
+                    part['detail'] = detail
+                if policy:
+                    part['registrationPolicy'] = policy
+                if reference is not None:
+                    # Mirrored longusColli is not in the detailed torso set;
+                    # all audited parts use their original source side.
+                    old = baseline.get((unit, side, fid))
+                    part['sourceDeviation'] = dict(after=shape_error(reference, v, f))
+                    if old:
+                        part['sourceDeviation']['before'] = shape_error(reference, *old)
                 if cleanup:
                     part['sourceCleanup'] = cleanup
                 if fid in u.get('sideAssignmentsFromGeometry', {}):
@@ -325,6 +430,14 @@ def main():
                          for p in packed['parts'] if p.get('registrationMetrics', {}).get('stretchedOver4')]}
     report['sourceCleanup'] = [{k: p[k] for k in ('unit', 'side', 'ids', 'sourceCleanup')}
                                for p in packed['parts'] if p.get('sourceCleanup')]
+    report['topologyCleanup'] = {
+        'parts': sum('topologyCleanup' in p for p in packed['parts']),
+        'mergedExactVertices': sum(p.get('topologyCleanup', {}).get('mergedExactVertices', 0) for p in packed['parts']),
+        'watertightBefore': sum(p.get('topologyCleanup', {}).get('watertightBefore', False) for p in packed['parts']),
+        'watertightAfter': sum(p.get('topologyCleanup', {}).get('watertightAfter', False) for p in packed['parts'])}
+    report['torsoDetail'] = [{k: p[k] for k in ('unit', 'side', 'ids', 'detail', 'sourceDeviation') if k in p}
+                              for p in packed['parts'] if 'detail' in p]
+    complete_report(report, source, args.baseline, args.reconstructed, args.torso_detail, args.triangles)
     (args.out.parent / 'coverage.json').write_text(json.dumps(report, ensure_ascii=False, indent=2))
     print('Packed', report['parts'], 'parts,', report['triangles'], 'triangles;', args.out.stat().st_size, 'bytes')
 
