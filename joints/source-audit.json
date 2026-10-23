@@ -1,0 +1,1032 @@
+{
+  "schemaVersion": 1,
+  "auditedOn": "2026-10-23",
+  "purpose": "Source availability audit for anatomical joint surfaces and ligaments; this file contains no tissue geometry and makes no claim that audited available meshes are included in a runtime pack.",
+  "scope": {
+    "release": "BodyParts3D 4.0",
+    "sourceVariant": "partof and isa, OBJ quality 99",
+    "regions": [
+      "shoulder",
+      "elbow",
+      "wrist",
+      "hip",
+      "knee",
+      "ankle",
+      "spine"
+    ],
+    "absenceMeaning": "No appropriately named concept-to-element mapping was found in both audited metadata tables. This is scoped to these artifacts, not a claim about other atlas releases or physical absence of the tissue.",
+    "currentLimbPack": "Major limb articular surfaces require explicit reconstructed provenance; genuine intervertebral disk meshes are audited here but are not included in this limb pack."
+  },
+  "source": {
+    "name": "BodyParts3D",
+    "version": "4.0",
+    "provider": "The Database Center for Life Science (DBCLS)",
+    "attribution": "BodyParts3D 4.0, © The Database Center for Life Science (DBCLS)",
+    "downloadPage": "https://dbarchive.biosciencedbc.jp/en/bodyparts3d/download.html",
+    "artifactBaseUrl": "https://dbarchive.biosciencedbc.jp/data/bodyparts3d/LATEST/",
+    "license": {
+      "name": "Creative Commons Attribution 4.0 International",
+      "spdx": "CC-BY-4.0",
+      "url": "https://creativecommons.org/licenses/by/4.0/"
+    },
+    "artifacts": [
+      {
+        "file": "partof_element_parts.txt",
+        "url": "https://dbarchive.biosciencedbc.jp/data/bodyparts3d/LATEST/partof_element_parts.txt",
+        "bytes": 651179,
+        "sha256": "3f5f6df1028eb122b30de77c711597b6bb8e5541658e5985859fd228adbf88ea"
+      },
+      {
+        "file": "isa_element_parts.txt",
+        "url": "https://dbarchive.biosciencedbc.jp/data/bodyparts3d/LATEST/isa_element_parts.txt",
+        "bytes": 1142159,
+        "sha256": "a3de74423f943b0d724ae8f59b3a817f87c423a544f8db98113b1980817cbeaf"
+      },
+      {
+        "file": "partof_BP3D_4.0_obj_99.zip",
+        "url": "https://dbarchive.biosciencedbc.jp/data/bodyparts3d/LATEST/partof_BP3D_4.0_obj_99.zip",
+        "bytes": 64888505,
+        "sha256": "9fbc713fffeee924a5a657d9813d84d7eb957bded63adb854931dd5e3eb61c97",
+        "objEntryCount": 1258
+      },
+      {
+        "file": "isa_BP3D_4.0_obj_99.zip",
+        "url": "https://dbarchive.biosciencedbc.jp/data/bodyparts3d/LATEST/isa_BP3D_4.0_obj_99.zip",
+        "bytes": 142903898,
+        "sha256": "40665852c49f218326590e204db91064a1ecfc3c6f8cbd7bbbcaac62c7cd409e",
+        "objEntryCount": 2234
+      }
+    ]
+  },
+  "method": {
+    "metadataColumns": [
+      "concept id",
+      "name",
+      "element file id"
+    ],
+    "availabilityChecks": [
+      "Exact concept ID/name/element ID triples checked against both complete TSV tables.",
+      "Every reported FJ ID checked for an actual OBJ entry in both ZIP directory lists.",
+      "SHA256 and byte counts rechecked against the local official-download manifest.",
+      "All distinct names containing ligament, cartilage or disk inspected to distinguish broad ancestors and unrelated structures."
+    ],
+    "distinctConceptNameCounts": {
+      "ligament": 38,
+      "cartilage": 44,
+      "disk": 27
+    },
+    "nameQueryResults": [
+      {
+        "caseInsensitiveNameSubstring": "articular cartilage",
+        "distinctConceptNameCount": 0
+      },
+      {
+        "caseInsensitiveNameSubstring": "menisc",
+        "distinctConceptNameCount": 0
+      },
+      {
+        "caseInsensitiveNameSubstring": "labrum",
+        "distinctConceptNameCount": 0
+      },
+      {
+        "caseInsensitiveNameSubstring": "labral",
+        "distinctConceptNameCount": 0
+      },
+      {
+        "caseInsensitiveNameSubstring": "cruciate",
+        "distinctConceptNameCount": 0
+      },
+      {
+        "caseInsensitiveNameSubstring": "collateral ligament",
+        "distinctConceptNameCount": 0
+      },
+      {
+        "caseInsensitiveNameSubstring": "joint capsule",
+        "distinctConceptNameCount": 0
+      },
+      {
+        "caseInsensitiveNameSubstring": "ligamentum flavum",
+        "distinctConceptNameCount": 0
+      },
+      {
+        "caseInsensitiveNameSubstring": "glenohumeral ligament",
+        "distinctConceptNameCount": 0
+      },
+      {
+        "caseInsensitiveNameSubstring": "coracohumeral ligament",
+        "distinctConceptNameCount": 0
+      },
+      {
+        "caseInsensitiveNameSubstring": "annular ligament",
+        "distinctConceptNameCount": 0
+      },
+      {
+        "caseInsensitiveNameSubstring": "iliofemoral ligament",
+        "distinctConceptNameCount": 0
+      },
+      {
+        "caseInsensitiveNameSubstring": "pubofemoral ligament",
+        "distinctConceptNameCount": 0
+      },
+      {
+        "caseInsensitiveNameSubstring": "ischiofemoral ligament",
+        "distinctConceptNameCount": 0
+      },
+      {
+        "caseInsensitiveNameSubstring": "talofibular ligament",
+        "distinctConceptNameCount": 0
+      },
+      {
+        "caseInsensitiveNameSubstring": "calcaneofibular ligament",
+        "distinctConceptNameCount": 0
+      },
+      {
+        "caseInsensitiveNameSubstring": "deltoid ligament",
+        "distinctConceptNameCount": 0
+      },
+      {
+        "caseInsensitiveNameSubstring": "triangular fibrocartilage",
+        "distinctConceptNameCount": 0
+      },
+      {
+        "caseInsensitiveNameSubstring": "anterior longitudinal ligament",
+        "distinctConceptNameCount": 0
+      },
+      {
+        "caseInsensitiveNameSubstring": "posterior longitudinal ligament",
+        "distinctConceptNameCount": 0
+      },
+      {
+        "caseInsensitiveNameSubstring": "annulus",
+        "distinctConceptNameCount": 0
+      },
+      {
+        "caseInsensitiveNameSubstring": "anulus",
+        "distinctConceptNameCount": 0
+      },
+      {
+        "caseInsensitiveNameSubstring": "nucleus pulposus",
+        "distinctConceptNameCount": 0
+      },
+      {
+        "caseInsensitiveNameSubstring": "bursa",
+        "distinctConceptNameCount": 0
+      },
+      {
+        "caseInsensitiveNameSubstring": "synovial",
+        "distinctConceptNameCount": 0
+      },
+      {
+        "caseInsensitiveNameSubstring": "fat pad",
+        "distinctConceptNameCount": 0
+      },
+      {
+        "caseInsensitiveNameSubstring": "fibrocartilage",
+        "distinctConceptNameCount": 0
+      },
+      {
+        "caseInsensitiveNameSubstring": "intervertebral disc",
+        "distinctConceptNameCount": 0
+      },
+      {
+        "caseInsensitiveNameSubstring": "intervertebral disk",
+        "distinctConceptNameCount": 26
+      }
+    ],
+    "rawObjArchivesCommitted": false
+  },
+  "availableLimbAdjacentTissues": [
+    {
+      "structure": "long plantar ligament",
+      "region": "foot",
+      "genericConcept": {
+        "conceptId": "FMA44248",
+        "name": "long plantar ligament"
+      },
+      "parts": [
+        {
+          "side": "right",
+          "conceptId": "FMA44249",
+          "name": "right long plantar ligament",
+          "elementId": "FJ1424",
+          "metadataTables": [
+            "isa_element_parts.txt"
+          ],
+          "meshEntries": [
+            {
+              "archive": "isa_BP3D_4.0_obj_99.zip",
+              "entry": "isa_BP3D_4.0_obj_99/FJ1424.obj"
+            }
+          ]
+        },
+        {
+          "side": "left",
+          "conceptId": "FMA44250",
+          "name": "left long plantar ligament",
+          "elementId": "FJ1424M",
+          "metadataTables": [
+            "isa_element_parts.txt"
+          ],
+          "meshEntries": [
+            {
+              "archive": "isa_BP3D_4.0_obj_99.zip",
+              "entry": "isa_BP3D_4.0_obj_99/FJ1424M.obj"
+            }
+          ]
+        }
+      ],
+      "scopeNote": "Plantar foot/calcaneocuboid support. This is not a tibiotalar ankle ligament, ATFL/CFL/deltoid ligament, or plantar aponeurosis."
+    },
+    {
+      "structure": "flexor retinaculum of wrist",
+      "region": "wrist",
+      "genericConcept": {
+        "conceptId": "FMA39988",
+        "name": "flexor retinaculum of wrist"
+      },
+      "parts": [
+        {
+          "side": "right",
+          "conceptId": "FMA40120",
+          "name": "flexor retinaculum of right wrist",
+          "elementId": "FJ1471",
+          "metadataTables": [
+            "partof_element_parts.txt",
+            "isa_element_parts.txt"
+          ],
+          "meshEntries": [
+            {
+              "archive": "partof_BP3D_4.0_obj_99.zip",
+              "entry": "partof_BP3D_4.0_obj_99/FJ1471.obj"
+            },
+            {
+              "archive": "isa_BP3D_4.0_obj_99.zip",
+              "entry": "isa_BP3D_4.0_obj_99/FJ1471.obj"
+            }
+          ]
+        },
+        {
+          "side": "left",
+          "conceptId": "FMA40121",
+          "name": "flexor retinaculum of left wrist",
+          "elementId": "FJ1471M",
+          "metadataTables": [
+            "partof_element_parts.txt",
+            "isa_element_parts.txt"
+          ],
+          "meshEntries": [
+            {
+              "archive": "partof_BP3D_4.0_obj_99.zip",
+              "entry": "partof_BP3D_4.0_obj_99/FJ1471M.obj"
+            },
+            {
+              "archive": "isa_BP3D_4.0_obj_99.zip",
+              "entry": "isa_BP3D_4.0_obj_99/FJ1471M.obj"
+            }
+          ]
+        }
+      ],
+      "scopeNote": "Carpal tunnel retinaculum/fascial restraint. This is not articular cartilage, a joint capsule, or TFCC."
+    }
+  ],
+  "intervertebralDisks": {
+    "genericConcept": {
+      "conceptId": "FMA10446",
+      "name": "intervertebral disk"
+    },
+    "additionalAncestor": {
+      "conceptId": "FMA67396",
+      "name": "articular disk of symphysis"
+    },
+    "meshCount": 23,
+    "includedInCurrentLimbPack": false,
+    "levelConvention": "For a named vertebra, the disk immediately inferior to it is listed. FJ3211 has no level-specific metadata name and is separately marked as inferred.",
+    "parts": [
+      {
+        "level": "C2-C3",
+        "conceptId": "FMA25058",
+        "name": "intervertebral disk of axis",
+        "elementId": "FJ3202",
+        "metadataTables": [
+          "partof_element_parts.txt",
+          "isa_element_parts.txt"
+        ],
+        "meshEntries": [
+          {
+            "archive": "partof_BP3D_4.0_obj_99.zip",
+            "entry": "partof_BP3D_4.0_obj_99/FJ3202.obj"
+          },
+          {
+            "archive": "isa_BP3D_4.0_obj_99.zip",
+            "entry": "isa_BP3D_4.0_obj_99/FJ3202.obj"
+          }
+        ],
+        "levelAssignment": "inferior_disk_of_metadata_named_vertebra"
+      },
+      {
+        "level": "C3-C4",
+        "conceptId": "FMA13896",
+        "name": "intervertebral disk of third cervical vertebra",
+        "elementId": "FJ3213",
+        "metadataTables": [
+          "partof_element_parts.txt",
+          "isa_element_parts.txt"
+        ],
+        "meshEntries": [
+          {
+            "archive": "partof_BP3D_4.0_obj_99.zip",
+            "entry": "partof_BP3D_4.0_obj_99/FJ3213.obj"
+          },
+          {
+            "archive": "isa_BP3D_4.0_obj_99.zip",
+            "entry": "isa_BP3D_4.0_obj_99/FJ3213.obj"
+          }
+        ],
+        "levelAssignment": "inferior_disk_of_metadata_named_vertebra"
+      },
+      {
+        "level": "C4-C5",
+        "conceptId": "FMA13897",
+        "name": "intervertebral disk of fourth cervical vertebra",
+        "elementId": "FJ3218",
+        "metadataTables": [
+          "partof_element_parts.txt",
+          "isa_element_parts.txt"
+        ],
+        "meshEntries": [
+          {
+            "archive": "partof_BP3D_4.0_obj_99.zip",
+            "entry": "partof_BP3D_4.0_obj_99/FJ3218.obj"
+          },
+          {
+            "archive": "isa_BP3D_4.0_obj_99.zip",
+            "entry": "isa_BP3D_4.0_obj_99/FJ3218.obj"
+          }
+        ],
+        "levelAssignment": "inferior_disk_of_metadata_named_vertebra"
+      },
+      {
+        "level": "C5-C6",
+        "conceptId": "FMA13898",
+        "name": "intervertebral disk of fifth cervical vertebra",
+        "elementId": "FJ3219",
+        "metadataTables": [
+          "partof_element_parts.txt",
+          "isa_element_parts.txt"
+        ],
+        "meshEntries": [
+          {
+            "archive": "partof_BP3D_4.0_obj_99.zip",
+            "entry": "partof_BP3D_4.0_obj_99/FJ3219.obj"
+          },
+          {
+            "archive": "isa_BP3D_4.0_obj_99.zip",
+            "entry": "isa_BP3D_4.0_obj_99/FJ3219.obj"
+          }
+        ],
+        "levelAssignment": "inferior_disk_of_metadata_named_vertebra"
+      },
+      {
+        "level": "C6-C7",
+        "conceptId": "FMA13899",
+        "name": "intervertebral disk of sixth cervical vertebra",
+        "elementId": "FJ3220",
+        "metadataTables": [
+          "partof_element_parts.txt",
+          "isa_element_parts.txt"
+        ],
+        "meshEntries": [
+          {
+            "archive": "partof_BP3D_4.0_obj_99.zip",
+            "entry": "partof_BP3D_4.0_obj_99/FJ3220.obj"
+          },
+          {
+            "archive": "isa_BP3D_4.0_obj_99.zip",
+            "entry": "isa_BP3D_4.0_obj_99/FJ3220.obj"
+          }
+        ],
+        "levelAssignment": "inferior_disk_of_metadata_named_vertebra"
+      },
+      {
+        "level": "C7-T1",
+        "conceptId": "FMA13900",
+        "name": "intervertebral disk of seventh cervical vertebra",
+        "elementId": "FJ3221",
+        "metadataTables": [
+          "partof_element_parts.txt",
+          "isa_element_parts.txt"
+        ],
+        "meshEntries": [
+          {
+            "archive": "partof_BP3D_4.0_obj_99.zip",
+            "entry": "partof_BP3D_4.0_obj_99/FJ3221.obj"
+          },
+          {
+            "archive": "isa_BP3D_4.0_obj_99.zip",
+            "entry": "isa_BP3D_4.0_obj_99/FJ3221.obj"
+          }
+        ],
+        "levelAssignment": "inferior_disk_of_metadata_named_vertebra"
+      },
+      {
+        "level": "T1-T2",
+        "conceptId": "FMA10458",
+        "name": "intervertebral disk of first thoracic vertebra",
+        "elementId": "FJ3222",
+        "metadataTables": [
+          "partof_element_parts.txt",
+          "isa_element_parts.txt"
+        ],
+        "meshEntries": [
+          {
+            "archive": "partof_BP3D_4.0_obj_99.zip",
+            "entry": "partof_BP3D_4.0_obj_99/FJ3222.obj"
+          },
+          {
+            "archive": "isa_BP3D_4.0_obj_99.zip",
+            "entry": "isa_BP3D_4.0_obj_99/FJ3222.obj"
+          }
+        ],
+        "levelAssignment": "inferior_disk_of_metadata_named_vertebra"
+      },
+      {
+        "level": "T2-T3",
+        "conceptId": "FMA13495",
+        "name": "intervertebral disk of second thoracic vertebra",
+        "elementId": "FJ3223",
+        "metadataTables": [
+          "partof_element_parts.txt",
+          "isa_element_parts.txt"
+        ],
+        "meshEntries": [
+          {
+            "archive": "partof_BP3D_4.0_obj_99.zip",
+            "entry": "partof_BP3D_4.0_obj_99/FJ3223.obj"
+          },
+          {
+            "archive": "isa_BP3D_4.0_obj_99.zip",
+            "entry": "isa_BP3D_4.0_obj_99/FJ3223.obj"
+          }
+        ],
+        "levelAssignment": "inferior_disk_of_metadata_named_vertebra"
+      },
+      {
+        "level": "T3-T4",
+        "conceptId": "FMA13500",
+        "name": "intervertebral disk of third thoracic vertebra",
+        "elementId": "FJ3224",
+        "metadataTables": [
+          "partof_element_parts.txt",
+          "isa_element_parts.txt"
+        ],
+        "meshEntries": [
+          {
+            "archive": "partof_BP3D_4.0_obj_99.zip",
+            "entry": "partof_BP3D_4.0_obj_99/FJ3224.obj"
+          },
+          {
+            "archive": "isa_BP3D_4.0_obj_99.zip",
+            "entry": "isa_BP3D_4.0_obj_99/FJ3224.obj"
+          }
+        ],
+        "levelAssignment": "inferior_disk_of_metadata_named_vertebra"
+      },
+      {
+        "level": "T4-T5",
+        "conceptId": "FMA13501",
+        "name": "intervertebral disk of fourth thoracic vertebra",
+        "elementId": "FJ3203",
+        "metadataTables": [
+          "partof_element_parts.txt",
+          "isa_element_parts.txt"
+        ],
+        "meshEntries": [
+          {
+            "archive": "partof_BP3D_4.0_obj_99.zip",
+            "entry": "partof_BP3D_4.0_obj_99/FJ3203.obj"
+          },
+          {
+            "archive": "isa_BP3D_4.0_obj_99.zip",
+            "entry": "isa_BP3D_4.0_obj_99/FJ3203.obj"
+          }
+        ],
+        "levelAssignment": "inferior_disk_of_metadata_named_vertebra"
+      },
+      {
+        "level": "T5-T6",
+        "conceptId": "FMA13502",
+        "name": "intervertebral disk of fifth thoracic vertebra",
+        "elementId": "FJ3204",
+        "metadataTables": [
+          "partof_element_parts.txt",
+          "isa_element_parts.txt"
+        ],
+        "meshEntries": [
+          {
+            "archive": "partof_BP3D_4.0_obj_99.zip",
+            "entry": "partof_BP3D_4.0_obj_99/FJ3204.obj"
+          },
+          {
+            "archive": "isa_BP3D_4.0_obj_99.zip",
+            "entry": "isa_BP3D_4.0_obj_99/FJ3204.obj"
+          }
+        ],
+        "levelAssignment": "inferior_disk_of_metadata_named_vertebra"
+      },
+      {
+        "level": "T6-T7",
+        "conceptId": "FMA13503",
+        "name": "intervertebral disk of sixth thoracic vertebra",
+        "elementId": "FJ3205",
+        "metadataTables": [
+          "partof_element_parts.txt",
+          "isa_element_parts.txt"
+        ],
+        "meshEntries": [
+          {
+            "archive": "partof_BP3D_4.0_obj_99.zip",
+            "entry": "partof_BP3D_4.0_obj_99/FJ3205.obj"
+          },
+          {
+            "archive": "isa_BP3D_4.0_obj_99.zip",
+            "entry": "isa_BP3D_4.0_obj_99/FJ3205.obj"
+          }
+        ],
+        "levelAssignment": "inferior_disk_of_metadata_named_vertebra"
+      },
+      {
+        "level": "T7-T8",
+        "conceptId": "FMA13504",
+        "name": "intervertebral disk of seventh thoracic vertebra",
+        "elementId": "FJ3206",
+        "metadataTables": [
+          "partof_element_parts.txt",
+          "isa_element_parts.txt"
+        ],
+        "meshEntries": [
+          {
+            "archive": "partof_BP3D_4.0_obj_99.zip",
+            "entry": "partof_BP3D_4.0_obj_99/FJ3206.obj"
+          },
+          {
+            "archive": "isa_BP3D_4.0_obj_99.zip",
+            "entry": "isa_BP3D_4.0_obj_99/FJ3206.obj"
+          }
+        ],
+        "levelAssignment": "inferior_disk_of_metadata_named_vertebra"
+      },
+      {
+        "level": "T8-T9",
+        "conceptId": "FMA13505",
+        "name": "intervertebral disk of eighth thoracic vertebra",
+        "elementId": "FJ3207",
+        "metadataTables": [
+          "partof_element_parts.txt",
+          "isa_element_parts.txt"
+        ],
+        "meshEntries": [
+          {
+            "archive": "partof_BP3D_4.0_obj_99.zip",
+            "entry": "partof_BP3D_4.0_obj_99/FJ3207.obj"
+          },
+          {
+            "archive": "isa_BP3D_4.0_obj_99.zip",
+            "entry": "isa_BP3D_4.0_obj_99/FJ3207.obj"
+          }
+        ],
+        "levelAssignment": "inferior_disk_of_metadata_named_vertebra"
+      },
+      {
+        "level": "T9-T10",
+        "conceptId": "FMA13506",
+        "name": "intervertebral disk of ninth thoracic vertebra",
+        "elementId": "FJ3208",
+        "metadataTables": [
+          "partof_element_parts.txt",
+          "isa_element_parts.txt"
+        ],
+        "meshEntries": [
+          {
+            "archive": "partof_BP3D_4.0_obj_99.zip",
+            "entry": "partof_BP3D_4.0_obj_99/FJ3208.obj"
+          },
+          {
+            "archive": "isa_BP3D_4.0_obj_99.zip",
+            "entry": "isa_BP3D_4.0_obj_99/FJ3208.obj"
+          }
+        ],
+        "levelAssignment": "inferior_disk_of_metadata_named_vertebra"
+      },
+      {
+        "level": "T10-T11",
+        "conceptId": "FMA13507",
+        "name": "intervertebral disk of tenth thoracic vertebra",
+        "elementId": "FJ3209",
+        "metadataTables": [
+          "partof_element_parts.txt",
+          "isa_element_parts.txt"
+        ],
+        "meshEntries": [
+          {
+            "archive": "partof_BP3D_4.0_obj_99.zip",
+            "entry": "partof_BP3D_4.0_obj_99/FJ3209.obj"
+          },
+          {
+            "archive": "isa_BP3D_4.0_obj_99.zip",
+            "entry": "isa_BP3D_4.0_obj_99/FJ3209.obj"
+          }
+        ],
+        "levelAssignment": "inferior_disk_of_metadata_named_vertebra"
+      },
+      {
+        "level": "T11-T12",
+        "conceptId": "FMA13508",
+        "name": "intervertebral disk of eleventh thoracic vertebra",
+        "elementId": "FJ3210",
+        "metadataTables": [
+          "partof_element_parts.txt",
+          "isa_element_parts.txt"
+        ],
+        "meshEntries": [
+          {
+            "archive": "partof_BP3D_4.0_obj_99.zip",
+            "entry": "partof_BP3D_4.0_obj_99/FJ3210.obj"
+          },
+          {
+            "archive": "isa_BP3D_4.0_obj_99.zip",
+            "entry": "isa_BP3D_4.0_obj_99/FJ3210.obj"
+          }
+        ],
+        "levelAssignment": "inferior_disk_of_metadata_named_vertebra"
+      },
+      {
+        "level": "T12-L1",
+        "conceptId": "FMA10446",
+        "name": "intervertebral disk",
+        "elementId": "FJ3211",
+        "metadataTables": [
+          "partof_element_parts.txt",
+          "isa_element_parts.txt"
+        ],
+        "meshEntries": [
+          {
+            "archive": "partof_BP3D_4.0_obj_99.zip",
+            "entry": "partof_BP3D_4.0_obj_99/FJ3211.obj"
+          },
+          {
+            "archive": "isa_BP3D_4.0_obj_99.zip",
+            "entry": "isa_BP3D_4.0_obj_99/FJ3211.obj"
+          }
+        ],
+        "levelAssignment": "inferred_from_source_geometry_and_sequence",
+        "caveat": "T12-L1 is an inferred level, not an exact metadata label. Both tables only assign the generic intervertebral disk concept FMA10446 (also FMA67396 articular disk of symphysis).",
+        "inferenceEvidence": {
+          "coordinateSystem": "unaltered BP3D OBJ coordinates, millimetres; z is superior",
+          "neighbourMeanVertexZmm": {
+            "FJ3210_T11-T12": 1099.15,
+            "FJ3211_unnamed": 1070.21,
+            "FJ3212_L1-L2": 1040.14
+          },
+          "method": "FJ3211 lies between the metadata-named T11-T12 and L1-L2 source disks; no level-specific FMA ID is asserted."
+        }
+      },
+      {
+        "level": "L1-L2",
+        "conceptId": "FMA16033",
+        "name": "intervertebral disk of first lumbar vertebra",
+        "elementId": "FJ3212",
+        "metadataTables": [
+          "partof_element_parts.txt",
+          "isa_element_parts.txt"
+        ],
+        "meshEntries": [
+          {
+            "archive": "partof_BP3D_4.0_obj_99.zip",
+            "entry": "partof_BP3D_4.0_obj_99/FJ3212.obj"
+          },
+          {
+            "archive": "isa_BP3D_4.0_obj_99.zip",
+            "entry": "isa_BP3D_4.0_obj_99/FJ3212.obj"
+          }
+        ],
+        "levelAssignment": "inferior_disk_of_metadata_named_vertebra"
+      },
+      {
+        "level": "L2-L3",
+        "conceptId": "FMA16034",
+        "name": "intervertebral disk of second lumbar vertebra",
+        "elementId": "FJ3214",
+        "metadataTables": [
+          "partof_element_parts.txt",
+          "isa_element_parts.txt"
+        ],
+        "meshEntries": [
+          {
+            "archive": "partof_BP3D_4.0_obj_99.zip",
+            "entry": "partof_BP3D_4.0_obj_99/FJ3214.obj"
+          },
+          {
+            "archive": "isa_BP3D_4.0_obj_99.zip",
+            "entry": "isa_BP3D_4.0_obj_99/FJ3214.obj"
+          }
+        ],
+        "levelAssignment": "inferior_disk_of_metadata_named_vertebra"
+      },
+      {
+        "level": "L3-L4",
+        "conceptId": "FMA16035",
+        "name": "intervertebral disk of third lumbar vertebra",
+        "elementId": "FJ3215",
+        "metadataTables": [
+          "partof_element_parts.txt",
+          "isa_element_parts.txt"
+        ],
+        "meshEntries": [
+          {
+            "archive": "partof_BP3D_4.0_obj_99.zip",
+            "entry": "partof_BP3D_4.0_obj_99/FJ3215.obj"
+          },
+          {
+            "archive": "isa_BP3D_4.0_obj_99.zip",
+            "entry": "isa_BP3D_4.0_obj_99/FJ3215.obj"
+          }
+        ],
+        "levelAssignment": "inferior_disk_of_metadata_named_vertebra"
+      },
+      {
+        "level": "L4-L5",
+        "conceptId": "FMA16036",
+        "name": "intervertebral disk of fourth lumbar vertebra",
+        "elementId": "FJ3216",
+        "metadataTables": [
+          "partof_element_parts.txt",
+          "isa_element_parts.txt"
+        ],
+        "meshEntries": [
+          {
+            "archive": "partof_BP3D_4.0_obj_99.zip",
+            "entry": "partof_BP3D_4.0_obj_99/FJ3216.obj"
+          },
+          {
+            "archive": "isa_BP3D_4.0_obj_99.zip",
+            "entry": "isa_BP3D_4.0_obj_99/FJ3216.obj"
+          }
+        ],
+        "levelAssignment": "inferior_disk_of_metadata_named_vertebra"
+      },
+      {
+        "level": "L5-S1",
+        "conceptId": "FMA16037",
+        "name": "intervertebral disk of fifth lumbar vertebra",
+        "elementId": "FJ3217",
+        "metadataTables": [
+          "partof_element_parts.txt",
+          "isa_element_parts.txt"
+        ],
+        "meshEntries": [
+          {
+            "archive": "partof_BP3D_4.0_obj_99.zip",
+            "entry": "partof_BP3D_4.0_obj_99/FJ3217.obj"
+          },
+          {
+            "archive": "isa_BP3D_4.0_obj_99.zip",
+            "entry": "isa_BP3D_4.0_obj_99/FJ3217.obj"
+          }
+        ],
+        "levelAssignment": "inferior_disk_of_metadata_named_vertebra"
+      }
+    ]
+  },
+  "regionalCoverage": [
+    {
+      "region": "shoulder",
+      "availableNamedTissueMeshes": [],
+      "missingNamedTissues": [
+        "articular cartilage",
+        "glenoid labrum",
+        "joint capsule",
+        "glenohumeral ligaments",
+        "coracohumeral ligament"
+      ],
+      "articularSurfaceSourceStatus": "no_named_atlas_tissue_mesh_found_in_audited_release",
+      "provenanceRequiredForGeneratedSurface": "reconstructed_from_frozen_packed_bone_geometry"
+    },
+    {
+      "region": "elbow",
+      "availableNamedTissueMeshes": [],
+      "missingNamedTissues": [
+        "articular cartilage",
+        "collateral ligaments",
+        "annular ligament",
+        "joint capsule"
+      ],
+      "articularSurfaceSourceStatus": "no_named_atlas_tissue_mesh_found_in_audited_release",
+      "provenanceRequiredForGeneratedSurface": "reconstructed_from_frozen_packed_bone_geometry"
+    },
+    {
+      "region": "wrist",
+      "availableNamedTissueMeshes": [
+        "FJ1471",
+        "FJ1471M"
+      ],
+      "missingNamedTissues": [
+        "articular cartilage",
+        "triangular fibrocartilage complex",
+        "joint capsule"
+      ],
+      "availableScope": "Flexor retinaculum only; it does not replace any missing articular tissue.",
+      "articularSurfaceSourceStatus": "no_named_atlas_tissue_mesh_found_in_audited_release",
+      "provenanceRequiredForGeneratedSurface": "reconstructed_from_frozen_packed_bone_geometry"
+    },
+    {
+      "region": "hip",
+      "availableNamedTissueMeshes": [],
+      "missingNamedTissues": [
+        "articular cartilage",
+        "acetabular labrum",
+        "joint capsule",
+        "iliofemoral ligament",
+        "pubofemoral ligament",
+        "ischiofemoral ligament"
+      ],
+      "articularSurfaceSourceStatus": "no_named_atlas_tissue_mesh_found_in_audited_release",
+      "provenanceRequiredForGeneratedSurface": "reconstructed_from_frozen_packed_bone_geometry"
+    },
+    {
+      "region": "knee",
+      "availableNamedTissueMeshes": [],
+      "missingNamedTissues": [
+        "articular cartilage",
+        "menisci",
+        "cruciate ligaments",
+        "collateral ligaments",
+        "joint capsule"
+      ],
+      "articularSurfaceSourceStatus": "no_named_atlas_tissue_mesh_found_in_audited_release",
+      "provenanceRequiredForGeneratedSurface": "reconstructed_from_frozen_packed_bone_geometry"
+    },
+    {
+      "region": "ankle",
+      "availableNamedTissueMeshes": [],
+      "adjacentFootTissueMeshes": [
+        "FJ1424",
+        "FJ1424M"
+      ],
+      "missingNamedTissues": [
+        "articular cartilage",
+        "talofibular ligaments",
+        "calcaneofibular ligament",
+        "deltoid ligament",
+        "joint capsule"
+      ],
+      "availableScope": "The adjacent long plantar ligament is a foot structure, not a substitute for missing ankle ligaments.",
+      "articularSurfaceSourceStatus": "no_named_atlas_tissue_mesh_found_in_audited_release",
+      "provenanceRequiredForGeneratedSurface": "reconstructed_from_frozen_packed_bone_geometry"
+    },
+    {
+      "region": "spine",
+      "availableNamedTissueMeshes": [
+        "FJ3202",
+        "FJ3213",
+        "FJ3218",
+        "FJ3219",
+        "FJ3220",
+        "FJ3221",
+        "FJ3222",
+        "FJ3223",
+        "FJ3224",
+        "FJ3203",
+        "FJ3204",
+        "FJ3205",
+        "FJ3206",
+        "FJ3207",
+        "FJ3208",
+        "FJ3209",
+        "FJ3210",
+        "FJ3211",
+        "FJ3212",
+        "FJ3214",
+        "FJ3215",
+        "FJ3216",
+        "FJ3217"
+      ],
+      "missingNamedTissues": [
+        "ligamentum flavum",
+        "anterior longitudinal ligament",
+        "posterior longitudinal ligament",
+        "separate annulus fibrosus mesh",
+        "separate nucleus pulposus mesh"
+      ],
+      "availableScope": "23 whole intervertebral disk meshes; FJ3211 level inferred. No separate annulus/nucleus source components.",
+      "includedInCurrentLimbPack": false
+    }
+  ],
+  "falsePositiveExclusions": [
+    {
+      "label": "calcaneal tendon classified under broad ligament ancestors",
+      "reason": "The lowest exact named structure is the Achilles tendon, not a joint ligament. Broad ligament organ or skeletal ligament ancestry is not accepted as joint-ligament provenance.",
+      "parts": [
+        {
+          "conceptId": "FMA258847",
+          "name": "right calcaneal tendon",
+          "elementId": "FJ1405",
+          "metadataTables": [
+            "isa_element_parts.txt"
+          ],
+          "meshEntries": [
+            {
+              "archive": "isa_BP3D_4.0_obj_99.zip",
+              "entry": "isa_BP3D_4.0_obj_99/FJ1405.obj"
+            }
+          ]
+        },
+        {
+          "conceptId": "FMA264844",
+          "name": "left calcaneal tendon",
+          "elementId": "FJ1405M",
+          "metadataTables": [
+            "isa_element_parts.txt"
+          ],
+          "meshEntries": [
+            {
+              "archive": "isa_BP3D_4.0_obj_99.zip",
+              "entry": "isa_BP3D_4.0_obj_99/FJ1405M.obj"
+            }
+          ]
+        }
+      ],
+      "genericConcept": {
+        "conceptId": "FMA51061",
+        "name": "calcaneal tendon"
+      }
+    },
+    {
+      "label": "patellar part of knee",
+      "reason": "These are patella bones already represented by the frozen skeleton, not knee cartilage or menisci.",
+      "parts": [
+        {
+          "regionConcept": {
+            "conceptId": "FMA79065",
+            "name": "patellar part of right knee"
+          },
+          "conceptId": "FMA24486",
+          "name": "right patella",
+          "elementId": "FJ3381",
+          "metadataTables": [
+            "partof_element_parts.txt",
+            "isa_element_parts.txt"
+          ],
+          "meshEntries": [
+            {
+              "archive": "partof_BP3D_4.0_obj_99.zip",
+              "entry": "partof_BP3D_4.0_obj_99/FJ3381.obj"
+            },
+            {
+              "archive": "isa_BP3D_4.0_obj_99.zip",
+              "entry": "isa_BP3D_4.0_obj_99/FJ3381.obj"
+            }
+          ]
+        },
+        {
+          "regionConcept": {
+            "conceptId": "FMA79066",
+            "name": "patellar part of left knee"
+          },
+          "conceptId": "FMA24487",
+          "name": "left patella",
+          "elementId": "FJ3275",
+          "metadataTables": [
+            "partof_element_parts.txt",
+            "isa_element_parts.txt"
+          ],
+          "meshEntries": [
+            {
+              "archive": "partof_BP3D_4.0_obj_99.zip",
+              "entry": "partof_BP3D_4.0_obj_99/FJ3275.obj"
+            },
+            {
+              "archive": "isa_BP3D_4.0_obj_99.zip",
+              "entry": "isa_BP3D_4.0_obj_99/FJ3275.obj"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "broad cartilage classes",
+      "reason": "Cartilage organ contains whole intervertebral disks and nasal/laryngeal cartilage; cartilage organ component contains costal cartilage. No major-limb articular-cartilage identity is inferred from those ancestors."
+    },
+    {
+      "label": "collateral arteries and cerebral capsules",
+      "reason": "Arterial collateral terms and cerebral internal-capsule terms are not limb collateral ligaments or joint capsules."
+    }
+  ],
+  "limitations": [
+    "Metadata labels and archive membership establish source availability, not anatomical validation or geometric fit to the finished skeleton.",
+    "Unlabelled tissue cannot be promoted to named articular cartilage, meniscus, labrum or ligament by broad ancestor membership.",
+    "The audit does not inspect an unlabelled bone surface and call it a separate atlas cartilage mesh. Generated articular patches must be labelled reconstructed.",
+    "The 23 spine disk meshes are whole disks; no source annulus/nucleus partition is available in these tables.",
+    "FJ3211 is assigned T12-L1 from source geometry/order only; no nonexistent level-specific FMA concept is invented.",
+    "No source OBJ file or archive is committed by this audit."
+  ]
+}

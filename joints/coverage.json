@@ -1,0 +1,399 @@
+{
+  "v": 1,
+  "basis": {
+    "file": "skull/bones_bp3d.json",
+    "sha256": "6caff1cf6c7d7a43b929721f1253059d85132e86d2ed6d52499fe484dfc22f03",
+    "coordinates": "rest-world metres; +X left, +Y up, +Z anterior"
+  },
+  "parts": 42,
+  "triangles": 41992,
+  "vertices": 21044,
+  "source": "reconstructed",
+  "regions": [
+    {
+      "id": "humeral_head_L",
+      "vertices": 900,
+      "triangles": 1776,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 8654.95
+    },
+    {
+      "id": "glenoid_L",
+      "vertices": 292,
+      "triangles": 580,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 1644.38
+    },
+    {
+      "id": "glenoid_labrum_L",
+      "vertices": 576,
+      "triangles": 1152,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 1054.94
+    },
+    {
+      "id": "femoral_head_L",
+      "vertices": 576,
+      "triangles": 1148,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 8765.3
+    },
+    {
+      "id": "acetabulum_L",
+      "vertices": 554,
+      "triangles": 1104,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 6508.22
+    },
+    {
+      "id": "acetabular_labrum_L",
+      "vertices": 576,
+      "triangles": 1152,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 2155.67
+    },
+    {
+      "id": "femoral_condyles_L",
+      "vertices": 1334,
+      "triangles": 2668,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 16496.72
+    },
+    {
+      "id": "tibial_plateau_L",
+      "vertices": 634,
+      "triangles": 1272,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 6292.05
+    },
+    {
+      "id": "patella_L",
+      "vertices": 322,
+      "triangles": 640,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 2849.82
+    },
+    {
+      "id": "medial_meniscus_L",
+      "vertices": 390,
+      "triangles": 776,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 793.93
+    },
+    {
+      "id": "lateral_meniscus_L",
+      "vertices": 390,
+      "triangles": 776,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 1248.77
+    },
+    {
+      "id": "distal_humerus_L",
+      "vertices": 1160,
+      "triangles": 2340,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 9236.0
+    },
+    {
+      "id": "radial_head_L",
+      "vertices": 216,
+      "triangles": 428,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 1414.66
+    },
+    {
+      "id": "ulnar_notch_L",
+      "vertices": 550,
+      "triangles": 1096,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 3732.13
+    },
+    {
+      "id": "distal_radius_L",
+      "vertices": 256,
+      "triangles": 508,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 1770.21
+    },
+    {
+      "id": "carpal_scaphoid_L",
+      "vertices": 186,
+      "triangles": 368,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 739.92
+    },
+    {
+      "id": "carpal_lunate_L",
+      "vertices": 154,
+      "triangles": 304,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 739.12
+    },
+    {
+      "id": "carpal_triquetrum_L",
+      "vertices": 172,
+      "triangles": 340,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 545.07
+    },
+    {
+      "id": "talar_dome_L",
+      "vertices": 510,
+      "triangles": 1016,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 4554.52
+    },
+    {
+      "id": "tibial_plafond_L",
+      "vertices": 516,
+      "triangles": 1040,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 4891.18
+    },
+    {
+      "id": "fibular_facet_L",
+      "vertices": 258,
+      "triangles": 512,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 1827.24
+    },
+    {
+      "id": "humeral_head_R",
+      "vertices": 1064,
+      "triangles": 2096,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 8799.63
+    },
+    {
+      "id": "glenoid_R",
+      "vertices": 162,
+      "triangles": 320,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 564.35
+    },
+    {
+      "id": "glenoid_labrum_R",
+      "vertices": 576,
+      "triangles": 1152,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 592.35
+    },
+    {
+      "id": "femoral_head_R",
+      "vertices": 568,
+      "triangles": 1132,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 8679.15
+    },
+    {
+      "id": "acetabulum_R",
+      "vertices": 506,
+      "triangles": 1012,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 6275.89
+    },
+    {
+      "id": "acetabular_labrum_R",
+      "vertices": 576,
+      "triangles": 1152,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 2196.63
+    },
+    {
+      "id": "femoral_condyles_R",
+      "vertices": 1280,
+      "triangles": 2564,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 16451.04
+    },
+    {
+      "id": "tibial_plateau_R",
+      "vertices": 596,
+      "triangles": 1188,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 6225.85
+    },
+    {
+      "id": "patella_R",
+      "vertices": 306,
+      "triangles": 608,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 2826.02
+    },
+    {
+      "id": "medial_meniscus_R",
+      "vertices": 390,
+      "triangles": 776,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 939.47
+    },
+    {
+      "id": "lateral_meniscus_R",
+      "vertices": 390,
+      "triangles": 776,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 1206.27
+    },
+    {
+      "id": "distal_humerus_R",
+      "vertices": 1066,
+      "triangles": 2144,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 9337.86
+    },
+    {
+      "id": "radial_head_R",
+      "vertices": 208,
+      "triangles": 412,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 1387.13
+    },
+    {
+      "id": "ulnar_notch_R",
+      "vertices": 596,
+      "triangles": 1188,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 4162.75
+    },
+    {
+      "id": "distal_radius_R",
+      "vertices": 302,
+      "triangles": 600,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 1829.14
+    },
+    {
+      "id": "carpal_scaphoid_R",
+      "vertices": 248,
+      "triangles": 492,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 712.03
+    },
+    {
+      "id": "carpal_lunate_R",
+      "vertices": 246,
+      "triangles": 492,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 734.65
+    },
+    {
+      "id": "carpal_triquetrum_R",
+      "vertices": 132,
+      "triangles": 260,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 499.31
+    },
+    {
+      "id": "talar_dome_R",
+      "vertices": 512,
+      "triangles": 1028,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 4503.45
+    },
+    {
+      "id": "tibial_plafond_R",
+      "vertices": 522,
+      "triangles": 1052,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 4799.21
+    },
+    {
+      "id": "fibular_facet_R",
+      "vertices": 276,
+      "triangles": 552,
+      "boundaryEdges": 0,
+      "nonmanifoldEdges": 0,
+      "inconsistentWindingEdges": 0,
+      "areaMm2": 1877.86
+    }
+  ],
+  "splitPointTouchFans": 39,
+  "limitations": [
+    "Frozen skeleton has no physiological cartilage clearance or contact solver; small rest overlaps remain.",
+    "Masks, thicknesses, labral cross sections and meniscal horn positions are educational reconstructions.",
+    "Spine, fingers, sternoclavicular/acromioclavicular and other joints retain their existing schematic surfaces."
+  ],
+  "packedBytes": 377054
+}

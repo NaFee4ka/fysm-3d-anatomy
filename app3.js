@@ -10,6 +10,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 /*__FASCIA_LIB__*/
 /*__MUSCLE_SURFACES_LIB__*/
 /*__CONNECTIVE_SURFACES_LIB__*/
+/*__JOINT_SURFACES_LIB__*/
 
 // ---------- typography: keep short words and dashes off line ends ----------
 const SHORT = 'в|во|и|не|ни|до|на|с|со|к|ко|о|об|от|у|по|за|из|а|но|же|для|при|без|над|под|про|или|как|что|это|то|их|его|её|ее|чем|чём|уже';
@@ -33,6 +34,8 @@ const CYC_DATA = /*__CYCLE__*/null;
 const FASCIA_MODEL = /*__FASCIA__*/null;
 const FASCIA_NOTES = /*__FASCIA_NOTES__*/null;
 const MUSCLE_SURFACE_DATA = /*__MUSCLE_SURFACES__*/null;
+const JOINT_SURFACE_DATA = /*__JOINT_SURFACES__*/null;
+const CAPSULE_RIM_DATA = /*__CAPSULE_RIMS__*/null;
 const EXTRAS = POSE_DATA.extras || {};
 const POSES = A.POSES;
 const POSE = Object.fromEntries(POSES.map(p => [p.id, p]));
@@ -363,7 +366,7 @@ const MAT = {
   bone: new THREE.MeshStandardMaterial({ color: 0xd8ccb3, roughness: 0.66, metalness: 0 }),
   dark: new THREE.MeshStandardMaterial({ color: 0x2c2723, roughness: 0.95, metalness: 0 }),
 };
-const cartMat = () => new THREE.MeshPhysicalMaterial({ color: 0xbcd6e4, roughness: 0.22, metalness: 0, clearcoat: 0.8, clearcoatRoughness: 0.2, transparent: true, opacity: 0.72, emissive: GOLD, emissiveIntensity: 0, depthWrite: false });
+const cartMat = () => new THREE.MeshPhysicalMaterial({ color: 0xcbd8d8, roughness: 0.36, metalness: 0, clearcoat: 0.35, clearcoatRoughness: 0.3, emissive: GOLD, emissiveIntensity: 0 });
 const discMat = () => new THREE.MeshStandardMaterial({ color: 0x7b9fb3, roughness: 0.4, metalness: 0, transparent: true, opacity: 0.9, emissive: GOLD, emissiveIntensity: 0 });
 const buckets = new Map();
 /*__SKULL__*/
@@ -401,10 +404,22 @@ for (const bk of buckets.values()) {
   let jid = null;
   if (bk.joint === 'facet' || bk.joint === 'disc') jid = vertToJoint[bk.vert] || null;
   else if (bk.joint) jid = bk.side ? bk.joint + '_' + bk.side : bk.joint;
-  mesh.userData = { kind: bk.mat === 'cart' || bk.mat === 'disc' ? 'cart' : 'bone', name: bk.name, latin: bk.latin, joint: jid };
+  mesh.userData = { kind: bk.mat === 'cart' || bk.mat === 'disc' ? 'cart' : 'bone', name: bk.name, latin: bk.latin, joint: jid, seg: bk.seg, baseOpacity: mesh.material.opacity };
   if (bk.mat === 'bone' || bk.mat === 'dark') mesh.userData.procBone = true;
   if (jid) (glowByJoint[jid] ||= []).push(mesh);
   segGroup[bk.seg].add(mesh);
+}
+
+// Retired geometry must leave both the scene and the picking/glow registries.
+// Otherwise a detached schematic surface can still intercept a tap.
+function removeModelMesh(mesh) {
+  mesh.removeFromParent();
+  for (const list of [boneMeshes, cartMeshes, discMeshes, ...Object.values(glowByJoint)]) {
+    const i = list.indexOf(mesh);
+    if (i >= 0) list.splice(i, 1);
+  }
+  mesh.geometry.dispose();
+  if (mesh.userData.kind === 'cart') mesh.material.dispose();
 }
 
 // real bones: BodyParts3D (DBCLS, CC BY 4.0), decimated and fitted to the rig segments at build time.
@@ -420,8 +435,8 @@ async function addRealBones() {
   const covered = new Set(D.parts.map(p => p.seg));
   // schematic cartilage that the real bones replace or that no longer sits on a bone surface
   const CART_GONE = new Set(['Лобковый симфиз', 'Мечевидный отросток', 'Рёберный хрящ', 'Хрящ головки плюсневой кости', 'Дугоотростчатый сустав']);
-  for (const seg of covered) for (const g of segGroup[seg].children.slice()) if (g.userData && g.userData.kind === 'cart' && CART_GONE.has(g.userData.name)) { segGroup[seg].remove(g); }
-  for (const seg of covered) for (const g of segGroup[seg].children.slice()) if (g.userData && g.userData.procBone) { segGroup[seg].remove(g); const i = boneMeshes.indexOf(g); if (i >= 0) boneMeshes.splice(i, 1); g.geometry.dispose(); }
+  for (const seg of covered) for (const g of segGroup[seg].children.slice()) if (g.userData && g.userData.kind === 'cart' && CART_GONE.has(g.userData.name)) removeModelMesh(g);
+  for (const seg of covered) for (const g of segGroup[seg].children.slice()) if (g.userData && g.userData.procBone) removeModelMesh(g);
   let off = 0;
   for (const p of D.parts) {
     const dq = new Uint16Array(buf, off, p.n * 3); off += p.n * 6;
@@ -605,7 +620,7 @@ for (const s of caps) (capStrands[s.inst.unit + '_' + s.inst.side] ||= []).push(
 
 // ---------- state ----------
 const state = { t: 1, poseId: 'dog', bones: true, joints: true, ligs: true, musclesOuter: true, musclesDeep: true, light: true, forces: false, lightMode: 'length', sel: null, playing: null, mode: 'pose', cycT: 0, fascia: false, flines: false };
-let muscleSurfaces = null, connectiveSurfaces = null;
+let muscleSurfaces = null, connectiveSurfaces = null, jointSurfaces = null;
 // physics: muscle effort from the static solution, at the full pose and in plain standing
 const ACTIVE_MIN = 0.08;
 const activeOf = id => new Set(Object.entries(PHYS[id].muscles).filter(([, m]) => m.a >= ACTIVE_MIN).map(([u]) => u));
@@ -632,6 +647,20 @@ function syncSurfaceVisibility() {
   }
   if (muscleSurfaces) muscleSurfaces.setVisibility(unit => A.UNITS[unit].deep ? state.musclesDeep : state.musclesOuter);
   if (connectiveSurfaces) connectiveSurfaces.setVisibility(part => part.kind === 'lig' ? state.ligs : state.joints);
+  if (jointSurfaces) jointSurfaces.setVisibility(state.joints);
+}
+function updateJointSourceNote(status) {
+  const note = document.getElementById('joint-source-note');
+  if (!note) return;
+  const capParts = connectiveSurfaces ? connectiveSurfaces.parts.filter(part => part.kind === 'cap') : [];
+  const fittedCaps = capParts.filter(part => part.displayFit === 'bone-rim').length;
+  note.textContent = nb(status === 'ready'
+    ? 'Хрящи, мениски и суставные губы основных суставов — геометрические реконструкции по готовым костям. ' + (fittedCaps === capParts.length && fittedCaps ? 'Края капсул подогнаны к поверхности костей. ' : 'Часть капсул показана условной схемой. ') + 'Контакт и сжатие тканей не моделируются.'
+    : 'Показана схема суставных поверхностей: уточнённые формы в этом браузере недоступны. Связки и капсулы — геометрические реконструкции.');
+}
+function jointSourceHTML(id) {
+  if (!jointSurfaces || !jointSurfaces.parts.some(part => part.joint === id)) return '';
+  return `<p class="meter-foot">${nb('Суставные поверхности — геометрические реконструкции по костям BodyParts3D. Подсветка капсулы показывает изменение длины отдельного расчётного пути. Сжатие, скольжение менисков и контакт тканей не рассчитываются.')}</p>`;
 }
 function loadedMuscleParts(unit) {
   if (!muscleSurfaces) return [];
@@ -701,6 +730,7 @@ function applyPose(t) {
   }
   if (muscleSurfaces) muscleSurfaces.update(P.W, pathCache);
   if (connectiveSurfaces) connectiveSurfaces.update(P.W, pathCache);
+  if (jointSurfaces) jointSurfaces.update(P.W);
   for (const id in jointById) { const jj = jointById[id]; jj.res = A.analyzeJoint(jj.def, P.local, P.W, state.mode !== 'cycle' && STATS[state.poseId] ? STATS[state.poseId].joint[id].mode : undefined); jj.k = Math.max(0, Math.min(1, Math.abs(jj.res.primary || 0) / (jj.res.comps[0] ? jj.res.comps[0].rom : 90))); }
   regions = A.analyzeRegions(P.local);
   const box = new THREE.Box3();
@@ -739,7 +769,7 @@ const avg = arr => arr.reduce((a, s) => a + s.strain, 0) / arr.length;
 const unitAvg = u => avg(unitStrands[u]);
 function glowK(strain) { return Math.pow(Math.min(1, Math.abs(strain) / 0.4), 0.8); }
 function setOpacity(mat, want, base) {
-  const o = want * base;
+  const o = Math.max(0, Math.min(1, want * base));
   if (mat.opacity !== o) { mat.opacity = o; mat.transparent = o < 1; mat.depthWrite = o >= 1 && base >= 1; mat.needsUpdate = true; }
 }
 const surfaceEmissive = new THREE.Color();
@@ -816,7 +846,7 @@ function updateMaterials(time) {
     const kj = effMode ? (cyc ? Math.min(1, cycJointLoad(id) / 3) : Math.min(1, jointEffortOf(id) / 0.5)) : jj.k;
     for (const m of meshes) {
       m.material.emissiveIntensity = state.light ? 0.9 * Math.pow(kj, 0.85) : 0;
-      const base = m.userData.kind === 'cart' && m.material.clearcoat !== undefined ? 0.72 : 0.9;
+      const base = m.userData.baseOpacity ?? 0.9;
       setOpacity(m.material, selected ? 1.3 : (sel && !selected ? 0.6 : 1), base);
     }
   }
@@ -918,7 +948,7 @@ function pick(cx, cy) {
   const objs = [];
   for (const s of muscles) if (s.mesh.visible) objs.push(s.mesh);
   if (state.ligs) for (const s of ligs) if (s.mesh.visible) objs.push(s.mesh);
-  if (state.joints) { objs.push(...jointPick); objs.push(...cartMeshes); objs.push(...discMeshes); for (const s of caps) if (s.mesh.visible) objs.push(s.mesh); }
+  if (state.joints) { objs.push(...jointPick); for (const mesh of [...cartMeshes, ...discMeshes]) if (mesh.visible && mesh.parent) objs.push(mesh); for (const s of caps) if (s.mesh.visible) objs.push(s.mesh); }
   if (muscleSurfaces) for (const mesh of muscleSurfaces.pickables) if (mesh.visible) objs.push(mesh);
   if (connectiveSurfaces) for (const mesh of connectiveSurfaces.pickables) if (mesh.visible) objs.push(mesh);
   if (state.bones) objs.push(...boneMeshes);
@@ -1230,7 +1260,7 @@ function renderJoint(id) {
     <p class="card-eyebrow">${nb(j.type === 'spine' ? 'Позвоночник' : j.type === 'st' ? 'Лопаточно-грудное скольжение' : 'Сустав')} ${sideWord(id)}</p>
     <h2 class="card-title">${nb(j.name)}</h2>
     <ul class="parts comps">${comps}</ul>
-    ${regRow}${capRow}
+    ${regRow}${capRow}${jointSourceHTML(id)}
     ${jointLoadBlock(id, j)}
     ${poseNote(P.joints[j.type === 'st' ? 'st' : j.type])}
     ${ligRows}
@@ -1732,7 +1762,7 @@ function renderJointCycle(id) {
     <p class="card-eyebrow">${nb((j.type === 'spine' ? 'Позвоночник' : j.type === 'st' ? 'Лопаточно-грудное скольжение' : 'Сустав') + ' ' + sideWord(id) + ' · сейчас')}</p>
     <h2 class="card-title">${nb(j.name)}</h2>
     <ul class="parts comps">${comps}</ul>
-    ${regRow}
+    ${regRow}${jointSourceHTML(id)}
     ${loadBlock}
     ${capBlock}
     ${ligRows}
@@ -1948,8 +1978,11 @@ for (const P of POSES) STATS[P.id] = computeStats(P.id);
 }
 buildForces(state.poseId);
 if (typeof createConnectiveSurfaces === 'function') {
-  connectiveSurfaces = createConnectiveSurfaces(A, THREE);
-  if (connectiveSurfaces) { model.add(connectiveSurfaces.group); syncSurfaceVisibility(); }
+  connectiveSurfaces = createConnectiveSurfaces(A, THREE, { capsuleRims: CAPSULE_RIM_DATA && CAPSULE_RIM_DATA.capsuleRims });
+  if (connectiveSurfaces) {
+    model.add(connectiveSurfaces.group); syncSurfaceVisibility();
+    stage.dataset.capsuleSurfaces = connectiveSurfaces.parts.filter(part => part.kind === 'cap').every(part => part.displayFit === 'bone-rim') ? 'fitted' : 'schematic';
+  }
 }
 applyPose(1);
 resize();
@@ -1960,6 +1993,37 @@ renderCues();
 renderInfo();
 $('stage').classList.add('ready');
 stage.dataset.muscleSurfaces = 'loading';
+stage.dataset.jointSurfaces = 'loading';
+// Replace only the exact schematic structures covered by a decoded package.
+// Minor joints and spine retain their existing surfaces; failure retains all
+// schematic joint surfaces and reports that state in the source note.
+setTimeout(async () => {
+  try {
+    const surfaces = typeof createJointSurfaces === 'function'
+      ? await createJointSurfaces(A, THREE, JOINT_SURFACE_DATA) : null;
+    if (!surfaces || !surfaces.covered.size) {
+      if (surfaces) surfaces.dispose();
+      stage.dataset.jointSurfaces = 'fallback'; updateJointSourceNote('fallback'); return;
+    }
+    surfaces.update(poseW);
+    jointSurfaces = surfaces;
+    for (const mesh of cartMeshes.slice()) {
+      if (surfaces.covered.has(mesh.userData.seg + '|' + mesh.userData.name)) removeModelMesh(mesh);
+    }
+    model.add(surfaces.group);
+    for (const part of surfaces.parts) {
+      part.mesh.userData.baseOpacity = part.baseOpacity;
+      cartMeshes.push(part.mesh);
+      (glowByJoint[part.joint] ||= []).push(part.mesh);
+    }
+    syncSurfaceVisibility(); poseDirty = true;
+    stage.dataset.jointSurfaces = 'ready'; updateJointSourceNote('ready');
+    if (state.sel && state.sel.kind === 'joint') renderInfo();
+  } catch (error) {
+    stage.dataset.jointSurfaces = 'fallback'; updateJointSourceNote('fallback');
+    console.warn('Joint surface reconstructions could not load; schematic surfaces remain visible.', error);
+  }
+}, 0);
 // Keep the procedural muscles visible while the anatomical meshes decode and
 // acquire their visual skin weights. A failed import retains that complete view.
 setTimeout(async () => {
