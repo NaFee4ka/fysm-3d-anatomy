@@ -466,10 +466,25 @@ const WARM = new THREE.Color(0xff8a2a), COOL = new THREE.Color(0x36b9ff);
 // working muscles are green: the belly takes the green colour, the glow leans to green
 const WORK = new THREE.Color(0x3fdc86), MUSCLE_ON = new THREE.Color(0x2c9a5a);
 function fiberTexture() {
-  const c = document.createElement('canvas'); c.width = 8; c.height = 64;
-  const g = c.getContext('2d');
-  for (let y = 0; y < 64; y++) { const v = 214 + Math.round(Math.sin(y * 1.7) * 18 + (y % 4 === 0 ? -26 : 0)); g.fillStyle = `rgb(${v},${v},${v})`; g.fillRect(0, y, 8, 1); }
-  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.repeat.set(1, 3);
+  const c = document.createElement('canvas'); c.width = c.height = 256;
+  const g = c.getContext('2d'), pixels = g.createImageData(c.width, c.height);
+  // Fascicles run along V. The previous eight-pixel texture varied only in V,
+  // making every muscle look like a corrugated hose at phone zoom levels.
+  // Periodic, low-contrast strands avoid both transverse bars and repeat seams;
+  // mipmaps keep the fine detail from shimmering when the camera pulls back.
+  for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) {
+    const u = 2 * Math.PI * x / c.width, v = 2 * Math.PI * y / c.height;
+    const warp = 0.32 * Math.sin(v) + 0.12 * Math.sin(3 * v + 0.8);
+    const fiber = Math.sin(23 * u + warp) + 0.45 * Math.sin(47 * u + 0.3 * Math.sin(2 * v));
+    const grain = Math.sin(79 * u + 37 * v) * Math.sin(31 * u - 53 * v);
+    const value = Math.round(246 + 3.4 * fiber + 0.8 * grain), k = 4 * (y * c.width + x);
+    pixels.data[k] = pixels.data[k + 1] = pixels.data[k + 2] = value;
+    pixels.data[k + 3] = 255;
+  }
+  g.putImageData(pixels, 0, 0);
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
   return t;
 }
 const fibers = fiberTexture();
@@ -509,7 +524,7 @@ class Strand {
     g.setIndex(idx);
     this.geo = g;
     this.colOff = col.slice(); this.colOn = colOn; this.on = false;
-    if (isMuscle) this.mat = new THREE.MeshStandardMaterial({ vertexColors: true, map: fibers, roughness: 0.5, metalness: 0, emissive: 0x000000, emissiveIntensity: 0 });
+    if (isMuscle) this.mat = new THREE.MeshStandardMaterial({ vertexColors: true, map: fibers, roughness: 0.7, metalness: 0, emissive: 0x000000, emissiveIntensity: 0 });
     else if (inst.kind === 'lig') this.mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.35, metalness: 0, emissive: 0x000000, emissiveIntensity: 0 });
     else this.mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.45, metalness: 0, transparent: true, opacity: 0.5, depthWrite: false, emissive: 0x000000, emissiveIntensity: 0 });
     this.mesh = new THREE.Mesh(g, this.mat);

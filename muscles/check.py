@@ -46,6 +46,15 @@ for p in data['parts']:
         assert metrics and metrics['triangleEdges'] == 3 * p['m'], p
         assert 0 <= metrics['stretchedOver4'] <= metrics['triangleEdges'], p
         assert np.isfinite(metrics['maxRatio']), p
+        topology = p.get('topologyCleanup')
+        if topology:
+            assert topology['trianglesBefore'] == topology['trianglesAfter'], p
+            assert 0 <= topology['mergedExactVertices'] < topology['rawVertices'], p
+        detail = p.get('detail')
+        if detail:
+            edges = np.concatenate([f[:, [0, 1]], f[:, [1, 2]], f[:, [2, 0]]])
+            longest_mm = np.linalg.norm(v[edges[:, 0]] - v[edges[:, 1]], axis=1).max() * 1000
+            assert longest_mm <= detail['edgeLimitMm'] + .05, (p, 'torso edge limit exceeded')
     covered.add((p['unit'], p['side']))
     triangles += p['m']
 missing = {(u, side) for u in mapping['units'] for side in ('L', 'R')} - covered
