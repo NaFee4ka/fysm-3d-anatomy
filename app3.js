@@ -8,6 +8,8 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 /*__ANATOMY__*/
 /*__FASCIA_LIB__*/
+/*__MUSCLE_SURFACES_LIB__*/
+/*__CONNECTIVE_SURFACES_LIB__*/
 
 // ---------- typography: keep short words and dashes off line ends ----------
 const SHORT = 'в|во|и|не|ни|до|на|с|со|к|ко|о|об|от|у|по|за|из|а|но|же|для|при|без|над|под|про|или|как|что|это|то|их|его|её|ее|чем|чём|уже';
@@ -30,6 +32,7 @@ const PHYS = /*__PHYSICS__*/null;
 const CYC_DATA = /*__CYCLE__*/null;
 const FASCIA_MODEL = /*__FASCIA__*/null;
 const FASCIA_NOTES = /*__FASCIA_NOTES__*/null;
+const MUSCLE_SURFACE_DATA = /*__MUSCLE_SURFACES__*/null;
 const EXTRAS = POSE_DATA.extras || {};
 const POSES = A.POSES;
 const POSE = Object.fromEntries(POSES.map(p => [p.id, p]));
@@ -577,13 +580,17 @@ const muscles = strands.filter(s => s.inst.kind === 'muscle');
 const ligs = strands.filter(s => s.inst.kind === 'lig');
 const caps = strands.filter(s => s.inst.kind === 'cap');
 const UNIT_IDS = Object.keys(A.UNITS);
-const unitStrands = {}, ligStrands = {}, capStrands = {};
-for (const s of muscles) (unitStrands[s.inst.unit] ||= []).push(s);
+const unitStrands = {}, unitSideStrands = {}, ligStrands = {}, capStrands = {};
+for (const s of muscles) {
+  (unitStrands[s.inst.unit] ||= []).push(s);
+  (unitSideStrands[s.inst.unit + '_' + s.inst.side] ||= []).push(s);
+}
 for (const s of ligs) (ligStrands[s.inst.unit] ||= []).push(s);
 for (const s of caps) (capStrands[s.inst.unit + '_' + s.inst.side] ||= []).push(s);
 
 // ---------- state ----------
 const state = { t: 1, poseId: 'dog', bones: true, joints: true, ligs: true, musclesOuter: true, musclesDeep: true, light: true, forces: false, lightMode: 'length', sel: null, playing: null, mode: 'pose', cycT: 0, fascia: false, flines: false };
+let muscleSurfaces = null, connectiveSurfaces = null;
 // physics: muscle effort from the static solution, at the full pose and in plain standing
 const ACTIVE_MIN = 0.08;
 const activeOf = id => new Set(Object.entries(PHYS[id].muscles).filter(([, m]) => m.a >= ACTIVE_MIN).map(([u]) => u));
@@ -600,6 +607,38 @@ function jointEffortOf(id) {
 let morph = null, displayConf = null;
 const isDeep = s => !!A.UNITS[s.inst.unit].deep;
 const muscleVisible = s => isDeep(s) ? state.musclesDeep : state.musclesOuter;
+const surfaceReplaces = s => s.inst.kind === 'muscle'
+  ? !!(muscleSurfaces && muscleSurfaces.covered.has(s.inst.unit + '_' + s.inst.side))
+  : !!(connectiveSurfaces && connectiveSurfaces.covered.has(s.inst.kind + '_' + s.inst.unit + '_' + s.inst.side));
+function syncSurfaceVisibility() {
+  for (const s of strands) {
+    const on = s.inst.kind === 'muscle' ? muscleVisible(s) : s.inst.kind === 'lig' ? state.ligs : state.joints;
+    s.mesh.visible = !!on && !surfaceReplaces(s);
+  }
+  if (muscleSurfaces) muscleSurfaces.setVisibility(unit => A.UNITS[unit].deep ? state.musclesDeep : state.musclesOuter);
+  if (connectiveSurfaces) connectiveSurfaces.setVisibility(part => part.kind === 'lig' ? state.ligs : state.joints);
+}
+function loadedMuscleParts(unit) {
+  if (!muscleSurfaces) return [];
+  return (MUSCLE_SURFACE_DATA.parts || []).filter(part => (!unit || part.unit === unit) && muscleSurfaces.covered.has(part.unit + '_' + part.side));
+}
+function updateMuscleSourceNote(status) {
+  const note = document.getElementById('muscle-source-note');
+  if (!note) return;
+  if (status === 'ready') {
+    const real = new Set(), reconstructed = new Set();
+    for (const part of loadedMuscleParts()) (part.source === 'reconstructed' ? reconstructed : real).add(part.unit);
+    note.textContent = nb('Объёмные формы: ' + real.size + ' мышечных юнитов по BodyParts3D; ' + reconstructed.size + ' — геометрические реконструкции. Движение тканей — приближение модели.');
+  } else if (status === 'fallback') note.textContent = nb('Показана схема мышечных пучков: объёмные формы в этом браузере недоступны.');
+}
+function muscleSourceHTML(unit) {
+  const parts = loadedMuscleParts(unit);
+  if (!parts.length) return '';
+  const reconstructed = parts.some(part => part.source === 'reconstructed');
+  const real = parts.some(part => part.source !== 'reconstructed');
+  const source = reconstructed ? (real ? 'BodyParts3D и геометрическая реконструкция' : 'геометрическая реконструкция') : 'BodyParts3D';
+  return `<p class="meter-foot">${nb('Объёмная форма: ' + source + '. Движение тканей — приближение модели.')}</p>`;
+}
 let poseW = null, poseLocal = null, regions = null;
 const centerTarget = new THREE.Vector3(0, 0.4, 0);
 const FIT_PTS = [['f3c_L', [0.21, 0.63, -0.02]], ['f3c_R', [-0.21, 0.63, -0.02]], ['ulna_L', [0.2, 1.09, -0.04]], ['ulna_R', [-0.2, 1.09, -0.04]], ['head', [0, 1.75, 0.0]], ['head', [0, 1.62, 0.1]], ['pelvis', [0, 0.93, 0]], ['hand_L', [0.21, 0.63, -0.02]], ['hand_R', [-0.21, 0.63, -0.02]], ['toes_L', [0.09, 0.003, 0.2]], ['toes_R', [-0.09, 0.003, 0.2]], ['foot_L', [0.094, 0.01, -0.06]], ['foot_R', [-0.094, 0.01, -0.06]], ['hum_L', [0.21, 1.4, -0.03]], ['hum_R', [-0.21, 1.4, -0.03]], ['pelvis', [0.15, 1.07, -0.03]], ['pelvis', [-0.15, 1.07, -0.03]], ['pelvis', [0, 1.02, -0.135]], ['pelvis', [0.08, 0.93, -0.14]], ['pelvis', [-0.08, 0.93, -0.14]], ['shank_L', [0.098, 0.52, 0.03]], ['shank_R', [-0.098, 0.52, 0.03]]].map(([s, p]) => ({ s, p: new THREE.Vector3(p[0], p[1], p[2]) }));
@@ -622,10 +661,15 @@ function applyPose(t) {
   poseW = P.W; poseLocal = P.local;
   for (const s of A.SEG) { const w = P.W[s.name]; segGroup[s.name].position.copy(w.p); segGroup[s.name].quaternion.copy(w.q); }
   const fd = new THREE.Vector3();
+  const pathCache = new Map();
   for (const s of strands) {
     const pts = A.strandPath(P.W, s.inst);
+    pathCache.set(s.inst.id, pts);
     const L = A.pathLength(pts);
     s.strain = L / s.L0 - 1;
+    // Keep the analytic paths for cards and forces. Loaded surfaces replace only
+    // the tube geometry, so there is no duplicate rendering or duplicated work.
+    if (surfaceReplaces(s)) { s.center = pts; continue; }
     let flatDir = null, widths = null;
     if (s.inst.flatRef) {
       const nO = A.pt(P.W, s.inst.flatRef.seg, s.inst.flatRef.p);
@@ -640,6 +684,8 @@ function applyPose(t) {
     else if (s.inst.flat < 1) { fd.copy(pts[0]).sub(centerTarget); fd.y = 0; flatDir = fd; }
     s.update(pts, s.inst.kind === 'muscle' ? Math.sqrt(s.L0 / L) : 1, flatDir, widths);
   }
+  if (muscleSurfaces) muscleSurfaces.update(P.W, pathCache);
+  if (connectiveSurfaces) connectiveSurfaces.update(P.W, pathCache);
   for (const id in jointById) { const jj = jointById[id]; jj.res = A.analyzeJoint(jj.def, P.local, P.W, state.mode !== 'cycle' && STATS[state.poseId] ? STATS[state.poseId].joint[id].mode : undefined); jj.k = Math.max(0, Math.min(1, Math.abs(jj.res.primary || 0) / (jj.res.comps[0] ? jj.res.comps[0].rom : 90))); }
   regions = A.analyzeRegions(P.local);
   const box = new THREE.Box3();
@@ -681,6 +727,7 @@ function setOpacity(mat, want, base) {
   const o = want * base;
   if (mat.opacity !== o) { mat.opacity = o; mat.transparent = o < 1; mat.depthWrite = o >= 1 && base >= 1; mat.needsUpdate = true; }
 }
+const surfaceEmissive = new THREE.Color();
 function updateMaterials(time) {
   const pulse = reduceMotion ? 1 : 0.72 + 0.28 * Math.sin(time * 0.0042);
   const sel = state.sel;
@@ -706,6 +753,21 @@ function updateMaterials(time) {
     const faded = (selUnit && s.inst.unit !== selUnit) || (sel && !selUnit);
     setOpacity(s.mat, faded ? (selUnit ? 0.14 : 0.25) : 1, 1);
   }
+  if (muscleSurfaces) muscleSurfaces.setAppearance((unit, side) => {
+    const a = cyc ? cycAct(unit, side) : effortOf(unit);
+    const active = a >= ACTIVE_MIN;
+    const sameSide = unitSideStrands[unit + '_' + side];
+    const strain = sameSide.reduce((sum, s) => sum + s.strain, 0) / sameSide.length;
+    const emissive = surfaceEmissive.copy(effMode ? WORK : strain >= 0 ? WARM : COOL);
+    let intensity = 0;
+    if (state.light) {
+      if (effMode) intensity = 1.3 * Math.pow(Math.min(1, a / 0.5), 0.75) * (active ? pulse : 1);
+      else if (active) { emissive.lerp(WORK, 0.9); intensity = Math.max(1.15 * glowK(strain), 0.8) * pulse; }
+      else intensity = 1.15 * glowK(strain);
+    }
+    const faded = (selUnit && unit !== selUnit) || (sel && !selUnit);
+    return { active, emissive, intensity, opacity: faded ? (selUnit ? 0.14 : 0.25) : 1 };
+  });
   for (const s of ligs) {
     const k = s.strain > 0.02 ? glowK(s.strain) : 0;
     if (state.light) { s.mat.emissive.copy(WARM); s.mat.emissiveIntensity = 0.7 * k; } else s.mat.emissiveIntensity = 0;
@@ -719,6 +781,18 @@ function updateMaterials(time) {
     const own = selJoint && (s.inst.unit + '_' + s.inst.side) === selJoint;
     setOpacity(s.mat, sel && !own ? 0.35 : 1, own ? 0.75 : 0.5);
   }
+  if (connectiveSurfaces) connectiveSurfaces.setAppearance(part => {
+    const k = part.strain > 0.02 ? glowK(part.strain) : 0;
+    part.mat.emissive.copy(WARM);
+    part.mat.emissiveIntensity = state.light ? (part.kind === 'cap' ? 1 : 0.7) * k : 0;
+    if (part.kind === 'lig') {
+      const own = selLig === part.unit || (selJointBase && A.LIGS[part.unit].joint === selJointBase);
+      setOpacity(part.mat, sel && !own ? 0.25 : 1, 1);
+    } else {
+      const own = selJoint && part.unit + '_' + part.side === selJoint;
+      setOpacity(part.mat, sel && !own ? 0.35 : 1, own ? 0.75 : 0.5);
+    }
+  });
   for (const id in jointById) {
     const jj = jointById[id];
     const meshes = glowByJoint[id] || [];
@@ -827,9 +901,11 @@ function pick(cx, cy) {
   ndc.set(((cx - r.left) / r.width) * 2 - 1, -((cy - r.top) / r.height) * 2 + 1);
   ray.setFromCamera(ndc, camera);
   const objs = [];
-  for (const s of muscles) if (muscleVisible(s)) objs.push(s.mesh);
-  if (state.ligs) for (const s of ligs) objs.push(s.mesh);
-  if (state.joints) { objs.push(...jointPick); objs.push(...cartMeshes); objs.push(...discMeshes); for (const s of caps) objs.push(s.mesh); }
+  for (const s of muscles) if (s.mesh.visible) objs.push(s.mesh);
+  if (state.ligs) for (const s of ligs) if (s.mesh.visible) objs.push(s.mesh);
+  if (state.joints) { objs.push(...jointPick); objs.push(...cartMeshes); objs.push(...discMeshes); for (const s of caps) if (s.mesh.visible) objs.push(s.mesh); }
+  if (muscleSurfaces) for (const mesh of muscleSurfaces.pickables) if (mesh.visible) objs.push(mesh);
+  if (connectiveSurfaces) for (const mesh of connectiveSurfaces.pickables) if (mesh.visible) objs.push(mesh);
   if (state.bones) objs.push(...boneMeshes);
   if (FR && (state.fascia || state.flines)) for (const m of FR.pickables) if (m.visible) objs.push(m);
   const hits = ray.intersectObjects(objs, false);
@@ -857,8 +933,8 @@ function pick(cx, cy) {
       }
     }
   };
-  scan(muscles.filter(muscleVisible));
-  if (state.ligs) scan(ligs);
+  scan(muscles.filter(s => s.mesh.visible));
+  if (state.ligs) scan(ligs.filter(s => s.mesh.visible));
   if (best) return select(best.data.kind === 'cap' ? { kind: 'joint', id: best.data.unit + '_' + best.data.side } : best.data);
   if (first) return select(first.object.userData);
   select(null);
@@ -1056,6 +1132,7 @@ function renderMuscle(unit) {
     <p class="card-eyebrow">${nb('Мышца')}</p>
     <h2 class="card-title">${nb(U.name)}</h2>
     <p class="latin">${U.latin}</p>
+    ${muscleSourceHTML(unit)}
     <div class="tags"><span class="tag">${U.deep ? 'глубокая' : 'внешняя'}</span>${activeSet.has(unit) ? '<span class="tag tag-active">работает</span>' : ''}<span class="tag tag-${cls}">${nb(strainWord(s))}</span></div>
     <div class="meter"><span class="meter-label">${nb('Длина сейчас')}</span><span class="num ${cls}-t big">${fmtPct(s)}</span></div>
     ${barHTML(s)}
@@ -1190,6 +1267,12 @@ function select(d) {
 }
 function focusSelection() {
   const s = state.sel; if (!s) return;
+  const surfaceBounds = s.kind === 'muscle' && muscleSurfaces ? muscleSurfaces.getBounds(s.unit, s.side || 'L')
+    : s.kind === 'lig' && connectiveSurfaces ? connectiveSurfaces.getBounds('lig', s.unit, s.side || 'L') : null;
+  if (surfaceBounds) {
+    const sphere = surfaceBounds.getBoundingSphere(new THREE.Sphere());
+    return focusOn(sphere.center, Math.max(s.kind === 'muscle' ? 0.5 : 0.3, sphere.radius * 2.6));
+  }
   if ((s.kind === 'fline' || s.kind === 'fascia') && fasciaM) {
     let pts = [];
     if (s.kind === 'fline') { const lm = fasciaM.lines[s.id + '_L']; pts = lm && lm.path ? lm.path : FASC.linePath(poseW, s.id, 'L'); }
@@ -1217,9 +1300,8 @@ function setLayer(name, on) {
   if (btn) btn.setAttribute('aria-pressed', on ? 'true' : 'false');
   if (name === 'light') document.body.classList.toggle('no-light', !on);
   if (name === 'bones') for (const m of boneMeshes) m.visible = on;
-  if (name === 'joints') { for (const m of cartMeshes) m.visible = on; for (const m of discMeshes) m.visible = on; for (const s of caps) s.mesh.visible = on; }
-  if (name === 'ligs') for (const s of ligs) s.mesh.visible = on;
-  if (name === 'musclesOuter' || name === 'musclesDeep') for (const s of muscles) s.mesh.visible = muscleVisible(s);
+  if (name === 'joints') { for (const m of cartMeshes) m.visible = on; for (const m of discMeshes) m.visible = on; }
+  if (name === 'joints' || name === 'ligs' || name === 'musclesOuter' || name === 'musclesDeep') syncSurfaceVisibility();
   if (name === 'forces') updateForces();
   if (FR && name === 'fascia') { FR.setLayer('sheets', on); FR.setLayer('bands', on); updateFascia(null, true); }
   if (FR && name === 'flines') { FR.setLayer('lines', on); updateFascia(null, true); if (on && !state.sel) select({ kind: 'flines' }); }
@@ -1579,6 +1661,7 @@ function renderMuscleCycle(unit) {
     <p class="card-eyebrow">${nb('Мышца · круг')}</p>
     <h2 class="card-title">${nb(U.name)}</h2>
     <p class="latin">${U.latin}</p>
+    ${muscleSourceHTML(unit)}
     <div class="tags"><span class="tag">${U.deep ? 'глубокая' : 'внешняя'}</span>${ph ? '' : `<span class="tag tag-active" id="cyc-live-tag"${a >= ACTIVE_MIN ? '' : ' hidden'}>работает</span>`}</div>
     ${ph ? `<p class="callout">${nb('Усилия по кадрам ещё считаются. Ниже — длина мышцы по ходу круга.')}</p>` : `
     <div class="meter"><span class="meter-label">${nb('Усилие сейчас')}</span><span class="num warm-t big" id="cyc-live-a">${pctTxt(a)}</span></div>
@@ -1849,6 +1932,10 @@ for (const P of POSES) STATS[P.id] = computeStats(P.id);
   if (POSE[h]) { state.poseId = h; activeSet = activeOf(h); VIEW_DIR = new THREE.Vector3(...POSE[h].view).normalize(); }
 }
 buildForces(state.poseId);
+if (typeof createConnectiveSurfaces === 'function') {
+  connectiveSurfaces = createConnectiveSurfaces(A, THREE);
+  if (connectiveSurfaces) { model.add(connectiveSurfaces.group); syncSurfaceVisibility(); }
+}
 applyPose(1);
 resize();
 resetView(false);
@@ -1857,6 +1944,27 @@ updateHeader();
 renderCues();
 renderInfo();
 $('stage').classList.add('ready');
+stage.dataset.muscleSurfaces = 'loading';
+// Keep the procedural muscles visible while the anatomical meshes decode and
+// acquire their visual skin weights. A failed import retains that complete view.
+setTimeout(async () => {
+  try {
+    const surfaces = typeof createMuscleSurfaces === 'function'
+      ? await createMuscleSurfaces(A, THREE, MUSCLE_SURFACE_DATA, { instances: insts, fiberTexture: fibers, world: poseW }) : null;
+    if (!surfaces || !surfaces.covered.size) { if (surfaces) surfaces.dispose(); stage.dataset.muscleSurfaces = 'fallback'; updateMuscleSourceNote('fallback'); return; }
+    muscleSurfaces = surfaces;
+    model.add(surfaces.group);
+    syncSurfaceVisibility();
+    poseDirty = true;
+    stage.dataset.muscleSurfaces = 'ready';
+    updateMuscleSourceNote('ready');
+    if (state.sel && state.sel.kind === 'muscle') renderInfo();
+  } catch (error) {
+    stage.dataset.muscleSurfaces = 'fallback';
+    updateMuscleSourceNote('fallback');
+    console.warn('Anatomical muscle surfaces could not load; procedural muscles remain visible.', error);
+  }
+}, 0);
 if (CYC) {
   cycleTab.hidden = false;
   buildCycMarks();

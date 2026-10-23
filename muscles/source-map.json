@@ -1,0 +1,4278 @@
+{
+  "source": "BodyParts3D4.0 DBCLS relation tables",
+  "license": "CC BY4.0; keep source attribution",
+  "units": {
+    "trapUp": {
+      "modelName": "Трапециевидная, верхняя часть",
+      "modelLatin": "m. trapezius, pars descendens",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "descending part of trapezius",
+          "conceptIds": [
+            "FMA32557"
+          ],
+          "elementIds": [
+            "FJ1521",
+            "FJ1521M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1521",
+        "FJ1521M"
+      ],
+      "leftIds": [
+        "FJ1521M"
+      ],
+      "rightIds": [
+        "FJ1521"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "trapMid": {
+      "modelName": "Трапециевидная, средняя часть",
+      "modelLatin": "m. trapezius, pars transversa",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "transverse part of trapezius",
+          "conceptIds": [
+            "FMA32556"
+          ],
+          "elementIds": [
+            "FJ1554",
+            "FJ1554M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1554",
+        "FJ1554M"
+      ],
+      "leftIds": [
+        "FJ1554M"
+      ],
+      "rightIds": [
+        "FJ1554"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "trapLow": {
+      "modelName": "Трапециевидная, нижняя часть",
+      "modelLatin": "m. trapezius, pars ascendens",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "ascending part of trapezius",
+          "conceptIds": [
+            "FMA32555"
+          ],
+          "elementIds": [
+            "FJ1520",
+            "FJ1520M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1520",
+        "FJ1520M"
+      ],
+      "leftIds": [
+        "FJ1520M"
+      ],
+      "rightIds": [
+        "FJ1520"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "lat": {
+      "modelName": "Широчайшая мышца спины",
+      "modelLatin": "m. latissimus dorsi",
+      "status": "missing",
+      "sourceConcepts": [
+        {
+          "name": "latissimus dorsi",
+          "conceptIds": [],
+          "elementIds": [],
+          "tables": [],
+          "available": false
+        }
+      ],
+      "elementIds": [],
+      "leftIds": [],
+      "rightIds": [],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false,
+      "limitation": "No exact named concept is present in the supplied BP3D4.0 relation tables. Keep an explicitly labelled procedural fallback; do not claim an atlas mesh for this unit."
+    },
+    "pecMaj": {
+      "modelName": "Большая грудная мышца",
+      "modelLatin": "m. pectoralis major",
+      "status": "group",
+      "sourceConcepts": [
+        {
+          "name": "clavicular part of pectoralis major",
+          "conceptIds": [
+            "FMA34687"
+          ],
+          "elementIds": [
+            "FJ1447",
+            "FJ1447M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        },
+        {
+          "name": "sternocostal part of pectoralis major",
+          "conceptIds": [
+            "FMA34696"
+          ],
+          "elementIds": [
+            "FJ1464",
+            "FJ1464M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        },
+        {
+          "name": "abdominal part of pectoralis major",
+          "conceptIds": [
+            "FMA34699"
+          ],
+          "elementIds": [
+            "FJ1446",
+            "FJ1446M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1446",
+        "FJ1446M",
+        "FJ1447",
+        "FJ1447M",
+        "FJ1464",
+        "FJ1464M"
+      ],
+      "leftIds": [
+        "FJ1446M",
+        "FJ1447M",
+        "FJ1464M"
+      ],
+      "rightIds": [
+        "FJ1446",
+        "FJ1447",
+        "FJ1464"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false,
+      "groupNote": "Several anatomical source parts share one model unit/physics value; preserve separate source pieces or merge once, never duplicate the group volume."
+    },
+    "pecMin": {
+      "modelName": "Малая грудная мышца",
+      "modelLatin": "m. pectoralis minor",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "pectoralis minor",
+          "conceptIds": [
+            "FMA13109"
+          ],
+          "elementIds": [
+            "FJ1456",
+            "FJ1456M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1456",
+        "FJ1456M"
+      ],
+      "leftIds": [
+        "FJ1456M"
+      ],
+      "rightIds": [
+        "FJ1456"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "subclavius": {
+      "modelName": "Подключичная мышца",
+      "modelLatin": "m. subclavius",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "subclavius",
+          "conceptIds": [
+            "FMA13410"
+          ],
+          "elementIds": [
+            "FJ1460",
+            "FJ1460M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1460",
+        "FJ1460M"
+      ],
+      "leftIds": [
+        "FJ1460M"
+      ],
+      "rightIds": [
+        "FJ1460"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "serratus": {
+      "modelName": "Передняя зубчатая мышца",
+      "modelLatin": "m. serratus anterior",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "serratus anterior",
+          "conceptIds": [
+            "FMA13397"
+          ],
+          "elementIds": [
+            "FJ1459",
+            "FJ1459M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1459",
+        "FJ1459M"
+      ],
+      "leftIds": [
+        "FJ1459M"
+      ],
+      "rightIds": [
+        "FJ1459"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "rhomb": {
+      "modelName": "Ромбовидные мышцы",
+      "modelLatin": "mm. rhomboidei",
+      "status": "group",
+      "sourceConcepts": [
+        {
+          "name": "rhomboid major",
+          "conceptIds": [
+            "FMA13379"
+          ],
+          "elementIds": [
+            "FJ1536",
+            "FJ1536M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        },
+        {
+          "name": "rhomboid minor",
+          "conceptIds": [
+            "FMA13380"
+          ],
+          "elementIds": [
+            "FJ1537",
+            "FJ1537M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1536",
+        "FJ1536M",
+        "FJ1537",
+        "FJ1537M"
+      ],
+      "leftIds": [
+        "FJ1536M",
+        "FJ1537M"
+      ],
+      "rightIds": [
+        "FJ1536",
+        "FJ1537"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false,
+      "groupNote": "Several anatomical source parts share one model unit/physics value; preserve separate source pieces or merge once, never duplicate the group volume."
+    },
+    "levScap": {
+      "modelName": "Мышца, поднимающая лопатку",
+      "modelLatin": "m. levator scapulae",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "levator scapulae",
+          "conceptIds": [
+            "FMA32519"
+          ],
+          "elementIds": [
+            "FJ1532",
+            "FJ1532M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1532",
+        "FJ1532M"
+      ],
+      "leftIds": [
+        "FJ1532M"
+      ],
+      "rightIds": [
+        "FJ1532"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "deltAnt": {
+      "modelName": "Дельтовидная, передняя часть",
+      "modelLatin": "m. deltoideus, pars clavicularis",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "clavicular part of deltoid",
+          "conceptIds": [
+            "FMA34677"
+          ],
+          "elementIds": [
+            "FJ1468",
+            "FJ1468M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1468",
+        "FJ1468M"
+      ],
+      "leftIds": [
+        "FJ1468M"
+      ],
+      "rightIds": [
+        "FJ1468"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "deltMid": {
+      "modelName": "Дельтовидная, средняя часть",
+      "modelLatin": "m. deltoideus, pars acromialis",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "acromial part of deltoid",
+          "conceptIds": [
+            "FMA34678"
+          ],
+          "elementIds": [
+            "FJ1467",
+            "FJ1467M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1467",
+        "FJ1467M"
+      ],
+      "leftIds": [
+        "FJ1467M"
+      ],
+      "rightIds": [
+        "FJ1467"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "deltPost": {
+      "modelName": "Дельтовидная, задняя часть",
+      "modelLatin": "m. deltoideus, pars spinalis",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "spinal part of deltoid",
+          "conceptIds": [
+            "FMA34679"
+          ],
+          "elementIds": [
+            "FJ1513",
+            "FJ1513M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1513",
+        "FJ1513M"
+      ],
+      "leftIds": [
+        "FJ1513M"
+      ],
+      "rightIds": [
+        "FJ1513"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "supra": {
+      "modelName": "Надостная мышца",
+      "modelLatin": "m. supraspinatus",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "supraspinatus",
+          "conceptIds": [
+            "FMA9629"
+          ],
+          "elementIds": [
+            "FJ1506",
+            "FJ1506M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1506",
+        "FJ1506M"
+      ],
+      "leftIds": [
+        "FJ1506M"
+      ],
+      "rightIds": [
+        "FJ1506"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "infra": {
+      "modelName": "Подостная мышца",
+      "modelLatin": "m. infraspinatus",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "infraspinatus",
+          "conceptIds": [
+            "FMA32546"
+          ],
+          "elementIds": [
+            "FJ1500",
+            "FJ1500M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1500",
+        "FJ1500M"
+      ],
+      "leftIds": [
+        "FJ1500M"
+      ],
+      "rightIds": [
+        "FJ1500"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "teresMin": {
+      "modelName": "Малая круглая мышца",
+      "modelLatin": "m. teres minor",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "teres minor",
+          "conceptIds": [
+            "FMA32550"
+          ],
+          "elementIds": [
+            "FJ1508",
+            "FJ1508M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1508",
+        "FJ1508M"
+      ],
+      "leftIds": [
+        "FJ1508M"
+      ],
+      "rightIds": [
+        "FJ1508"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "subscap": {
+      "modelName": "Подлопаточная мышца",
+      "modelLatin": "m. subscapularis",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "subscapularis",
+          "conceptIds": [
+            "FMA13413"
+          ],
+          "elementIds": [
+            "FJ1504",
+            "FJ1504M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1504",
+        "FJ1504M"
+      ],
+      "leftIds": [
+        "FJ1504M"
+      ],
+      "rightIds": [
+        "FJ1504"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "teresMaj": {
+      "modelName": "Большая круглая мышца",
+      "modelLatin": "m. teres major",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "teres major",
+          "conceptIds": [
+            "FMA32549"
+          ],
+          "elementIds": [
+            "FJ1507",
+            "FJ1507M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1507",
+        "FJ1507M"
+      ],
+      "leftIds": [
+        "FJ1507M"
+      ],
+      "rightIds": [
+        "FJ1507"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "tricLong": {
+      "modelName": "Трёхглавая, длинная головка",
+      "modelLatin": "m. triceps brachii, caput longum",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "long head of triceps brachii",
+          "conceptIds": [
+            "FMA37692"
+          ],
+          "elementIds": [
+            "FJ1479",
+            "FJ1479M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1479",
+        "FJ1479M"
+      ],
+      "leftIds": [
+        "FJ1479M"
+      ],
+      "rightIds": [
+        "FJ1479"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "tricLat": {
+      "modelName": "Трёхглавая, латеральная головка",
+      "modelLatin": "m. triceps brachii, caput laterale",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "lateral head of triceps brachii",
+          "conceptIds": [
+            "FMA37694"
+          ],
+          "elementIds": [
+            "FJ1477",
+            "FJ1477M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1477",
+        "FJ1477M"
+      ],
+      "leftIds": [
+        "FJ1477M"
+      ],
+      "rightIds": [
+        "FJ1477"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "tricMed": {
+      "modelName": "Трёхглавая, медиальная головка",
+      "modelLatin": "m. triceps brachii, caput mediale",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "medial head of triceps brachii",
+          "conceptIds": [
+            "FMA37693"
+          ],
+          "elementIds": [
+            "FJ1480",
+            "FJ1480M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1480",
+        "FJ1480M"
+      ],
+      "leftIds": [
+        "FJ1480M"
+      ],
+      "rightIds": [
+        "FJ1480"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "anconeus": {
+      "modelName": "Локтевая мышца",
+      "modelLatin": "m. anconeus",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "anconeus",
+          "conceptIds": [
+            "FMA37704"
+          ],
+          "elementIds": [
+            "FJ1485",
+            "FJ1485M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1485",
+        "FJ1485M"
+      ],
+      "leftIds": [
+        "FJ1485M"
+      ],
+      "rightIds": [
+        "FJ1485"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "bicLong": {
+      "modelName": "Двуглавая, длинная головка",
+      "modelLatin": "m. biceps brachii, caput longum",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "long head of biceps brachii",
+          "conceptIds": [
+            "FMA37683"
+          ],
+          "elementIds": [
+            "FJ1478",
+            "FJ1478M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1478",
+        "FJ1478M"
+      ],
+      "leftIds": [
+        "FJ1478M"
+      ],
+      "rightIds": [
+        "FJ1478"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "bicShort": {
+      "modelName": "Двуглавая, короткая головка",
+      "modelLatin": "m. biceps brachii, caput breve",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "short head of biceps brachii",
+          "conceptIds": [
+            "FMA37682"
+          ],
+          "elementIds": [
+            "FJ1512",
+            "FJ1512M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1512",
+        "FJ1512M"
+      ],
+      "leftIds": [
+        "FJ1512M"
+      ],
+      "rightIds": [
+        "FJ1512"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "coracobr": {
+      "modelName": "Клювовидно-плечевая мышца",
+      "modelLatin": "m. coracobrachialis",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "coracobrachialis",
+          "conceptIds": [
+            "FMA37664"
+          ],
+          "elementIds": [
+            "FJ1488",
+            "FJ1488M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1488",
+        "FJ1488M"
+      ],
+      "leftIds": [
+        "FJ1488M"
+      ],
+      "rightIds": [
+        "FJ1488"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "brachialis": {
+      "modelName": "Плечевая мышца",
+      "modelLatin": "m. brachialis",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "brachialis",
+          "conceptIds": [
+            "FMA37667"
+          ],
+          "elementIds": [
+            "FJ1486",
+            "FJ1486M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1486",
+        "FJ1486M"
+      ],
+      "leftIds": [
+        "FJ1486M"
+      ],
+      "rightIds": [
+        "FJ1486"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "brachiorad": {
+      "modelName": "Плечелучевая мышца",
+      "modelLatin": "m. brachioradialis",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "brachioradialis",
+          "conceptIds": [
+            "FMA38485"
+          ],
+          "elementIds": [
+            "FJ1487",
+            "FJ1487M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1487",
+        "FJ1487M"
+      ],
+      "leftIds": [
+        "FJ1487M"
+      ],
+      "rightIds": [
+        "FJ1487"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "pronTeres": {
+      "modelName": "Круглый пронатор",
+      "modelLatin": "m. pronator teres",
+      "status": "group",
+      "sourceConcepts": [
+        {
+          "name": "humeral head of pronator teres",
+          "conceptIds": [
+            "FMA38558"
+          ],
+          "elementIds": [
+            "FJ1474",
+            "FJ1474M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        },
+        {
+          "name": "ulnar head of pronator teres",
+          "conceptIds": [
+            "FMA38559"
+          ],
+          "elementIds": [
+            "FJ1516",
+            "FJ1516M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1474",
+        "FJ1474M",
+        "FJ1516",
+        "FJ1516M"
+      ],
+      "leftIds": [
+        "FJ1474M",
+        "FJ1516M"
+      ],
+      "rightIds": [
+        "FJ1474",
+        "FJ1516"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false,
+      "groupNote": "Several anatomical source parts share one model unit/physics value; preserve separate source pieces or merge once, never duplicate the group volume."
+    },
+    "pronQuad": {
+      "modelName": "Квадратный пронатор",
+      "modelLatin": "m. pronator quadratus",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "pronator quadratus",
+          "conceptIds": [
+            "FMA38453"
+          ],
+          "elementIds": [
+            "FJ1503",
+            "FJ1503M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1503",
+        "FJ1503M"
+      ],
+      "leftIds": [
+        "FJ1503M"
+      ],
+      "rightIds": [
+        "FJ1503"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "supinator": {
+      "modelName": "Мышца-супинатор",
+      "modelLatin": "m. supinator",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "supinator",
+          "conceptIds": [
+            "FMA38512"
+          ],
+          "elementIds": [
+            "FJ1505",
+            "FJ1505M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1505",
+        "FJ1505M"
+      ],
+      "leftIds": [
+        "FJ1505M"
+      ],
+      "rightIds": [
+        "FJ1505"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "wristFlex": {
+      "modelName": "Сгибатели запястья",
+      "modelLatin": "mm. flexores carpi",
+      "status": "group",
+      "sourceConcepts": [
+        {
+          "name": "flexor carpi radialis",
+          "conceptIds": [
+            "FMA38459"
+          ],
+          "elementIds": [
+            "FJ1496",
+            "FJ1496M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        },
+        {
+          "name": "humeral head of flexor carpi ulnaris",
+          "conceptIds": [
+            "FMA38615"
+          ],
+          "elementIds": [
+            "FJ1473",
+            "FJ1473M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        },
+        {
+          "name": "ulnar head of flexor carpi ulnaris",
+          "conceptIds": [
+            "FMA38616"
+          ],
+          "elementIds": [
+            "FJ1518",
+            "FJ1518M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1473",
+        "FJ1473M",
+        "FJ1496",
+        "FJ1496M",
+        "FJ1518",
+        "FJ1518M"
+      ],
+      "leftIds": [
+        "FJ1473M",
+        "FJ1496M",
+        "FJ1518M"
+      ],
+      "rightIds": [
+        "FJ1473",
+        "FJ1496",
+        "FJ1518"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false,
+      "groupNote": "Several anatomical source parts share one model unit/physics value; preserve separate source pieces or merge once, never duplicate the group volume.",
+      "scopeNote": "FCR and both FCU heads only. The middle old strand was labelled finger flexors, but FDS/FDP source volume belongs to fingerFlex, so it must not be copied here."
+    },
+    "palmaris": {
+      "modelName": "Длинная ладонная мышца",
+      "modelLatin": "m. palmaris longus",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "palmaris longus",
+          "conceptIds": [
+            "FMA38462"
+          ],
+          "elementIds": [
+            "FJ1502",
+            "FJ1502M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1502",
+        "FJ1502M"
+      ],
+      "leftIds": [
+        "FJ1502M"
+      ],
+      "rightIds": [
+        "FJ1502"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "fingerFlex": {
+      "modelName": "Сгибатели пальцев",
+      "modelLatin": "mm. flexores digitorum",
+      "status": "group",
+      "sourceConcepts": [
+        {
+          "name": "flexor digitorum superficialis",
+          "conceptIds": [
+            "FMA38469"
+          ],
+          "elementIds": [
+            "FJ1475",
+            "FJ1475M",
+            "FJ1499",
+            "FJ1499M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        },
+        {
+          "name": "flexor digitorum profundus",
+          "conceptIds": [
+            "FMA38478"
+          ],
+          "elementIds": [
+            "FJ1497",
+            "FJ1497M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1475",
+        "FJ1475M",
+        "FJ1497",
+        "FJ1497M",
+        "FJ1499",
+        "FJ1499M"
+      ],
+      "leftIds": [
+        "FJ1475M",
+        "FJ1497M",
+        "FJ1499M"
+      ],
+      "rightIds": [
+        "FJ1475",
+        "FJ1497",
+        "FJ1499"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false,
+      "groupNote": "Several anatomical source parts share one model unit/physics value; preserve separate source pieces or merge once, never duplicate the group volume.",
+      "scopeNote": "FDS/FDP to digits2–5 only, matching current four model strands; flexor pollicis longus is not represented by this unit and is not silently added."
+    },
+    "wristExt": {
+      "modelName": "Разгибатели запястья и пальцев",
+      "modelLatin": "mm. extensores carpi et digitorum",
+      "status": "group",
+      "sourceConcepts": [
+        {
+          "name": "extensor carpi radialis longus",
+          "conceptIds": [
+            "FMA38494"
+          ],
+          "elementIds": [
+            "FJ1490",
+            "FJ1490M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        },
+        {
+          "name": "extensor carpi radialis brevis",
+          "conceptIds": [
+            "FMA38497"
+          ],
+          "elementIds": [
+            "FJ1489",
+            "FJ1489M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        },
+        {
+          "name": "extensor carpi ulnaris",
+          "conceptIds": [
+            "FMA38506"
+          ],
+          "elementIds": [
+            "FJ1472",
+            "FJ1472M",
+            "FJ1517",
+            "FJ1517M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        },
+        {
+          "name": "extensor digitorum",
+          "conceptIds": [
+            "FMA38500"
+          ],
+          "elementIds": [
+            "FJ1492",
+            "FJ1492M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        },
+        {
+          "name": "extensor indicis",
+          "conceptIds": [
+            "FMA38524"
+          ],
+          "elementIds": [
+            "FJ1493",
+            "FJ1493M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        },
+        {
+          "name": "extensor digiti minimi",
+          "conceptIds": [
+            "FMA38503"
+          ],
+          "elementIds": [
+            "FJ1491",
+            "FJ1491M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1472",
+        "FJ1472M",
+        "FJ1489",
+        "FJ1489M",
+        "FJ1490",
+        "FJ1490M",
+        "FJ1491",
+        "FJ1491M",
+        "FJ1492",
+        "FJ1492M",
+        "FJ1493",
+        "FJ1493M",
+        "FJ1517",
+        "FJ1517M"
+      ],
+      "leftIds": [
+        "FJ1472M",
+        "FJ1489M",
+        "FJ1490M",
+        "FJ1491M",
+        "FJ1492M",
+        "FJ1493M",
+        "FJ1517M"
+      ],
+      "rightIds": [
+        "FJ1472",
+        "FJ1489",
+        "FJ1490",
+        "FJ1491",
+        "FJ1492",
+        "FJ1493",
+        "FJ1517"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false,
+      "groupNote": "Several anatomical source parts share one model unit/physics value; preserve separate source pieces or merge once, never duplicate the group volume."
+    },
+    "apl": {
+      "modelName": "Длинная мышца, отводящая большой палец кисти",
+      "modelLatin": "m. abductor pollicis longus",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "abductor pollicis longus",
+          "conceptIds": [
+            "FMA38515"
+          ],
+          "elementIds": [
+            "FJ1484",
+            "FJ1484M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1484",
+        "FJ1484M"
+      ],
+      "leftIds": [
+        "FJ1484M"
+      ],
+      "rightIds": [
+        "FJ1484"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "thenar": {
+      "modelName": "Мышцы возвышения большого пальца",
+      "modelLatin": "mm. thenaris",
+      "status": "group",
+      "sourceConcepts": [
+        {
+          "name": "abductor pollicis brevis",
+          "conceptIds": [
+            "FMA37373"
+          ],
+          "elementIds": [
+            "FJ1483",
+            "FJ1483M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        },
+        {
+          "name": "flexor pollicis brevis",
+          "conceptIds": [
+            "FMA37378"
+          ],
+          "elementIds": [
+            "FJ1469",
+            "FJ1469M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        },
+        {
+          "name": "opponens pollicis",
+          "conceptIds": [
+            "FMA37379"
+          ],
+          "elementIds": [
+            "FJ1501",
+            "FJ1501M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        },
+        {
+          "name": "oblique head of adductor pollicis",
+          "conceptIds": [
+            "FMA46119"
+          ],
+          "elementIds": [
+            "FJ1481",
+            "FJ1481M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        },
+        {
+          "name": "transverse head of adductor pollicis",
+          "conceptIds": [
+            "FMA46120"
+          ],
+          "elementIds": [
+            "FJ1515",
+            "FJ1515M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1469",
+        "FJ1469M",
+        "FJ1481",
+        "FJ1481M",
+        "FJ1483",
+        "FJ1483M",
+        "FJ1501",
+        "FJ1501M",
+        "FJ1515",
+        "FJ1515M"
+      ],
+      "leftIds": [
+        "FJ1469M",
+        "FJ1481M",
+        "FJ1483M",
+        "FJ1501M",
+        "FJ1515M"
+      ],
+      "rightIds": [
+        "FJ1469",
+        "FJ1481",
+        "FJ1483",
+        "FJ1501",
+        "FJ1515"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false,
+      "groupNote": "Several anatomical source parts share one model unit/physics value; preserve separate source pieces or merge once, never duplicate the group volume.",
+      "scopeNote": "Broad model thenar group: abductor/opponens/flexor pollicis brevis plus both adductor pollicis heads. This is one group physics estimate, not individual-muscle activation.",
+      "sideAssignmentsFromGeometry": {
+        "FJ1469": "R",
+        "FJ1469M": "L"
+      },
+      "sideCorrection": "The relation-table laterality for flexor pollicis brevis disagrees with the actual OBJ geometry: FJ1469 lies entirely on the right (negative X), FJ1469M on the left (positive X). These two assignments are corrected from geometry; no surface is mirrored or relabelled as another muscle."
+    },
+    "hypothenar": {
+      "modelName": "Мышцы возвышения мизинца",
+      "modelLatin": "mm. hypothenaris",
+      "status": "group",
+      "sourceConcepts": [
+        {
+          "name": "abductor digiti minimi of hand",
+          "conceptIds": [
+            "FMA37382"
+          ],
+          "elementIds": [
+            "FJ1466",
+            "FJ1466M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        },
+        {
+          "name": "flexor digiti minimi brevis of hand",
+          "conceptIds": [
+            "FMA37383"
+          ],
+          "elementIds": [
+            "FJ1470",
+            "FJ1470M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        },
+        {
+          "name": "opponens digiti minimi of hand",
+          "conceptIds": [
+            "FMA37384"
+          ],
+          "elementIds": [
+            "FJ1482",
+            "FJ1482M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1466",
+        "FJ1466M",
+        "FJ1470",
+        "FJ1470M",
+        "FJ1482",
+        "FJ1482M"
+      ],
+      "leftIds": [
+        "FJ1466M",
+        "FJ1470M",
+        "FJ1482M"
+      ],
+      "rightIds": [
+        "FJ1466",
+        "FJ1470",
+        "FJ1482"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false,
+      "groupNote": "Several anatomical source parts share one model unit/physics value; preserve separate source pieces or merge once, never duplicate the group volume."
+    },
+    "interossei": {
+      "modelName": "Тыльные межкостные мышцы кисти",
+      "modelLatin": "mm. interossei dorsales",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "set of dorsal interossei of hand",
+          "conceptIds": [
+            "FMA71319"
+          ],
+          "elementIds": [
+            "FJ1509",
+            "FJ1509M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1509",
+        "FJ1509M"
+      ],
+      "leftIds": [
+        "FJ1509M"
+      ],
+      "rightIds": [
+        "FJ1509"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false,
+      "scopeNote": "Only dorsal interossei, as specified by modelLatin. Do not substitute palmar interossei or lumbricals."
+    },
+    "scm": {
+      "modelName": "Грудино-ключично-сосцевидная мышца",
+      "modelLatin": "m. sternocleidomastoideus",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "sternocleidomastoid",
+          "conceptIds": [
+            "FMA13407"
+          ],
+          "elementIds": [
+            "FJ1573",
+            "FJ1595"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1573",
+        "FJ1595"
+      ],
+      "leftIds": [
+        "FJ1573"
+      ],
+      "rightIds": [
+        "FJ1595"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "scalene": {
+      "modelName": "Лестничные мышцы",
+      "modelLatin": "mm. scaleni",
+      "status": "group",
+      "sourceConcepts": [
+        {
+          "name": "scalenus anterior",
+          "conceptIds": [
+            "FMA13385"
+          ],
+          "elementIds": [
+            "FJ1570",
+            "FJ1592"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        },
+        {
+          "name": "scalenus medius",
+          "conceptIds": [
+            "FMA13386"
+          ],
+          "elementIds": [
+            "FJ1571",
+            "FJ1593"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        },
+        {
+          "name": "scalenus posterior",
+          "conceptIds": [
+            "FMA13387"
+          ],
+          "elementIds": [
+            "FJ1572",
+            "FJ1594"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1570",
+        "FJ1571",
+        "FJ1572",
+        "FJ1592",
+        "FJ1593",
+        "FJ1594"
+      ],
+      "leftIds": [
+        "FJ1570",
+        "FJ1571",
+        "FJ1572"
+      ],
+      "rightIds": [
+        "FJ1592",
+        "FJ1593",
+        "FJ1594"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false,
+      "groupNote": "Several anatomical source parts share one model unit/physics value; preserve separate source pieces or merge once, never duplicate the group volume."
+    },
+    "longusColli": {
+      "modelName": "Длинная мышца шеи",
+      "modelLatin": "m. longus colli",
+      "status": "group",
+      "sourceConcepts": [
+        {
+          "name": "inferior oblique part of longus colli",
+          "conceptIds": [
+            "FMA46281"
+          ],
+          "elementIds": [
+            "FJ1557"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        },
+        {
+          "name": "superior oblique part of longus colli",
+          "conceptIds": [
+            "FMA46280"
+          ],
+          "elementIds": [
+            "FJ1600"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        },
+        {
+          "name": "vertical intermediate part of longus colli",
+          "conceptIds": [
+            "FMA46282"
+          ],
+          "elementIds": [
+            "FJ1601"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1557",
+        "FJ1600",
+        "FJ1601"
+      ],
+      "leftIds": [
+        "FJ1557",
+        "FJ1600",
+        "FJ1601"
+      ],
+      "rightIds": [],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": true,
+      "partitionNeeded": false,
+      "groupNote": "Several anatomical source parts share one model unit/physics value; preserve separate source pieces or merge once, never duplicate the group volume.",
+      "scopeNote": "Available names identify left longus colli parts only; mirror to right if necessary and record that provenance."
+    },
+    "splenius": {
+      "modelName": "Ременная мышца головы",
+      "modelLatin": "m. splenius capitis",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "splenius capitis",
+          "conceptIds": [
+            "FMA22653"
+          ],
+          "elementIds": [
+            "FJ1545",
+            "FJ1545M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1545",
+        "FJ1545M"
+      ],
+      "leftIds": [
+        "FJ1545M"
+      ],
+      "rightIds": [
+        "FJ1545"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "semispinalis": {
+      "modelName": "Полуостистая мышца головы",
+      "modelLatin": "m. semispinalis capitis",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "semispinalis capitis",
+          "conceptIds": [
+            "FMA22830"
+          ],
+          "elementIds": [
+            "FJ1538",
+            "FJ1538M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1538",
+        "FJ1538M"
+      ],
+      "leftIds": [
+        "FJ1538M"
+      ],
+      "rightIds": [
+        "FJ1538"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "erector": {
+      "modelName": "Мышца, выпрямляющая позвоночник",
+      "modelLatin": "m. erector spinae",
+      "status": "group",
+      "sourceConcepts": [
+        {
+          "name": "iliocostalis lumborum",
+          "conceptIds": [
+            "FMA22702"
+          ],
+          "elementIds": [
+            "FJ1527",
+            "FJ1527M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        },
+        {
+          "name": "iliocostalis thoracis",
+          "conceptIds": [
+            "FMA22703"
+          ],
+          "elementIds": [
+            "FJ1528",
+            "FJ1528M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        },
+        {
+          "name": "iliocostalis cervicis",
+          "conceptIds": [
+            "FMA22704"
+          ],
+          "elementIds": [
+            "FJ1526",
+            "FJ1526M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        },
+        {
+          "name": "longissimus thoracis",
+          "conceptIds": [
+            "FMA22709"
+          ],
+          "elementIds": [
+            "FJ1535",
+            "FJ1535M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        },
+        {
+          "name": "longissimus cervicis",
+          "conceptIds": [
+            "FMA22711"
+          ],
+          "elementIds": [
+            "FJ1534",
+            "FJ1534M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        },
+        {
+          "name": "longissimus capitis",
+          "conceptIds": [
+            "FMA22714"
+          ],
+          "elementIds": [
+            "FJ1533",
+            "FJ1533M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        },
+        {
+          "name": "spinalis",
+          "conceptIds": [
+            "FMA77179"
+          ],
+          "elementIds": [
+            "FJ1543",
+            "FJ1543M",
+            "FJ1544",
+            "FJ1544M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1526",
+        "FJ1526M",
+        "FJ1527",
+        "FJ1527M",
+        "FJ1528",
+        "FJ1528M",
+        "FJ1533",
+        "FJ1533M",
+        "FJ1534",
+        "FJ1534M",
+        "FJ1535",
+        "FJ1535M",
+        "FJ1543",
+        "FJ1543M",
+        "FJ1544",
+        "FJ1544M"
+      ],
+      "leftIds": [
+        "FJ1526M",
+        "FJ1527M",
+        "FJ1528M",
+        "FJ1533M",
+        "FJ1534M",
+        "FJ1535M",
+        "FJ1543M",
+        "FJ1544M"
+      ],
+      "rightIds": [
+        "FJ1526",
+        "FJ1527",
+        "FJ1528",
+        "FJ1533",
+        "FJ1534",
+        "FJ1535",
+        "FJ1543",
+        "FJ1544"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false,
+      "groupNote": "Several anatomical source parts share one model unit/physics value; preserve separate source pieces or merge once, never duplicate the group volume.",
+      "scopeNote": "Includes cervical/head parts of anatomical erector spinae, which go beyond the prior four schematic strands ending near C7. Visual whole-muscle scope is broader than the existing physics routes. Exclude these parts if exact schematic coverage is required."
+    },
+    "multifidus": {
+      "modelName": "Многораздельная мышца",
+      "modelLatin": "mm. multifidi",
+      "status": "missing",
+      "sourceConcepts": [
+        {
+          "name": "multifidus",
+          "conceptIds": [],
+          "elementIds": [],
+          "tables": [],
+          "available": false
+        }
+      ],
+      "elementIds": [],
+      "leftIds": [],
+      "rightIds": [],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false,
+      "limitation": "No exact named concept is present in the supplied BP3D4.0 relation tables. Keep an explicitly labelled procedural fallback; do not claim an atlas mesh for this unit."
+    },
+    "ql": {
+      "modelName": "Квадратная мышца поясницы",
+      "modelLatin": "m. quadratus lumborum",
+      "status": "missing",
+      "sourceConcepts": [
+        {
+          "name": "quadratus lumborum",
+          "conceptIds": [],
+          "elementIds": [],
+          "tables": [],
+          "available": false
+        }
+      ],
+      "elementIds": [],
+      "leftIds": [],
+      "rightIds": [],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false,
+      "limitation": "No exact named concept is present in the supplied BP3D4.0 relation tables. Keep an explicitly labelled procedural fallback; do not claim an atlas mesh for this unit."
+    },
+    "rectAbd": {
+      "modelName": "Прямая мышца живота",
+      "modelLatin": "m. rectus abdominis",
+      "status": "missing",
+      "sourceConcepts": [
+        {
+          "name": "rectus abdominis",
+          "conceptIds": [],
+          "elementIds": [],
+          "tables": [],
+          "available": false
+        }
+      ],
+      "elementIds": [],
+      "leftIds": [],
+      "rightIds": [],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false,
+      "limitation": "No exact named concept is present in the supplied BP3D4.0 relation tables. Keep an explicitly labelled procedural fallback; do not claim an atlas mesh for this unit."
+    },
+    "extObl": {
+      "modelName": "Наружная косая мышца живота",
+      "modelLatin": "m. obliquus externus abdominis",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "external oblique",
+          "conceptIds": [
+            "FMA13335"
+          ],
+          "elementIds": [
+            "FJ1452",
+            "FJ1452M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1452",
+        "FJ1452M"
+      ],
+      "leftIds": [
+        "FJ1452M"
+      ],
+      "rightIds": [
+        "FJ1452"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "intObl": {
+      "modelName": "Внутренняя косая мышца живота",
+      "modelLatin": "m. obliquus internus abdominis",
+      "status": "missing",
+      "sourceConcepts": [
+        {
+          "name": "internal oblique",
+          "conceptIds": [],
+          "elementIds": [],
+          "tables": [],
+          "available": false
+        }
+      ],
+      "elementIds": [],
+      "leftIds": [],
+      "rightIds": [],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false,
+      "limitation": "No exact named concept is present in the supplied BP3D4.0 relation tables. Keep an explicitly labelled procedural fallback; do not claim an atlas mesh for this unit."
+    },
+    "transAbd": {
+      "modelName": "Поперечная мышца живота",
+      "modelLatin": "m. transversus abdominis",
+      "status": "missing",
+      "sourceConcepts": [
+        {
+          "name": "transversus abdominis",
+          "conceptIds": [],
+          "elementIds": [],
+          "tables": [],
+          "available": false
+        }
+      ],
+      "elementIds": [],
+      "leftIds": [],
+      "rightIds": [],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false,
+      "limitation": "No exact named concept is present in the supplied BP3D4.0 relation tables. Keep an explicitly labelled procedural fallback; do not claim an atlas mesh for this unit."
+    },
+    "psoas": {
+      "modelName": "Большая поясничная мышца",
+      "modelLatin": "m. psoas major",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "psoas major",
+          "conceptIds": [
+            "FMA18060"
+          ],
+          "elementIds": [
+            "FJ1431",
+            "FJ1431M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1431",
+        "FJ1431M"
+      ],
+      "leftIds": [
+        "FJ1431M"
+      ],
+      "rightIds": [
+        "FJ1431"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "iliacus": {
+      "modelName": "Подвздошная мышца",
+      "modelLatin": "m. iliacus",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "iliacus",
+          "conceptIds": [
+            "FMA22310"
+          ],
+          "elementIds": [
+            "FJ1422",
+            "FJ1422M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1422",
+        "FJ1422M"
+      ],
+      "leftIds": [
+        "FJ1422M"
+      ],
+      "rightIds": [
+        "FJ1422"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "gluteMax": {
+      "modelName": "Большая ягодичная мышца",
+      "modelLatin": "m. gluteus maximus",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "gluteus maximus",
+          "conceptIds": [
+            "FMA22314"
+          ],
+          "elementIds": [
+            "FJ1418",
+            "FJ1418M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1418",
+        "FJ1418M"
+      ],
+      "leftIds": [
+        "FJ1418M"
+      ],
+      "rightIds": [
+        "FJ1418"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "gluteMed": {
+      "modelName": "Средняя ягодичная мышца",
+      "modelLatin": "m. gluteus medius",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "gluteus medius",
+          "conceptIds": [
+            "FMA22315"
+          ],
+          "elementIds": [
+            "FJ1419",
+            "FJ1419M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1419",
+        "FJ1419M"
+      ],
+      "leftIds": [
+        "FJ1419M"
+      ],
+      "rightIds": [
+        "FJ1419"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "gluteMin": {
+      "modelName": "Малая ягодичная мышца",
+      "modelLatin": "m. gluteus minimus",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "gluteus minimus",
+          "conceptIds": [
+            "FMA22317"
+          ],
+          "elementIds": [
+            "FJ1420",
+            "FJ1420M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1420",
+        "FJ1420M"
+      ],
+      "leftIds": [
+        "FJ1420M"
+      ],
+      "rightIds": [
+        "FJ1420"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "piriformis": {
+      "modelName": "Грушевидная мышца",
+      "modelLatin": "m. piriformis",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "piriformis",
+          "conceptIds": [
+            "FMA19082"
+          ],
+          "elementIds": [
+            "FJ1428",
+            "FJ1428M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1428",
+        "FJ1428M"
+      ],
+      "leftIds": [
+        "FJ1428M"
+      ],
+      "rightIds": [
+        "FJ1428"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "obtInt": {
+      "modelName": "Внутренняя запирательная мышца",
+      "modelLatin": "m. obturator internus",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "obturator internus",
+          "conceptIds": [
+            "FMA22298"
+          ],
+          "elementIds": [
+            "FJ1426",
+            "FJ1426M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1426",
+        "FJ1426M"
+      ],
+      "leftIds": [
+        "FJ1426M"
+      ],
+      "rightIds": [
+        "FJ1426"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "gemelli": {
+      "modelName": "Близнецовые мышцы",
+      "modelLatin": "mm. gemelli",
+      "status": "group",
+      "sourceConcepts": [
+        {
+          "name": "gemellus superior",
+          "conceptIds": [
+            "FMA22318"
+          ],
+          "elementIds": [
+            "FJ1417",
+            "FJ1417M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        },
+        {
+          "name": "gemellus inferior",
+          "conceptIds": [
+            "FMA22320"
+          ],
+          "elementIds": [
+            "FJ1416",
+            "FJ1416M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1416",
+        "FJ1416M",
+        "FJ1417",
+        "FJ1417M"
+      ],
+      "leftIds": [
+        "FJ1416M",
+        "FJ1417M"
+      ],
+      "rightIds": [
+        "FJ1416",
+        "FJ1417"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false,
+      "groupNote": "Several anatomical source parts share one model unit/physics value; preserve separate source pieces or merge once, never duplicate the group volume."
+    },
+    "quadFem": {
+      "modelName": "Квадратная мышца бедра",
+      "modelLatin": "m. quadratus femoris",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "quadratus femoris",
+          "conceptIds": [
+            "FMA22321"
+          ],
+          "elementIds": [
+            "FJ1432",
+            "FJ1432M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1432",
+        "FJ1432M"
+      ],
+      "leftIds": [
+        "FJ1432M"
+      ],
+      "rightIds": [
+        "FJ1432"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "obtExt": {
+      "modelName": "Наружная запирательная мышца",
+      "modelLatin": "m. obturator externus",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "obturator externus",
+          "conceptIds": [
+            "FMA22299"
+          ],
+          "elementIds": [
+            "FJ1425",
+            "FJ1425M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1425",
+        "FJ1425M"
+      ],
+      "leftIds": [
+        "FJ1425M"
+      ],
+      "rightIds": [
+        "FJ1425"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "tfl": {
+      "modelName": "Напрягатель широкой фасции",
+      "modelLatin": "m. tensor fasciae latae",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "tensor fasciae latae",
+          "conceptIds": [
+            "FMA22423"
+          ],
+          "elementIds": [
+            "FJ1438",
+            "FJ1438M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1438",
+        "FJ1438M"
+      ],
+      "leftIds": [
+        "FJ1438M"
+      ],
+      "rightIds": [
+        "FJ1438"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "sartorius": {
+      "modelName": "Портняжная мышца",
+      "modelLatin": "m. sartorius",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "sartorius",
+          "conceptIds": [
+            "FMA22353"
+          ],
+          "elementIds": [
+            "FJ1434",
+            "FJ1434M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1434",
+        "FJ1434M"
+      ],
+      "leftIds": [
+        "FJ1434M"
+      ],
+      "rightIds": [
+        "FJ1434"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "pectineus": {
+      "modelName": "Гребенчатая мышца",
+      "modelLatin": "m. pectineus",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "pectineus",
+          "conceptIds": [
+            "FMA22440"
+          ],
+          "elementIds": [
+            "FJ1427",
+            "FJ1427M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1427",
+        "FJ1427M"
+      ],
+      "leftIds": [
+        "FJ1427M"
+      ],
+      "rightIds": [
+        "FJ1427"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "addLong": {
+      "modelName": "Длинная приводящая мышца",
+      "modelLatin": "m. adductor longus",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "adductor longus",
+          "conceptIds": [
+            "FMA22441"
+          ],
+          "elementIds": [
+            "FJ1402",
+            "FJ1402M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1402",
+        "FJ1402M"
+      ],
+      "leftIds": [
+        "FJ1402M"
+      ],
+      "rightIds": [
+        "FJ1402"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "addBrev": {
+      "modelName": "Короткая приводящая мышца",
+      "modelLatin": "m. adductor brevis",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "adductor brevis",
+          "conceptIds": [
+            "FMA22442"
+          ],
+          "elementIds": [
+            "FJ1401",
+            "FJ1401M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1401",
+        "FJ1401M"
+      ],
+      "leftIds": [
+        "FJ1401M"
+      ],
+      "rightIds": [
+        "FJ1401"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "addMag": {
+      "modelName": "Большая приводящая мышца",
+      "modelLatin": "m. adductor magnus",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "adductor magnus",
+          "conceptIds": [
+            "FMA22443"
+          ],
+          "elementIds": [
+            "FJ1403",
+            "FJ1403M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1403",
+        "FJ1403M"
+      ],
+      "leftIds": [
+        "FJ1403M"
+      ],
+      "rightIds": [
+        "FJ1403"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "gracilis": {
+      "modelName": "Тонкая мышца",
+      "modelLatin": "m. gracilis",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "gracilis",
+          "conceptIds": [
+            "FMA43882"
+          ],
+          "elementIds": [
+            "FJ1421",
+            "FJ1421M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1421",
+        "FJ1421M"
+      ],
+      "leftIds": [
+        "FJ1421M"
+      ],
+      "rightIds": [
+        "FJ1421"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "bicFemL": {
+      "modelName": "Двуглавая мышца бедра, длинная головка",
+      "modelLatin": "m. biceps femoris, caput longum",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "long head of biceps femoris",
+          "conceptIds": [
+            "FMA45887"
+          ],
+          "elementIds": [
+            "FJ1395",
+            "FJ1395M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1395",
+        "FJ1395M"
+      ],
+      "leftIds": [
+        "FJ1395M"
+      ],
+      "rightIds": [
+        "FJ1395"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "bicFemS": {
+      "modelName": "Двуглавая мышца бедра, короткая головка",
+      "modelLatin": "m. biceps femoris, caput breve",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "short head of biceps femoris",
+          "conceptIds": [
+            "FMA45890"
+          ],
+          "elementIds": [
+            "FJ1444",
+            "FJ1444M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1444",
+        "FJ1444M"
+      ],
+      "leftIds": [
+        "FJ1444M"
+      ],
+      "rightIds": [
+        "FJ1444"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "semiT": {
+      "modelName": "Полусухожильная мышца",
+      "modelLatin": "m. semitendinosus",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "semitendinosus",
+          "conceptIds": [
+            "FMA22357"
+          ],
+          "elementIds": [
+            "FJ1436",
+            "FJ1436M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1436",
+        "FJ1436M"
+      ],
+      "leftIds": [
+        "FJ1436M"
+      ],
+      "rightIds": [
+        "FJ1436"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "semiM": {
+      "modelName": "Полуперепончатая мышца",
+      "modelLatin": "m. semimembranosus",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "semimembranosus",
+          "conceptIds": [
+            "FMA22438"
+          ],
+          "elementIds": [
+            "FJ1435",
+            "FJ1435M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1435",
+        "FJ1435M"
+      ],
+      "leftIds": [
+        "FJ1435M"
+      ],
+      "rightIds": [
+        "FJ1435"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "rectFem": {
+      "modelName": "Прямая мышца бедра",
+      "modelLatin": "m. rectus femoris",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "rectus femoris",
+          "conceptIds": [
+            "FMA22430"
+          ],
+          "elementIds": [
+            "FJ1433",
+            "FJ1433M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1433",
+        "FJ1433M"
+      ],
+      "leftIds": [
+        "FJ1433M"
+      ],
+      "rightIds": [
+        "FJ1433"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "vastLat": {
+      "modelName": "Латеральная широкая мышца бедра",
+      "modelLatin": "m. vastus lateralis",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "vastus lateralis",
+          "conceptIds": [
+            "FMA22431"
+          ],
+          "elementIds": [
+            "FJ1442",
+            "FJ1442M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1442",
+        "FJ1442M"
+      ],
+      "leftIds": [
+        "FJ1442M"
+      ],
+      "rightIds": [
+        "FJ1442"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "vastMed": {
+      "modelName": "Медиальная широкая мышца бедра",
+      "modelLatin": "m. vastus medialis",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "vastus medialis",
+          "conceptIds": [
+            "FMA22432"
+          ],
+          "elementIds": [
+            "FJ1443",
+            "FJ1443M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1443",
+        "FJ1443M"
+      ],
+      "leftIds": [
+        "FJ1443M"
+      ],
+      "rightIds": [
+        "FJ1443"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "vastInt": {
+      "modelName": "Промежуточная широкая мышца бедра",
+      "modelLatin": "m. vastus intermedius",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "vastus intermedius",
+          "conceptIds": [
+            "FMA22433"
+          ],
+          "elementIds": [
+            "FJ1441",
+            "FJ1441M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1441",
+        "FJ1441M"
+      ],
+      "leftIds": [
+        "FJ1441M"
+      ],
+      "rightIds": [
+        "FJ1441"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "popliteus": {
+      "modelName": "Подколенная мышца",
+      "modelLatin": "m. popliteus",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "popliteus",
+          "conceptIds": [
+            "FMA22590"
+          ],
+          "elementIds": [
+            "FJ1430",
+            "FJ1430M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1430",
+        "FJ1430M"
+      ],
+      "leftIds": [
+        "FJ1430M"
+      ],
+      "rightIds": [
+        "FJ1430"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "gastroM": {
+      "modelName": "Икроножная мышца, медиальная головка",
+      "modelLatin": "m. gastrocnemius, caput mediale",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "medial head of gastrocnemius",
+          "conceptIds": [
+            "FMA45956"
+          ],
+          "elementIds": [
+            "FJ1397",
+            "FJ1397M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1397",
+        "FJ1397M"
+      ],
+      "leftIds": [
+        "FJ1397M"
+      ],
+      "rightIds": [
+        "FJ1397"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "gastroL": {
+      "modelName": "Икроножная мышца, латеральная головка",
+      "modelLatin": "m. gastrocnemius, caput laterale",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "lateral head of gastrocnemius",
+          "conceptIds": [
+            "FMA45959"
+          ],
+          "elementIds": [
+            "FJ1394",
+            "FJ1394M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1394",
+        "FJ1394M"
+      ],
+      "leftIds": [
+        "FJ1394M"
+      ],
+      "rightIds": [
+        "FJ1394"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "plantaris": {
+      "modelName": "Подошвенная мышца",
+      "modelLatin": "m. plantaris",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "plantaris",
+          "conceptIds": [
+            "FMA22543"
+          ],
+          "elementIds": [
+            "FJ1429",
+            "FJ1429M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1429",
+        "FJ1429M"
+      ],
+      "leftIds": [
+        "FJ1429M"
+      ],
+      "rightIds": [
+        "FJ1429"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "soleus": {
+      "modelName": "Камбаловидная мышца",
+      "modelLatin": "m. soleus",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "soleus",
+          "conceptIds": [
+            "FMA22542"
+          ],
+          "elementIds": [
+            "FJ1437",
+            "FJ1437M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1437",
+        "FJ1437M"
+      ],
+      "leftIds": [
+        "FJ1437M"
+      ],
+      "rightIds": [
+        "FJ1437"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "tibAnt": {
+      "modelName": "Передняя большеберцовая мышца",
+      "modelLatin": "m. tibialis anterior",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "tibialis anterior",
+          "conceptIds": [
+            "FMA22532"
+          ],
+          "elementIds": [
+            "FJ1439",
+            "FJ1439M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1439",
+        "FJ1439M"
+      ],
+      "leftIds": [
+        "FJ1439M"
+      ],
+      "rightIds": [
+        "FJ1439"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "edl": {
+      "modelName": "Длинный разгибатель пальцев стопы",
+      "modelLatin": "m. extensor digitorum longus",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "extensor digitorum longus",
+          "conceptIds": [
+            "FMA22534"
+          ],
+          "elementIds": [
+            "FJ1406",
+            "FJ1406M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1406",
+        "FJ1406M"
+      ],
+      "leftIds": [
+        "FJ1406M"
+      ],
+      "rightIds": [
+        "FJ1406"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "ehl": {
+      "modelName": "Длинный разгибатель большого пальца",
+      "modelLatin": "m. extensor hallucis longus",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "extensor hallucis longus",
+          "conceptIds": [
+            "FMA22533"
+          ],
+          "elementIds": [
+            "FJ1408",
+            "FJ1408M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1408",
+        "FJ1408M"
+      ],
+      "leftIds": [
+        "FJ1408M"
+      ],
+      "rightIds": [
+        "FJ1408"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "fibL": {
+      "modelName": "Длинная малоберцовая мышца",
+      "modelLatin": "m. fibularis longus",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "fibularis longus",
+          "conceptIds": [
+            "FMA22539"
+          ],
+          "elementIds": [
+            "FJ1410",
+            "FJ1410M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1410",
+        "FJ1410M"
+      ],
+      "leftIds": [
+        "FJ1410M"
+      ],
+      "rightIds": [
+        "FJ1410"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "fibB": {
+      "modelName": "Короткая малоберцовая мышца",
+      "modelLatin": "m. fibularis brevis",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "fibularis brevis",
+          "conceptIds": [
+            "FMA22540"
+          ],
+          "elementIds": [
+            "FJ1409",
+            "FJ1409M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1409",
+        "FJ1409M"
+      ],
+      "leftIds": [
+        "FJ1409M"
+      ],
+      "rightIds": [
+        "FJ1409"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "tibPost": {
+      "modelName": "Задняя большеберцовая мышца",
+      "modelLatin": "m. tibialis posterior",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "tibialis posterior",
+          "conceptIds": [
+            "FMA51099"
+          ],
+          "elementIds": [
+            "FJ1440",
+            "FJ1440M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1440",
+        "FJ1440M"
+      ],
+      "leftIds": [
+        "FJ1440M"
+      ],
+      "rightIds": [
+        "FJ1440"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "fhl": {
+      "modelName": "Длинный сгибатель большого пальца",
+      "modelLatin": "m. flexor hallucis longus",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "flexor hallucis longus",
+          "conceptIds": [
+            "FMA22593"
+          ],
+          "elementIds": [
+            "FJ1415",
+            "FJ1415M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1415",
+        "FJ1415M"
+      ],
+      "leftIds": [
+        "FJ1415M"
+      ],
+      "rightIds": [
+        "FJ1415"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "fdl": {
+      "modelName": "Длинный сгибатель пальцев стопы",
+      "modelLatin": "m. flexor digitorum longus",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "flexor digitorum longus",
+          "conceptIds": [
+            "FMA51071"
+          ],
+          "elementIds": [
+            "FJ1414",
+            "FJ1414M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1414",
+        "FJ1414M"
+      ],
+      "leftIds": [
+        "FJ1414M"
+      ],
+      "rightIds": [
+        "FJ1414"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "abdHall": {
+      "modelName": "Мышца, отводящая большой палец стопы",
+      "modelLatin": "m. abductor hallucis",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "abductor hallucis",
+          "conceptIds": [
+            "FMA37448"
+          ],
+          "elementIds": [
+            "FJ1400",
+            "FJ1400M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1400",
+        "FJ1400M"
+      ],
+      "leftIds": [
+        "FJ1400M"
+      ],
+      "rightIds": [
+        "FJ1400"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "fdb": {
+      "modelName": "Короткий сгибатель пальцев стопы",
+      "modelLatin": "m. flexor digitorum brevis",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "flexor digitorum brevis",
+          "conceptIds": [
+            "FMA37450"
+          ],
+          "elementIds": [
+            "FJ1413",
+            "FJ1413M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1413",
+        "FJ1413M"
+      ],
+      "leftIds": [
+        "FJ1413M"
+      ],
+      "rightIds": [
+        "FJ1413"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    },
+    "adm": {
+      "modelName": "Мышца, отводящая мизинец стопы",
+      "modelLatin": "m. abductor digiti minimi pedis",
+      "status": "direct",
+      "sourceConcepts": [
+        {
+          "name": "abductor digiti minimi of foot",
+          "conceptIds": [
+            "FMA37451"
+          ],
+          "elementIds": [
+            "FJ1390",
+            "FJ1390M"
+          ],
+          "tables": [
+            "isa_element_parts.txt"
+          ],
+          "available": true
+        }
+      ],
+      "elementIds": [
+        "FJ1390",
+        "FJ1390M"
+      ],
+      "leftIds": [
+        "FJ1390M"
+      ],
+      "rightIds": [
+        "FJ1390"
+      ],
+      "sideUnresolvedIds": [],
+      "mirrorMissingSide": false,
+      "partitionNeeded": false
+    }
+  },
+  "elementOwners": {
+    "FJ1521M": [
+      "trapUp"
+    ],
+    "FJ1521": [
+      "trapUp"
+    ],
+    "FJ1554M": [
+      "trapMid"
+    ],
+    "FJ1554": [
+      "trapMid"
+    ],
+    "FJ1520": [
+      "trapLow"
+    ],
+    "FJ1520M": [
+      "trapLow"
+    ],
+    "FJ1447M": [
+      "pecMaj"
+    ],
+    "FJ1464": [
+      "pecMaj"
+    ],
+    "FJ1446M": [
+      "pecMaj"
+    ],
+    "FJ1446": [
+      "pecMaj"
+    ],
+    "FJ1447": [
+      "pecMaj"
+    ],
+    "FJ1464M": [
+      "pecMaj"
+    ],
+    "FJ1456M": [
+      "pecMin"
+    ],
+    "FJ1456": [
+      "pecMin"
+    ],
+    "FJ1460M": [
+      "subclavius"
+    ],
+    "FJ1460": [
+      "subclavius"
+    ],
+    "FJ1459": [
+      "serratus"
+    ],
+    "FJ1459M": [
+      "serratus"
+    ],
+    "FJ1536M": [
+      "rhomb"
+    ],
+    "FJ1537M": [
+      "rhomb"
+    ],
+    "FJ1536": [
+      "rhomb"
+    ],
+    "FJ1537": [
+      "rhomb"
+    ],
+    "FJ1532": [
+      "levScap"
+    ],
+    "FJ1532M": [
+      "levScap"
+    ],
+    "FJ1468M": [
+      "deltAnt"
+    ],
+    "FJ1468": [
+      "deltAnt"
+    ],
+    "FJ1467": [
+      "deltMid"
+    ],
+    "FJ1467M": [
+      "deltMid"
+    ],
+    "FJ1513M": [
+      "deltPost"
+    ],
+    "FJ1513": [
+      "deltPost"
+    ],
+    "FJ1506": [
+      "supra"
+    ],
+    "FJ1506M": [
+      "supra"
+    ],
+    "FJ1500": [
+      "infra"
+    ],
+    "FJ1500M": [
+      "infra"
+    ],
+    "FJ1508": [
+      "teresMin"
+    ],
+    "FJ1508M": [
+      "teresMin"
+    ],
+    "FJ1504": [
+      "subscap"
+    ],
+    "FJ1504M": [
+      "subscap"
+    ],
+    "FJ1507": [
+      "teresMaj"
+    ],
+    "FJ1507M": [
+      "teresMaj"
+    ],
+    "FJ1479M": [
+      "tricLong"
+    ],
+    "FJ1479": [
+      "tricLong"
+    ],
+    "FJ1477": [
+      "tricLat"
+    ],
+    "FJ1477M": [
+      "tricLat"
+    ],
+    "FJ1480": [
+      "tricMed"
+    ],
+    "FJ1480M": [
+      "tricMed"
+    ],
+    "FJ1485M": [
+      "anconeus"
+    ],
+    "FJ1485": [
+      "anconeus"
+    ],
+    "FJ1478": [
+      "bicLong"
+    ],
+    "FJ1478M": [
+      "bicLong"
+    ],
+    "FJ1512": [
+      "bicShort"
+    ],
+    "FJ1512M": [
+      "bicShort"
+    ],
+    "FJ1488M": [
+      "coracobr"
+    ],
+    "FJ1488": [
+      "coracobr"
+    ],
+    "FJ1486": [
+      "brachialis"
+    ],
+    "FJ1486M": [
+      "brachialis"
+    ],
+    "FJ1487M": [
+      "brachiorad"
+    ],
+    "FJ1487": [
+      "brachiorad"
+    ],
+    "FJ1516": [
+      "pronTeres"
+    ],
+    "FJ1474M": [
+      "pronTeres"
+    ],
+    "FJ1474": [
+      "pronTeres"
+    ],
+    "FJ1516M": [
+      "pronTeres"
+    ],
+    "FJ1503M": [
+      "pronQuad"
+    ],
+    "FJ1503": [
+      "pronQuad"
+    ],
+    "FJ1505": [
+      "supinator"
+    ],
+    "FJ1505M": [
+      "supinator"
+    ],
+    "FJ1518": [
+      "wristFlex"
+    ],
+    "FJ1496M": [
+      "wristFlex"
+    ],
+    "FJ1473M": [
+      "wristFlex"
+    ],
+    "FJ1518M": [
+      "wristFlex"
+    ],
+    "FJ1496": [
+      "wristFlex"
+    ],
+    "FJ1473": [
+      "wristFlex"
+    ],
+    "FJ1502M": [
+      "palmaris"
+    ],
+    "FJ1502": [
+      "palmaris"
+    ],
+    "FJ1475M": [
+      "fingerFlex"
+    ],
+    "FJ1497": [
+      "fingerFlex"
+    ],
+    "FJ1499": [
+      "fingerFlex"
+    ],
+    "FJ1497M": [
+      "fingerFlex"
+    ],
+    "FJ1475": [
+      "fingerFlex"
+    ],
+    "FJ1499M": [
+      "fingerFlex"
+    ],
+    "FJ1490": [
+      "wristExt"
+    ],
+    "FJ1489": [
+      "wristExt"
+    ],
+    "FJ1492": [
+      "wristExt"
+    ],
+    "FJ1493M": [
+      "wristExt"
+    ],
+    "FJ1472M": [
+      "wristExt"
+    ],
+    "FJ1489M": [
+      "wristExt"
+    ],
+    "FJ1491": [
+      "wristExt"
+    ],
+    "FJ1491M": [
+      "wristExt"
+    ],
+    "FJ1517": [
+      "wristExt"
+    ],
+    "FJ1517M": [
+      "wristExt"
+    ],
+    "FJ1492M": [
+      "wristExt"
+    ],
+    "FJ1472": [
+      "wristExt"
+    ],
+    "FJ1493": [
+      "wristExt"
+    ],
+    "FJ1490M": [
+      "wristExt"
+    ],
+    "FJ1484": [
+      "apl"
+    ],
+    "FJ1484M": [
+      "apl"
+    ],
+    "FJ1469M": [
+      "thenar"
+    ],
+    "FJ1481": [
+      "thenar"
+    ],
+    "FJ1515": [
+      "thenar"
+    ],
+    "FJ1501": [
+      "thenar"
+    ],
+    "FJ1483M": [
+      "thenar"
+    ],
+    "FJ1483": [
+      "thenar"
+    ],
+    "FJ1469": [
+      "thenar"
+    ],
+    "FJ1501M": [
+      "thenar"
+    ],
+    "FJ1481M": [
+      "thenar"
+    ],
+    "FJ1515M": [
+      "thenar"
+    ],
+    "FJ1470M": [
+      "hypothenar"
+    ],
+    "FJ1466": [
+      "hypothenar"
+    ],
+    "FJ1482M": [
+      "hypothenar"
+    ],
+    "FJ1482": [
+      "hypothenar"
+    ],
+    "FJ1466M": [
+      "hypothenar"
+    ],
+    "FJ1470": [
+      "hypothenar"
+    ],
+    "FJ1509M": [
+      "interossei"
+    ],
+    "FJ1509": [
+      "interossei"
+    ],
+    "FJ1573": [
+      "scm"
+    ],
+    "FJ1595": [
+      "scm"
+    ],
+    "FJ1572": [
+      "scalene"
+    ],
+    "FJ1571": [
+      "scalene"
+    ],
+    "FJ1593": [
+      "scalene"
+    ],
+    "FJ1570": [
+      "scalene"
+    ],
+    "FJ1592": [
+      "scalene"
+    ],
+    "FJ1594": [
+      "scalene"
+    ],
+    "FJ1600": [
+      "longusColli"
+    ],
+    "FJ1601": [
+      "longusColli"
+    ],
+    "FJ1557": [
+      "longusColli"
+    ],
+    "FJ1545M": [
+      "splenius"
+    ],
+    "FJ1545": [
+      "splenius"
+    ],
+    "FJ1538M": [
+      "semispinalis"
+    ],
+    "FJ1538": [
+      "semispinalis"
+    ],
+    "FJ1535M": [
+      "erector"
+    ],
+    "FJ1526": [
+      "erector"
+    ],
+    "FJ1544M": [
+      "erector"
+    ],
+    "FJ1544": [
+      "erector"
+    ],
+    "FJ1543M": [
+      "erector"
+    ],
+    "FJ1533M": [
+      "erector"
+    ],
+    "FJ1543": [
+      "erector"
+    ],
+    "FJ1527M": [
+      "erector"
+    ],
+    "FJ1528": [
+      "erector"
+    ],
+    "FJ1534": [
+      "erector"
+    ],
+    "FJ1527": [
+      "erector"
+    ],
+    "FJ1526M": [
+      "erector"
+    ],
+    "FJ1535": [
+      "erector"
+    ],
+    "FJ1534M": [
+      "erector"
+    ],
+    "FJ1533": [
+      "erector"
+    ],
+    "FJ1528M": [
+      "erector"
+    ],
+    "FJ1452M": [
+      "extObl"
+    ],
+    "FJ1452": [
+      "extObl"
+    ],
+    "FJ1431": [
+      "psoas"
+    ],
+    "FJ1431M": [
+      "psoas"
+    ],
+    "FJ1422M": [
+      "iliacus"
+    ],
+    "FJ1422": [
+      "iliacus"
+    ],
+    "FJ1418": [
+      "gluteMax"
+    ],
+    "FJ1418M": [
+      "gluteMax"
+    ],
+    "FJ1419M": [
+      "gluteMed"
+    ],
+    "FJ1419": [
+      "gluteMed"
+    ],
+    "FJ1420": [
+      "gluteMin"
+    ],
+    "FJ1420M": [
+      "gluteMin"
+    ],
+    "FJ1428M": [
+      "piriformis"
+    ],
+    "FJ1428": [
+      "piriformis"
+    ],
+    "FJ1426M": [
+      "obtInt"
+    ],
+    "FJ1426": [
+      "obtInt"
+    ],
+    "FJ1416": [
+      "gemelli"
+    ],
+    "FJ1417M": [
+      "gemelli"
+    ],
+    "FJ1416M": [
+      "gemelli"
+    ],
+    "FJ1417": [
+      "gemelli"
+    ],
+    "FJ1432M": [
+      "quadFem"
+    ],
+    "FJ1432": [
+      "quadFem"
+    ],
+    "FJ1425": [
+      "obtExt"
+    ],
+    "FJ1425M": [
+      "obtExt"
+    ],
+    "FJ1438M": [
+      "tfl"
+    ],
+    "FJ1438": [
+      "tfl"
+    ],
+    "FJ1434": [
+      "sartorius"
+    ],
+    "FJ1434M": [
+      "sartorius"
+    ],
+    "FJ1427M": [
+      "pectineus"
+    ],
+    "FJ1427": [
+      "pectineus"
+    ],
+    "FJ1402": [
+      "addLong"
+    ],
+    "FJ1402M": [
+      "addLong"
+    ],
+    "FJ1401": [
+      "addBrev"
+    ],
+    "FJ1401M": [
+      "addBrev"
+    ],
+    "FJ1403M": [
+      "addMag"
+    ],
+    "FJ1403": [
+      "addMag"
+    ],
+    "FJ1421M": [
+      "gracilis"
+    ],
+    "FJ1421": [
+      "gracilis"
+    ],
+    "FJ1395M": [
+      "bicFemL"
+    ],
+    "FJ1395": [
+      "bicFemL"
+    ],
+    "FJ1444": [
+      "bicFemS"
+    ],
+    "FJ1444M": [
+      "bicFemS"
+    ],
+    "FJ1436": [
+      "semiT"
+    ],
+    "FJ1436M": [
+      "semiT"
+    ],
+    "FJ1435": [
+      "semiM"
+    ],
+    "FJ1435M": [
+      "semiM"
+    ],
+    "FJ1433": [
+      "rectFem"
+    ],
+    "FJ1433M": [
+      "rectFem"
+    ],
+    "FJ1442": [
+      "vastLat"
+    ],
+    "FJ1442M": [
+      "vastLat"
+    ],
+    "FJ1443M": [
+      "vastMed"
+    ],
+    "FJ1443": [
+      "vastMed"
+    ],
+    "FJ1441M": [
+      "vastInt"
+    ],
+    "FJ1441": [
+      "vastInt"
+    ],
+    "FJ1430M": [
+      "popliteus"
+    ],
+    "FJ1430": [
+      "popliteus"
+    ],
+    "FJ1397M": [
+      "gastroM"
+    ],
+    "FJ1397": [
+      "gastroM"
+    ],
+    "FJ1394M": [
+      "gastroL"
+    ],
+    "FJ1394": [
+      "gastroL"
+    ],
+    "FJ1429": [
+      "plantaris"
+    ],
+    "FJ1429M": [
+      "plantaris"
+    ],
+    "FJ1437": [
+      "soleus"
+    ],
+    "FJ1437M": [
+      "soleus"
+    ],
+    "FJ1439M": [
+      "tibAnt"
+    ],
+    "FJ1439": [
+      "tibAnt"
+    ],
+    "FJ1406M": [
+      "edl"
+    ],
+    "FJ1406": [
+      "edl"
+    ],
+    "FJ1408M": [
+      "ehl"
+    ],
+    "FJ1408": [
+      "ehl"
+    ],
+    "FJ1410M": [
+      "fibL"
+    ],
+    "FJ1410": [
+      "fibL"
+    ],
+    "FJ1409": [
+      "fibB"
+    ],
+    "FJ1409M": [
+      "fibB"
+    ],
+    "FJ1440": [
+      "tibPost"
+    ],
+    "FJ1440M": [
+      "tibPost"
+    ],
+    "FJ1415": [
+      "fhl"
+    ],
+    "FJ1415M": [
+      "fhl"
+    ],
+    "FJ1414": [
+      "fdl"
+    ],
+    "FJ1414M": [
+      "fdl"
+    ],
+    "FJ1400M": [
+      "abdHall"
+    ],
+    "FJ1400": [
+      "abdHall"
+    ],
+    "FJ1413M": [
+      "fdb"
+    ],
+    "FJ1413": [
+      "fdb"
+    ],
+    "FJ1390M": [
+      "adm"
+    ],
+    "FJ1390": [
+      "adm"
+    ]
+  },
+  "sharedElementConflicts": {},
+  "rules": [
+    "Use exact named concepts, not broad body-region ancestors.",
+    "Deduplicate each FJ within a unit: isa and partof tables repeat some relationships.",
+    "No source FJ may be copied wholesale into multiple model units. Shared FJs require a real geometric partition.",
+    "Trapezius, deltoid, triceps, biceps and gastrocnemius have separate named source heads/parts; no whole-muscle duplication needed.",
+    "FJ...M is used only as a mirror-side fallback when sided ontology names are absent. Explicit sided concepts take precedence."
+  ]
+}

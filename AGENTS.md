@@ -12,6 +12,7 @@
 - Перед каждым pull request: `python3 build.py && test "$(grep -c __dbg dist/index.html)" = 0`. Отладка не должна попадать в `index.html`. Эту же проверку делает автопубликация.
 - Node нужен, только если меняются позы или физика: `npm ci` (three 0.160), затем `node poses_build.mjs` → `poses.json`, `node physics_build.mjs` → `physics.json`. Круг: `./cycle_run.sh` (около 5 минут). Готовые данные поз и круга уже лежат в репозитории, для правки текстов и интерфейса Node не нужен.
 - Скрипты `ui_*_test.py` — Playwright с SwiftShader: открывают `dist/test.html` и делают скриншоты. Если в твоей среде нет браузера, проверку отрисовки пропусти и честно напиши об этом. После смены позы в тесте вызывай `window.__dbg.resetView(false)`: камера подгоняется плавно и в медленном рендере не успевает.
+- Мягкие ткани: `node muscle_paths_test.mjs`, `node connective_surface_check.mjs`, `node muscle_surfaces_test.mjs --actual --all-vertices`; целостность атласа — `python3 muscles/check.py` (нужен NumPy). Браузерная проверка — `python3 ui_soft_tissues_test.py --out /tmp/fysm-ui --browser /path/to/chromium`; особенности HTTPS-прокси описаны в начале скрипта.
 
 ## Что в каких файлах
 
@@ -20,6 +21,8 @@
 - `template3.html` — разметка, стили, вкладки поз, легенда.
 - `poses_build.mjs` → `poses.json` — положения сегментов в позах. `physics_core.mjs`, `physics_params.mjs`, `physics_build.mjs` → `physics.json` — расчёт нагрузки.
 - `cycle_*.mjs`, `cycle_keys/`, `cycle_data.json` — круг. `fascia3.js`, `fascia_render.js`, `books/` — фасции и линии Майерса. `skull/bones_bp3d.json` — кости.
+- `muscle_surface_render.js` и `muscles/muscles_bp3d.json` — объёмные формы мышц; происхождение и пересборка — `muscles/README.md`. 85 юнитов представлены BodyParts3D, 6 — явно отмеченными реконструкциями из `muscle_recon_build.mjs`. `connective_surface_render.js` — ленты связок и оболочки капсул. Геометрия этих поверхностей не определяет физиологический поперечник или силу.
+- `strandPath()` и `ownedStrandPath()` используют общий алгоритм в `anatomy3.js`: длина, плечо рычага и принадлежность точек силы сегментам должны оставаться согласованными. Подробности и границы точности — `docs/soft-tissues-accuracy.md`.
 - Остальные `*.mjs` и `*.py` в корне — исследовательские и отладочные скрипты, для обычной работы не нужны.
 - Новая поза затрагивает: запись в `POSES` и ветку в `measure()` (`anatomy3.js`), `poses_build.mjs`, `physics_params.mjs` и список поз в `physics_build.mjs`, `POSE_KEY` в `app3.js`, вкладку в `template3.html`. Образец — «Стойка на руках» (шестая поза).
 

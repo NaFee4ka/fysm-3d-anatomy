@@ -1,3 +1,8 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Анатомия шести асан</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24,7 +29,7 @@
 }
 html, body { height: 100%; }
 [hidden] { display: none !important; }
-body { background: var(--ink); color: var(--bone); font: 15px/1.5 var(--font-ui); -webkit-font-smoothing: antialiased; }
+body { margin: 0; box-sizing: border-box; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); background: var(--ink); color: var(--bone); font: 15px/1.5 var(--font-ui); -webkit-font-smoothing: antialiased; }
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--ink); }
 button { font: inherit; color: inherit; }
 button:focus-visible, input:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
@@ -235,6 +240,8 @@ body.no-light .legend-wrap { opacity: 0.45; }
   .panel { overflow-y: auto; padding-block: 14px 24px; }
 }
 </style>
+</head>
+<body>
 
 <div class="app">
   <header class="top gutter">
@@ -351,7 +358,10 @@ body.no-light .legend-wrap { opacity: 0.45; }
 
     <section class="card" id="info" aria-live="polite"></section>
 
-    <p class="note">Схематичная модель мужчины ростом около 176 см и весом 70 кг. Толщина мышц взята по типичной площади поперечного сечения; при удлинении мышца становится тоньше, потому что её объём не меняется. Длины мышц и связок посчитаны по точкам прикрепления с огибанием костей, углы суставов сравниваются с нормами подвижности взрослого. Силы посчитаны как статика: каждый сустав и всё тело должны быть в равновесии, а мышцы делят работу так, чтобы общее усилие было наименьшим, как в моделях OpenSim. Максимальные силы мышц взяты из опубликованных моделей опорно-двигательного аппарата, рычаги мышц посчитаны по изменению их длины в каждой позе. Учтены вес сегментов тела, мягкость тканей под опорой, трение о коврик, хват руками (руки могут только тянуть), пассивное натяжение растянутых мышц, жёсткость дисков и связок позвоночника, упор суставов в конце подвижности, давление лопатки на рёбра. Усилия, о которых просят подсказки (ягодицы в тонусе, пресс включён), заданы как минимальный тонус, остальное следует из равновесия. Цифры показывают направление и порядок величин, у каждого тела они свои. Череп — настоящие кости из анатомической базы BodyParts3D (© The Database Center for Life Science, лицензия CC BY 4.0), упрощённые и подогнанные к модели; зубы достроены по ширинам коронок взрослого.</p>
+    <p class="note" id="muscle-source-note" role="status">Загружаются объёмные формы мышц. Пока показана схема мышечных пучков.</p>
+    <p class="note">Модель взрослого мужчины ростом около 176 см и весом 70 кг. Кости и доступные поверхности мышц взяты из анатомической базы <a href="https://dbarchive.biosciencedbc.jp/en/bodyparts3d/desc.html" target="_blank" rel="noopener noreferrer">BodyParts3D</a>, упрощены и подогнаны к одному скелету. Недостающие мышцы, связки, капсулы и фасции реконструированы по точкам крепления и направлениям волокон. Формы мышц плавно привязаны к сегментам скелета по расчётным прикреплениям и проводникам. Изменение толщины и складки капсул — геометрические приближения, а не измеренная деформация ткани. При глубоком сгибании возможны уплощения и пересечения поверхностей. Удлинение пути связки или фасции относительно стойки не равно растяжению самой ткани.</p>
+    <p class="note">Усилия и нагрузки — оценки статической модели. Мышцы распределяют работу по условию равновесия с наименьшим суммарным усилием. Максимальные силы взяты из опубликованных моделей, рычаги посчитаны по изменению длины мышечных путей. Учтены опора, трение, хват, пассивные ткани и упоры суставов. Подсказки задают минимальный тонус отдельных мышц. В промежуточных положениях бегунка усилие интерполируется между стойкой и полной позой; кадры круга рассчитаны отдельно. Инерция, нервное управление и индивидуальная гибкость не учитываются; фасции пока не передают силу в решателе. Настоящая форма поверхности сама по себе не подтверждает точность оценки нагрузки.</p>
+    <p class="note">BodyParts3D, © The Database Center for Life Science, <a href="https://dbarchive.biosciencedbc.jp/en/bodyparts3d/lic.html" target="_blank" rel="noopener noreferrer">CC Attribution 4.0 International</a>. Зубы достроены по ширинам коронок взрослого.</p>
   </aside>
 </div>
 
@@ -368,3 +378,5 @@ setTimeout(function () {
   }
 }, 20000);
 </script>
+</body>
+</html>
