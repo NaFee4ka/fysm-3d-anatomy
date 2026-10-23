@@ -1,0 +1,546 @@
+{
+  "v": 1,
+  "checked_on": "2026-10-23",
+  "publication_window": {
+    "from": "2025-01-01",
+    "through": "2026-10-23"
+  },
+  "purpose": "Primary evidence for verification, explicit modeling assumptions and sensitivity; no institutional endorsement or validation of Fysm yoga.",
+  "imported_assets": [
+    {
+      "kind": "transcribed_numeric_table_inputs",
+      "file": "research/2025-2026/benchmark-geometry.json",
+      "source_id": "S7",
+      "source_tables": [
+        1,
+        2,
+        3,
+        5
+      ],
+      "cases": [
+        "case1",
+        "case2"
+      ],
+      "license": "CC-BY-4.0",
+      "attribution": "Gonçalves et al., DOI 10.1007/s11044-025-10096-8; table/page attribution preserved in the fixture.",
+      "content": "Body lengths, body-local joint/muscle/via coordinates, initial states and reference-length metadata transcribed from published tables.",
+      "derived_project_material": "Independent scalar analytic length/moment-arm samples and FYSM segment/API adaptation; not author simulation outputs.",
+      "not_imported": [
+        "downloaded meshes",
+        "author software",
+        "author force or activation curves",
+        "IFToMM result TSV files"
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "S1",
+      "kind": "peer_reviewed_software_paper",
+      "title": "The Neuromusculoskeletal Modeling Pipeline: MATLAB-based model personalization and treatment optimization functionality for OpenSim",
+      "authors": "Hammond et al.",
+      "year": 2025,
+      "publication_date": "2025-05-19",
+      "doi": "10.1186/s12984-025-01629-5",
+      "url": "https://doi.org/10.1186/s12984-025-01629-5",
+      "institutions": [
+        "Rice University",
+        "Stanford University",
+        "University of California, Davis"
+      ],
+      "evidence": [
+        {
+          "section": "Muscle–tendon model personalization",
+          "quote": "maximum isometric force is held constant during an MTP tool run",
+          "verified_url": "https://link.springer.com/article/10.1186/s12984-025-01629-5"
+        },
+        {
+          "section": "Common optimization cost formulation",
+          "finding": "Cost terms use explicit maximum allowable errors; personalization requires experimental movement inputs."
+        }
+      ],
+      "license": {
+        "paper": "CC BY-NC-ND 4.0",
+        "software": "Apache-2.0",
+        "software_version_in_paper": "1.4.0",
+        "verified_section": "Availability of data and materials; Rights and permissions"
+      },
+      "applicability": "Separate assumed activation bounds from personalized muscle capacity; compare explicit tone assumptions.",
+      "not_transferable": "No Fmax replacement or yoga calibration without individual measurements; force and activation scaling are non-identifiable together.",
+      "code_mapping": [
+        {
+          "file": "physics_params.mjs",
+          "symbol": "CUE_TONE",
+          "relation": "methodological motivation for explicit imposed-tone scenarios"
+        },
+        {
+          "file": "physics_core.mjs",
+          "symbol": "solve",
+          "relation": "separate physical residuals, feasibility and optimization status; not an implementation copied from the paper"
+        },
+        {
+          "file": "physics_sensitivity_build.mjs",
+          "relation": "explicit cue/noCue full-pose calculations; actual scenario extrema, not confidence intervals"
+        },
+        {
+          "file": "app3.js",
+          "symbol": "researchComparisonHTML / researchCase",
+          "relation": "Show cue/noCue results only for verified full-pose/stand scenario records; range is not a confidence interval."
+        },
+        {
+          "file": "app3.js",
+          "symbol": "updateResearchQuality",
+          "relation": "Display numerical quality, dimensional equilibrium residuals, reserves and muscle-domain limits separately from physiological accuracy."
+        }
+      ],
+      "verification_limit": "Article read; experimental workflow and MATLAB software not reproduced."
+    },
+    {
+      "id": "S2",
+      "kind": "peer_reviewed_research_paper",
+      "title": "Automated quantification of the anatomic accuracy of muscle paths and its application in an image-based subject-specific modeling workflow for adult spinal deformity",
+      "authors": "Peeters et al.",
+      "year": 2025,
+      "publication_date": "2025-03-27",
+      "publication_date_type": "epub; journal issue June 2025",
+      "doi": "10.1016/j.gaitpost.2025.03.007",
+      "url": "https://doi.org/10.1016/j.gaitpost.2025.03.007",
+      "institutions": [
+        "KU Leuven",
+        "University Hospitals Leuven"
+      ],
+      "evidence": [
+        {
+          "section": "Methods, author university record LIRIAS4227752",
+          "quote": "muscle-bone penetration, muscle action, moment arm magnitude, and discontinuities",
+          "verified_url": "https://set.kuleuven.be/optec/people/00015567/view?pubsonpage=50&pubtype=journal-article&sortby=stitle"
+        }
+      ],
+      "license": {
+        "paper": "Reuse license not established from accessible primary records",
+        "software_and_meshes": "Not established; no imported assets"
+      },
+      "applicability": "Keep route geometry and moment-arm quality distinct from rendered muscle shape and solver balance.",
+      "not_transferable": "No new yoga attachment points or validation of the existing 91-unit paths; small spinal patient sample.",
+      "code_mapping": [
+        {
+          "file": "physics_core.mjs",
+          "symbol": "R and GUARDS",
+          "relation": "explains remaining route limitations; no geometry changes in this branch"
+        },
+        {
+          "file": "anatomy3.js",
+          "symbol": "strandPath",
+          "relation": "unchanged source geometry; future range-of-motion route validation"
+        }
+      ],
+      "verification_limit": "Publication date/DOI verified in PubMed; methods/results verified in author university record; publisher full text unavailable."
+    },
+    {
+      "id": "S3",
+      "kind": "peer_reviewed_research_paper",
+      "title": "Knee contact force alone is insufficient to validate joint mechanics in musculoskeletal models",
+      "authors": "Guo et al.",
+      "year": 2025,
+      "publication_date": "2025-09-23",
+      "publication_date_type": "available online; journal issue November 2025",
+      "doi": "10.1016/j.jbiomech.2025.112980",
+      "url": "https://doi.org/10.1016/j.jbiomech.2025.112980",
+      "institutions": [
+        "ETH Zürich",
+        "Ludwig Maximilians University Munich",
+        "Charité – Universitätsmedizin Berlin"
+      ],
+      "evidence": [
+        {
+          "section": "Abstract",
+          "finding": "Agreement of knee contact-force predictions does not guarantee correct joint kinematics or soft-tissue mechanics.",
+          "verified_url": "https://pubmed.ncbi.nlm.nih.gov/41016258/"
+        }
+      ],
+      "license": {
+        "paper": "Specific reuse license unverified in accessible primary records; PubMed states copyright The Authors",
+        "software_and_models": "Not imported"
+      },
+      "applicability": "Report solver verification and output-specific physical limits separately.",
+      "not_transferable": "Walking/squatting and implant knee models do not establish yoga accuracy, cartilage pressure or capsule forces.",
+      "code_mapping": [
+        {
+          "file": "physics_core.mjs",
+          "symbol": "jr and solver quality diagnostics",
+          "relation": "separate reaction estimates from contact-pressure or tissue validation"
+        },
+        {
+          "file": "docs/research-2025-2026.md",
+          "relation": "explicit validation boundaries"
+        },
+        {
+          "file": "app3.js",
+          "symbol": "updateResearchQuality",
+          "relation": "Display numerical quality, dimensional equilibrium residuals, reserves and muscle-domain limits separately from physiological accuracy."
+        }
+      ],
+      "verification_limit": "Bibliography/abstract verified in PubMed and ETH author listing; publisher full text blocked; no experimental replication."
+    },
+    {
+      "id": "S4",
+      "kind": "peer_reviewed_research_paper",
+      "title": "Effect of uncertainties in musculoskeletal modeling inputs on sensitivity of knee joint finite element simulations",
+      "authors": "Jahangir et al.",
+      "year": 2025,
+      "publication_date": "2025-02-25",
+      "publication_date_type": "online article date; journal issue April 2025",
+      "doi": "10.1016/j.medengphy.2025.104313",
+      "url": "https://doi.org/10.1016/j.medengphy.2025.104313",
+      "institutions": [
+        "University of Eastern Finland",
+        "University of Copenhagen",
+        "Copenhagen University Hospital, Bispebjerg and Frederiksberg"
+      ],
+      "evidence": [
+        {
+          "section": "Abstract",
+          "finding": "Three walking participants; modeling assumptions had subject-specific effects on musculoskeletal and finite-element outputs.",
+          "verified_url": "https://researchprofiles.ku.dk/en/publications/effect-of-uncertainties-in-musculoskeletal-modeling-inputs-on-sen/"
+        }
+      ],
+      "license": {
+        "paper": "CC BY",
+        "verified_url": "https://researchprofiles.ku.dk/en/publications/effect-of-uncertainties-in-musculoskeletal-modeling-inputs-on-sen/",
+        "software_and_data": "Not imported"
+      },
+      "applicability": "Compute actual alternative-assumption results rather than attach an invented universal error percentage.",
+      "not_transferable": "Published walking/FE percentage differences are not yoga accuracy bounds or confidence intervals.",
+      "code_mapping": [
+        {
+          "file": "physics_params.mjs",
+          "symbol": "CUE_TONE",
+          "relation": "tone/no-imposed-tone sensitivity is an engineering adaptation, not the paper protocol"
+        },
+        {
+          "file": "physics_core.mjs",
+          "symbol": "friction constraints",
+          "relation": "contact assumptions require explicit checks; polygon choice is our derivation"
+        },
+        {
+          "file": "physics_sensitivity_build.mjs",
+          "relation": "explicit cue/noCue full-pose calculations; actual scenario extrema, not confidence intervals"
+        },
+        {
+          "file": "app3.js",
+          "symbol": "researchComparisonHTML / researchCase",
+          "relation": "Show cue/noCue results only for verified full-pose/stand scenario records; range is not a confidence interval."
+        }
+      ],
+      "verification_limit": "Abstract, institutions and license verified in author university records; date verified through PubMed; study not reproduced."
+    },
+    {
+      "id": "S5",
+      "kind": "peer_reviewed_research_paper",
+      "title": "Benchmarking the predictive capability of human gait simulations",
+      "authors": "Afschrift, Kistemaker, Bobbert, De Groote",
+      "year": 2025,
+      "publication_date": "2025-11-17",
+      "doi": "10.1371/journal.pcbi.1012713",
+      "url": "https://doi.org/10.1371/journal.pcbi.1012713",
+      "institutions": [
+        "Vrije Universiteit Amsterdam",
+        "KU Leuven"
+      ],
+      "evidence": [
+        {
+          "section": "Abstract and Discussion",
+          "finding": "Reasonable kinematic prediction did not ensure metabolic accuracy; changing the objective traded accuracy between outputs.",
+          "verified_url": "https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1012713"
+        }
+      ],
+      "license": {
+        "paper": "CC BY",
+        "maintained_software": "AGPL-3.0",
+        "maintained_software_url": "https://github.com/KULeuvenNeuromechanics/PredSim",
+        "study_repository": "No license found at https://github.com/MaartenAfschrift/PredSim_gait_conditions",
+        "imported_code": false
+      },
+      "applicability": "Test distinct outputs and tasks; explicit objective/tone sensitivity rather than universal physiological optimality.",
+      "not_transferable": "No yoga, extreme-ROM, calorie or force validation; no numerical result reused as an error bar.",
+      "code_mapping": [
+        {
+          "file": "physics_core.mjs",
+          "symbol": "objective and passive spine",
+          "relation": "verification and explicit assumptions; conservative gradient is a separate mathematical correction"
+        },
+        {
+          "file": "physics_params.mjs",
+          "symbol": "CUE_TONE",
+          "relation": "document assumed neural control"
+        },
+        {
+          "file": "physics_sensitivity_build.mjs",
+          "relation": "explicit cue/noCue full-pose calculations; actual scenario extrema, not confidence intervals"
+        },
+        {
+          "file": "app3.js",
+          "symbol": "researchComparisonHTML / researchCase",
+          "relation": "Show cue/noCue results only for verified full-pose/stand scenario records; range is not a confidence interval."
+        }
+      ],
+      "verification_limit": "Full publisher article read; repositories/license labels checked; simulations not reproduced."
+    },
+    {
+      "id": "S6",
+      "kind": "official_software_release",
+      "title": "OpenSim 4.6; computational improvements to static optimization",
+      "authors": "OpenSim Team; static-optimization PR by Nathan Pickle, merged by Nick Bianco",
+      "year": 2026,
+      "publication_date": "2026-04-26",
+      "publication_date_type": "first PyPI release date for version 4.6; not a universal date for every GUI/build artifact",
+      "doi": null,
+      "url": "https://pypi.org/project/opensim/4.6/",
+      "institutions": [
+        "Stanford University, OpenSim project",
+        "CFD Research Corporation, static-optimization contribution"
+      ],
+      "evidence": [
+        {
+          "section": "Official release metadata",
+          "finding": "OpenSim 4.6 Python package released 2026-04-26; Apache 2.0."
+        },
+        {
+          "section": "PR #4037, merged 2025-04-25",
+          "quote": "This PR pre-calculates all state derivatives to improve speed.",
+          "verified_url": "https://github.com/opensim-org/opensim-core/pull/4037"
+        }
+      ],
+      "license": {
+        "software": "Apache-2.0",
+        "imported_code": false
+      },
+      "applicability": "Software changes need reproducible numerical checks separate from physiological validation.",
+      "not_transferable": "No new Fmax, tissue stiffness or yoga accuracy; published software speed changes do not predict JavaScript performance.",
+      "code_mapping": [
+        {
+          "file": "physics_core.mjs",
+          "symbol": "qpSolve",
+          "relation": "verification practice only; KKT diagnostics and friction/spine changes are independently implemented"
+        },
+        {
+          "file": "app3.js",
+          "symbol": "updateResearchQuality",
+          "relation": "Display numerical quality, dimensional equilibrium residuals, reserves and muscle-domain limits separately from physiological accuracy."
+        }
+      ],
+      "verification_limit": "Official release metadata, documentation and PR checked; package not installed or used as a reference solver."
+    },
+    {
+      "id": "S7",
+      "kind": "peer_reviewed_benchmark_paper",
+      "title": "Validation of skeletal muscle models in multibody dynamics: A collaborative collection of benchmark cases",
+      "authors": "Gonçalves et al.",
+      "year": 2026,
+      "publication_date": "2025-08-11",
+      "publication_date_type": "version of record online 2025-08-11; issue April 2026",
+      "doi": "10.1007/s11044-025-10096-8",
+      "url": "https://doi.org/10.1007/s11044-025-10096-8",
+      "institutions": [
+        "Universidade de Lisboa, Instituto Superior Técnico/IDMEC",
+        "Universidade do Minho, CMEMS",
+        "LABBELS"
+      ],
+      "evidence": [
+        {
+          "section": "Sections 4 and 5",
+          "finding": "Five component cases cover contraction, via-points, force sharing, antagonist neutralization and biarticular action; meaningful force comparisons require the same contraction model.",
+          "verified_url": "https://link.springer.com/article/10.1007/s11044-025-10096-8"
+        }
+      ],
+      "license": {
+        "paper": "CC BY 4.0",
+        "reference_data": "TSV results stated in supplementary material/IFToMM library; files not retrieved; IFToMM separately restricts downloads to research purposes",
+        "reference_data_terms_url": "https://www.iftomm-multibody.org/benchmark/terms/",
+        "reference_entry_url": "https://www.iftomm-multibody.org/benchmark/problem/Validation_of_Skeletal_Muscle_Models/",
+        "imported_assets": [
+          "research/2025-2026/benchmark-geometry.json: transcribed numerical table inputs, adapted with attribution under article CC BY 4.0"
+        ],
+        "imported_author_code_or_simulation_outputs": false
+      },
+      "applicability": "Candidate external geometry/component benchmark for polyline routes and generalized-force assembly.",
+      "not_transferable": "Published cubic-stress recruitment/Hill model differs from this quadratic static solver; full force-activation validation cannot be claimed.",
+      "code_mapping": [
+        {
+          "file": "research/2025-2026/benchmark-geometry.json",
+          "relation": "published Cases 1/2 Tables 1/2/3/5 geometry inputs; project-computed scalar analytic reference samples, not author force TSV"
+        },
+        {
+          "file": "physics_reference_geometry_test.mjs",
+          "relation": "Actual FYSM strandPath/ownedStrandPath and rotW/dpdq/pullOn component verification: 968 configurations and 20 independent analytic samples; no QP/Hill or author force-TSV reproduction."
+        }
+      ],
+      "verification_limit": "Primary publisher article and PDF read; dates, affiliations and CC BY license checked. Table geometry independently transcribed and checked. No author TSV force comparison or full Hill reproduction.",
+      "component_check_evidence": {
+        "test": "node physics_reference_geometry_test.mjs",
+        "configurations": 968,
+        "independent_analytic_samples": 20,
+        "maximum_length_error_m": 6.67e-16,
+        "maximum_length_derivative_error_m_per_rad": 2.62e-10,
+        "maximum_virtual_work_error_Nm": 2.36e-16,
+        "classification": "Component consistency against independently derived analytic references using published geometry; not measured human validation.",
+        "length_derivative_error_note": "Small-step finite-difference check; working 0.3-degree step is reported separately.",
+        "maximum_working_step_length_derivative_error_m_per_rad": 5.19e-07,
+        "working_step_degrees": 0.3
+      }
+    },
+    {
+      "id": "S8",
+      "kind": "peer_reviewed_research_paper",
+      "title": "Assessing sensitivity of predictive shoulder simulations to uncertain soft tissue properties",
+      "authors": "Morgan J. Dalman; Katherine R. Saul",
+      "year": 2026,
+      "publication_date": "2025-12-08",
+      "publication_date_type": "online article date; journal issue January 2026",
+      "doi": "10.1016/j.jbiomech.2025.113114",
+      "url": "https://doi.org/10.1016/j.jbiomech.2025.113114",
+      "institutions": [
+        "North Carolina State University"
+      ],
+      "evidence": [
+        {
+          "section": "Abstract and Methods",
+          "finding": "Uncertain ligament slack length/stiffness and cartilage properties affect scaption kinematics/contact; slack length was particularly influential.",
+          "verified_url": "https://pubmed.ncbi.nlm.nih.gov/41380522/"
+        }
+      ],
+      "license": {
+        "paper": "Open-access Creative Commons label found, exact terms not verified here",
+        "software_and_data": "Not imported"
+      },
+      "applicability": "Support explicit passive-tissue uncertainty and sensitivity discussion alongside solver results.",
+      "not_transferable": "No yoga calibration; published Monte Carlo sample counts/distributions are not Fysm confidence intervals or default parameter ranges.",
+      "code_mapping": [
+        {
+          "file": "physics_params.mjs",
+          "symbol": "PASSIVE and CUE_TONE",
+          "relation": "document uncertain assumptions; tone comparison is a separate scenario, not reproduction of this protocol"
+        },
+        {
+          "file": "docs/research-2025-2026.md",
+          "relation": "source for visible uncertainty explanation"
+        },
+        {
+          "file": "physics_sensitivity_build.mjs",
+          "relation": "explicit cue/noCue full-pose calculations; actual scenario extrema, not confidence intervals"
+        },
+        {
+          "file": "app3.js",
+          "symbol": "researchComparisonHTML / researchCase",
+          "relation": "Show cue/noCue results only for verified full-pose/stand scenario records; range is not a confidence interval."
+        },
+        {
+          "file": "app3.js",
+          "symbol": "updateResearchQuality",
+          "relation": "Display numerical quality, dimensional equilibrium residuals, reserves and muscle-domain limits separately from physiological accuracy."
+        }
+      ],
+      "verification_limit": "PubMed date/affiliation/abstract checked; primary Methods passages additionally checked by collaborating source reviewer. Study not reproduced."
+    },
+    {
+      "id": "S9",
+      "kind": "peer_reviewed_dataset_paper",
+      "title": "Rapid personalized computational modeling of the wrist",
+      "authors": "Andreassen et al.",
+      "year": 2026,
+      "publication_date": "2026-08-18",
+      "doi": "10.1088/1873-4030/ae8542",
+      "url": "https://doi.org/10.1088/1873-4030/ae8542",
+      "institutions": [
+        "Mayo Clinic, Assistive and Restorative Technology Laboratory",
+        "Mayo Clinic Graduate Program in Biomedical Engineering and Physiology"
+      ],
+      "evidence": [
+        {
+          "section": "Abstract and figure captions",
+          "finding": "Three personalized 4DCT wrist models; some material parameters are non-identifiable when both connected bones are displacement-controlled.",
+          "verified_url": "https://pubmed.ncbi.nlm.nih.gov/42392143/"
+        }
+      ],
+      "datasets": [
+        {
+          "doi": "10.5281/zenodo.18353473",
+          "url": "https://zenodo.org/records/18353473",
+          "available_date": "2026-01-14",
+          "version_2_date": "2026-01-23",
+          "contents": "Raw geometry and kinematics, three participants",
+          "license": "CC BY 4.0"
+        },
+        {
+          "doi": "10.5281/zenodo.18354296",
+          "url": "https://zenodo.org/records/18354296",
+          "contents": "Separate finite-element models",
+          "license": "CC BY-NC 4.0"
+        }
+      ],
+      "license": {
+        "paper": "CC BY label in PubMed",
+        "raw_data": "CC BY 4.0",
+        "finite_element_models": "CC BY-NC 4.0; separate from raw data",
+        "imported_assets": false
+      },
+      "applicability": "Future external geometry/kinematic benchmark only; no current model or skeleton replacement.",
+      "not_transferable": "Unresisted wrist calibration and FE contact results do not establish loaded handstand accuracy or individual ligament parameters.",
+      "code_mapping": [
+        {
+          "file": "joints/",
+          "relation": "future benchmark candidate; no data imported and no current geometry edits"
+        }
+      ],
+      "verification_limit": "Paper date/affiliations/abstract/captions verified in PubMed. Dataset licensing/version details checked by collaborating reviewer on primary Zenodo records; this reader encountered rate limiting. No FE runs or participant comparison."
+    }
+  ],
+  "engineering_choices_not_claimed_as_paper_results": [
+    "KKT/feasibility diagnostics verify the implemented quadratic problem, not human physiology.",
+    "Inscribed 16-gon friction approximation and its 1-cos(pi/16) radial deficit follow geometry; no 2025-2026 friction measurement is claimed.",
+    "Conservative spine torque is the negative directional derivative of the existing energy; stiffness values are not newly calibrated.",
+    "CUE_TONE versus no imposed tone is an explicit sensitivity scenario, not a published yoga protocol or confidence interval."
+  ],
+  "not_adopted": [
+    {
+      "item": "A universal replacement of all Fmax or specific-tension values",
+      "reason": "No verified primary dataset here supplies the project's 91 muscle units in static yoga with compatible architecture and calibration."
+    },
+    {
+      "item": "Population volume regressions used as force calibration",
+      "reason": "Muscle volume alone does not specify physiological cross section or maximum force; frozen anisotropically fitted atlas bones are not participant measurements."
+    },
+    {
+      "item": "2026 Bayesian isometric-elbow preprint as validation",
+      "doi": "10.64898/2026.07.08.737322",
+      "reason": "Explicitly a non-peer-reviewed preprint; requires measured EMG/torque, and its reported code URL returned 404 during this check. Not a source for new yoga force values."
+    }
+  ],
+  "asset_scope": "Material newly brought into the repository for this 2025–2026 research change; pre-existing anatomy atlas assets are outside this manifest.",
+  "implementation_limits": {
+    "scenario_scope": [
+      "ordinary standing",
+      "six full pose endpoints"
+    ],
+    "excluded_scenario_states": [
+      "intermediate slider positions",
+      "animated cycle frames"
+    ],
+    "force_length": {
+      "source_file": "physics_core.mjs",
+      "reference": "Standing musculotendon path assigned normalized fiber length 1, not individually measured optimal fiber/tendon lengths.",
+      "fiber_fraction_floor": 0.3,
+      "active_curve_argument_bounds": [
+        0.4,
+        1.7
+      ],
+      "interpretation": "Existing modeling clamps, not new experimentally calibrated values. Successful equilibrium does not validate forces outside the approximation domain.",
+      "diagnostic_data_fields": [
+        "modelLimits.forceLengthClampedStrands",
+        "modelLimits.forceLengthClampedUnits",
+        "modelLimits.fibreFractionFloorUnits"
+      ]
+    },
+    "displayed_force_fraction": "Active force divided by Fmax; distinct from internal FMAX-weighted solver activation and from measured EMG."
+  }
+}

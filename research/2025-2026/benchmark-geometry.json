@@ -1,0 +1,107 @@
+{
+  "schema": "fysm.external-geometry-reference.v1",
+  "scope": {
+    "classification": "component verification using published geometry",
+    "covered": ["piecewise-linear MTU paths", "via-point ownership", "rigid coordinate transforms", "length derivatives", "tension virtual work"],
+    "notCovered": ["Kelvin-Hill contraction dynamics", "force-length and force-velocity curves", "activation or fatigue dynamics", "authors' stress-cubed optimization", "published force or activation trajectories", "validation of yoga poses or human tissue parameters"],
+    "referenceOutput": "The geometry inputs below are transcribed from the publication. The length/moment-arm samples are independently derived analytic values, not the authors' supplementary simulation results."
+  },
+  "source": {
+    "id": "goncalves-2025-2026-cases-1-2-geometry",
+    "authors": ["Sérgio B. Gonçalves", "Mariana Rodrigues da Silva", "Filipe Marques", "Paulo Flores", "Miguel Tavares da Silva"],
+    "title": "Validation of skeletal muscle models in multibody dynamics: A collaborative collection of benchmark cases",
+    "doi": "10.1007/s11044-025-10096-8",
+    "articleUrl": "https://link.springer.com/article/10.1007/s11044-025-10096-8",
+    "pdfUrl": "https://link.springer.com/content/pdf/10.1007/s11044-025-10096-8.pdf",
+    "publishedOnline": "2025-08-11",
+    "issueYear": 2026,
+    "issueYearNote": "The current publisher article page lists volume 66, pages 1057–1100 (2026); the downloaded version-of-record PDF header prints (2025). The unambiguous online publication date above is used for source provenance.",
+    "journal": "Multibody System Dynamics 66, 1057–1100",
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "Geometry adapted from Tables 1, 2, 3 and 5 of Gonçalves et al.; analytic geometry references and FYSM segment mapping added. No published human model or tissue calibration is implied.",
+    "tableLocations": [
+      {"table": 1, "printedPage": 1076, "used": "body lengths"},
+      {"table": 2, "printedPage": 1076, "used": "body-local joint positions and revolute axis"},
+      {"table": 3, "printedPage": 1077, "used": "initial body centers, orientations and rounded body-2 velocities"},
+      {"table": 5, "printedPage": 1079, "used": "Case 1 and Case 2 origin, insertion and via-point coordinates; reference-length parameters retained only as metadata"}
+    ],
+    "transcriptionNotes": [
+      "Coordinates are body-local metres with the body frame at its center of mass; the initial body orientations are identity.",
+      "Case 2 extensor via-point z is -0.450 m, not -0.500 m. This makes its fixed first segment 0.950 m.",
+      "Table-5 l_ref_MT is a contraction-model parameter. It is not the exact geometric neutral path length in Case 2.",
+      "Table-5 f0_M has an apparent unit-label inconsistency with the force nomenclature. No force-capacity entries are imported or used here.",
+      "The printed initial angular rate -1.6447 rad/s is not exactly -(pi/6)*pi for a literal 30-degree, 2-second sinusoid. Only the internal consistency of the printed instantaneous velocities is checked, not an exact author time waveform.",
+      "The introductory fixed-at-CoM wording differs from Table 2 and section 4.1. This fixture uses the explicit joint coordinates and initial centers in Tables 2 and 3."
+    ]
+  },
+  "units": {"position": "m", "angle": "rad unless explicitly degrees", "lengthDerivative": "m/rad", "signedMomentArm": "m, equal to -dL/dq for a right-hand +Y rotation", "probeTension": "N; test-selected, not a published force result"},
+  "published": {
+    "bodies": {
+      "body1": {"lengthM": 1.0, "initialCenterM": [0.0, 0.0, -0.5], "initialQuaternionXYZW": [0.0, 0.0, 0.0, 1.0]},
+      "body2": {"lengthM": 1.0, "initialCenterM": [0.0, 0.0, -1.5], "initialQuaternionXYZW": [0.0, 0.0, 0.0, 1.0]}
+    },
+    "joints": {
+      "J0": {"type": "fixed", "body1LocalM": [0.0, 0.0, 0.5]},
+      "J1": {"type": "revolute", "body1LocalM": [0.0, 0.0, -0.5], "body2LocalM": [0.0, 0.0, 0.5], "axisGlobalAtNeutral": [0.0, 1.0, 0.0]}
+    },
+    "motion": {"rangeDegrees": [-30.0, 30.0], "periodS": 2.0, "body2InitialAngularVelocityRadS": [0.0, -1.6447, 0.0], "body2InitialCenterVelocityMS": [0.8224, 0.0, 0.0], "velocitySourceRoundingDecimalPlaces": 4},
+    "cases": [
+      {
+        "id": "case1",
+        "muscles": [
+          {"id": "flexor", "referenceLengthParameterM": 1.1, "points": [{"body": "body1", "role": "origin", "localM": [0.075, 0.0, 0.5]}, {"body": "body2", "role": "insertion", "localM": [0.075, 0.0, 0.4]}]},
+          {"id": "extensor", "referenceLengthParameterM": 1.05, "points": [{"body": "body1", "role": "origin", "localM": [-0.1, 0.0, 0.5]}, {"body": "body2", "role": "insertion", "localM": [-0.1, 0.0, 0.45]}]}
+        ]
+      },
+      {
+        "id": "case2",
+        "muscles": [
+          {"id": "flexor", "referenceLengthParameterM": 1.1, "points": [{"body": "body1", "role": "origin", "localM": [0.075, 0.0, 0.5]}, {"body": "body1", "role": "via", "localM": [0.075, 0.0, -0.5]}, {"body": "body2", "role": "insertion", "localM": [0.025, 0.0, 0.4]}]},
+          {"id": "extensor", "referenceLengthParameterM": 1.05, "points": [{"body": "body1", "role": "origin", "localM": [-0.1, 0.0, 0.5]}, {"body": "body1", "role": "via", "localM": [-0.1, 0.0, -0.45]}, {"body": "body2", "role": "insertion", "localM": [-0.05, 0.0, 0.45]}]}
+        ]
+      }
+    ]
+  },
+  "adaptation": {
+    "bodyToFYSM": {"body1": "hum_L", "body2": "fore_L"},
+    "meaning": "Segment names only adapt the actual FYSM point-transform and ownership APIs to this published synthetic two-body geometry; no anatomical pose, attachment or parameter is changed.",
+    "restPointMapping": "storedPoint = A.S[mappedSegment].J + publishedBodyLocalPoint",
+    "worldMapping": "W[mappedSegment].p = published body center; W[mappedSegment].q = body rotation",
+    "physicsHelperMapping": "Use the existing elbow moved-subtree with the explicitly supplied benchmark +Y axis and published J1 center; this does not test the anatomical elbow-axis definition."
+  },
+  "analyticReference": {
+    "provenance": "Independently computed with scalar Python math from the transcribed coordinates; not sampled from FYSM or the authors' plots.",
+    "formula": "For the final segment, r = insertionLocal - J1.body2Local, a = lastFixedLocal - J1.body1Local. b(q) = Ry(q) r, s = b-a. L(q) = fixedPolylineLength + norm(s); dL/dq = dot(s, [b.z, 0, -b.x])/norm(s); momentArm = -dL/dq.",
+    "samples": [
+      {"case": "case1", "muscle": "flexor", "values": [
+        {"angleDegrees": -30, "lengthM": 1.049862988662955, "signedMomentArmM": -0.1130000743842797},
+        {"angleDegrees": -15, "lengthM": 1.077433690428393, "signedMomentArmM": -0.0966323301149066},
+        {"angleDegrees": 0, "lengthM": 1.1, "signedMomentArmM": -0.075},
+        {"angleDegrees": 15, "lengthM": 1.116366267026184, "signedMomentArmM": -0.0495024213106231},
+        {"angleDegrees": 30, "lengthM": 1.125705243376041, "signedMomentArmM": -0.02155057547698772}
+      ]},
+      {"case": "case1", "muscle": "extensor", "values": [
+        {"angleDegrees": -30, "lengthM": 1.093975334412415, "signedMomentArmM": 0.06483936626913504},
+        {"angleDegrees": -15, "lengthM": 1.074302594977158, "signedMomentArmM": 0.08477076233646044},
+        {"angleDegrees": 0, "lengthM": 1.05, "signedMomentArmM": 0.1},
+        {"angleDegrees": 15, "lengthM": 1.022458833709991, "signedMomentArmM": 0.1093197788304861},
+        {"angleDegrees": 30, "lengthM": 0.9933690312782832, "signedMomentArmM": 0.1116731686859778}
+      ]},
+      {"case": "case2", "muscle": "flexor", "values": [
+        {"angleDegrees": -30, "lengthM": 1.074178195824705, "signedMomentArmM": -0.07492350638342524},
+        {"angleDegrees": -15, "lengthM": 1.093517337830363, "signedMomentArmM": -0.07227705732878829},
+        {"angleDegrees": 0, "lengthM": 1.11180339887499, "signedMomentArmM": -0.06708203932499368},
+        {"angleDegrees": 15, "lengthM": 1.128491493212406, "signedMomentArmM": -0.06015751870793045},
+        {"angleDegrees": 30, "lengthM": 1.143186608088216, "signedMomentArmM": -0.05190911795189727}
+      ]},
+      {"case": "case2", "muscle": "extensor", "values": [
+        {"angleDegrees": -30, "lengthM": 1.093770208948439, "signedMomentArmM": 0.05387201274195119},
+        {"angleDegrees": -15, "lengthM": 1.078657127844098, "signedMomentArmM": 0.06133738131856138},
+        {"angleDegrees": 0, "lengthM": 1.061803398874989, "signedMomentArmM": 0.06708203932499369},
+        {"angleDegrees": 15, "lengthM": 1.043744787545851, "signedMomentArmM": 0.0703761377792323},
+        {"angleDegrees": 30, "lengthM": 1.025298558957511, "signedMomentArmM": 0.06965857781346109}
+      ]}
+    ]
+  }
+}

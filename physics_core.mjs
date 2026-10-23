@@ -11,6 +11,48 @@ import { MUSCLE, PASSIVE, SPINE_PASSIVE, JOINT_STOPS, CONTACT_K, FRICTION } from
 
 export const G = 9.81;
 
+// A regular polygon inscribed in the isotropic Coulomb circle. The former
+// four-face diamond reduced available traction by 29% along a world diagonal.
+// Sixteen faces keep every admissible force inside the same unchanged mu*N
+// circle, with at most 1-cos(pi/16) = 1.92% directional loss.
+export const COULOMB_FACETS = 16;
+export function frictionFacets(mu) {
+  const bound = -mu * Math.cos(Math.PI / COULOMB_FACETS);
+  return Array.from({ length: COULOMB_FACETS }, (_, k) => {
+    const angle = (k + 0.5) * 2 * Math.PI / COULOMB_FACETS;
+    return { normal: bound, x: Math.cos(angle), z: Math.sin(angle) };
+  });
+}
+
+// Energy of one existing spinal spring, in joules. Parameters retain their
+// original units (N*m/degree and degrees); no stiffness or range is retuned.
+export function spineJointEnergy(q, parameter) {
+  const D = Math.PI / 180, e = new THREE.Euler().setFromQuaternion(q, 'XYZ');
+  const angles = [e.x, e.y, e.z];
+  let energy = 0;
+  for (let a = 0; a < 3; a++) {
+    const angle = angles[a];
+    energy += 0.5 * parameter.k[a] * angle * angle / D;
+    const limit = (a === 0 ? (angle >= 0 ? parameter.flex : parameter.ext) : parameter.side) * D;
+    const span = 0.4 * limit, u = (Math.abs(angle) - 0.6 * limit) / span;
+    if (u > 0) energy += parameter.Mlim * span * (Math.expm1(4 * u) / 4 - u) / Math.expm1(4);
+  }
+  return energy;
+}
+
+export function spineJointTorque(q, parameter) {
+  const delta = 1e-6, torque = new Float64Array(3);
+  for (let a = 0; a < 3; a++) {
+    const axis = new THREE.Vector3().setComponent(a, 1);
+    const plus = new THREE.Quaternion().setFromAxisAngle(axis, delta).multiply(q);
+    const minus = new THREE.Quaternion().setFromAxisAngle(axis, -delta).multiply(q);
+    // The solver's axes are fixed in the parent frame. Euler-angle derivatives
+    // cannot be assigned directly to these torques in a mixed rotation.
+    torque[a] = -(spineJointEnergy(plus, parameter) - spineJointEnergy(minus, parameter)) / (2 * delta);
+  }
+  return torque;
+}
+
 export function makePhysics(A, opts = {}) {
   const { V, S, SEG, pt, LANDMARKS, MASS, strandPath, pathLength } = A;
   const BODY = opts.mass || 70, BW = BODY * G;
@@ -176,17 +218,8 @@ export function makePhysics(A, opts = {}) {
   function spinePassive(local) {
     const out = {};
     for (const [j, child] of SPINE) {
-      const P = SPINE_PASSIVE[j];
-      const e = new THREE.Euler().setFromQuaternion(local[child], 'XYZ');
-      const ang = [e.x / (Math.PI / 180), e.y / (Math.PI / 180), e.z / (Math.PI / 180)];
-      for (let a = 0; a < 3; a++) {
-        const th = ang[a];
-        const lim = a === 0 ? (th >= 0 ? P.flex : P.ext) : P.side;
-        let M = -P.k[a] * th;
-        const u = (Math.abs(th) - 0.6 * lim) / (0.4 * lim);
-        if (u > 0) M -= Math.sign(th) * P.Mlim * expRise(u, 4);
-        out[j + '_' + 'xyz'[a]] = M;
-      }
+      const torque = spineJointTorque(local[child], SPINE_PASSIVE[j]);
+      for (let a = 0; a < 3; a++) out[j + '_' + 'xyz'[a]] = torque[a];
     }
     return out;
   }
@@ -331,9 +364,9 @@ export function makePhysics(A, opts = {}) {
     for (let i = 0; i < NG; i++) for (let a = 0; a < 3; a++) { lo[iG + 3 * i + a] = -(grips[i].max || 0.8); hi[iG + 3 * i + a] = grips[i].max || 0.8; }
     for (let i = 0; i < NS; i++) { lo[iS + i] = 0; hi[iS + i] = o.noST ? 0 : 1; }
     for (let i = 0; i < pgroups.length; i++) { lo[iP + i] = (o.passiveLo ?? 0.5) - 1; hi[iP + i] = (o.passiveHi ?? 2) - 1; }
-    // friction cone (as a square pyramid inside the circle): |tx| + |tz| <= mu N
+    // Isotropic Coulomb friction, approximated by an inscribed 16-sided cone.
     const Ain = [], bin = [];
-    for (let i = 0; i < NC; i++) for (const [sx, sz] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) { const r = new Map(); r.set(iC + 3 * i, -contacts[i].mu); r.set(iC + 3 * i + 1, sx); r.set(iC + 3 * i + 2, sz); Ain.push(r); bin.push(0); }
+    for (let i = 0; i < NC; i++) for (const facet of frictionFacets(contacts[i].mu)) { const r = new Map(); r.set(iC + 3 * i, facet.normal); r.set(iC + 3 * i + 1, facet.x); r.set(iC + 3 * i + 2, facet.z); Ain.push(r); bin.push(0); }
     // a grip that only pulls: the shank pulls the hand away from the shoulder, inside a cone round the arm line
     grips.forEach((g, i) => {
       if (!g.from) return;
@@ -369,7 +402,7 @@ export function makePhysics(A, opts = {}) {
     pgroups.forEach((g, i) => { varKeys[iP + i] = 'p' + g.name + g.side; });
     const eqKeys = DOF.map((d, k) => 'e' + k);
     const inKeys = [];
-    for (let i = 0; i < NC; i++) for (let s4 = 0; s4 < 4; s4++) inKeys.push('f' + contacts[i].li + '_' + s4);
+    for (let i = 0; i < NC; i++) for (let facet = 0; facet < COULOMB_FACETS; facet++) inKeys.push('f' + contacts[i].li + '_coulomb' + COULOMB_FACETS + '_' + facet);
     grips.forEach((g, i) => { if (g.from) for (let s4 = 0; s4 < 4; s4++) inKeys.push('k' + (g.side || i) + '_' + s4); });
     // without a warm start the vertical loads of the rigid-body solution are a good first guess for the floor
     let warm = o.warm || null;
@@ -377,7 +410,26 @@ export function makePhysics(A, opts = {}) {
       warm = { x: new Map(warm.x), y: warm.y, rho: warm.rho };
       contacts.forEach((ct, i) => { const k = 'c' + ct.li + '_0'; if (!warm.x.has(k)) warm.x.set(k, Nv[i] / BW); });
     }
-    const x = qpSolve(P, Aeq, beq, Ain, bin, lo, hi, { iters: o.iters || 20000, tol: o.tol || 1e-6, q: qlin, warm, varKeys, eqKeys, inKeys });
+    const equilibriumResiduals = value => {
+      let forceResidualN = 0, momentResidualNm = 0;
+      Aeq.forEach((row, r) => {
+        let sum = 0; for (let c = 0; c < NX; c++) sum += row[c] * value[c];
+        const error = Math.abs(sum - beq[r]) * (DOF[r].kind === 'trans' ? BW : MOMS);
+        if (DOF[r].kind === 'trans') forceResidualN = Math.max(forceResidualN, error);
+        else momentResidualNm = Math.max(momentResidualNm, error);
+      });
+      return { forceResidualN, momentResidualNm };
+    };
+    let x;
+    try {
+      x = qpSolveVerified(P, Aeq, beq, Ain, bin, lo, hi, { iters: o.iters || 20000, tol: o.tol || 1e-6, epsAbs: o.epsAbs, epsRel: o.epsRel, q: qlin, warm, varKeys, eqKeys, inKeys, retries: o.retries, allowUnconverged: o.allowUnconverged });
+    } catch (error) {
+      if (error.quality && error.solution) {
+        Object.assign(error.quality, equilibriumResiduals(error.solution));
+        error.message += '; force residual ' + error.quality.forceResidualN + ' N, moment residual ' + error.quality.momentResidualNm + ' N*m';
+      }
+      throw error;
+    }
 
     // ---------- results ----------
     const pscale = {};
@@ -389,8 +441,8 @@ export function makePhysics(A, opts = {}) {
     const stF = st.map((s, i) => ({ ...s, F: s.n.clone().multiplyScalar(x[iS + i] * BW) }));
     const reserve = {};
     for (const [k, ix] of resIdx) reserve[DOF[k].id] = x[ix] * 10;
-    let maxRes = 0;
-    Aeq.forEach((row, r) => { let s = 0; for (let c = 0; c < NX; c++) s += row[c] * x[c]; maxRes = Math.max(maxRes, Math.abs(s - beq[r]) * (DOF[r].kind === 'trans' ? BW : MOMS)); });
+    const quality = { ...x.quality, ...equilibriumResiduals(x) };
+    const maxRes = Math.max(quality.forceResidualN, quality.momentResidualNm);
     // per dof: load from gravity and contacts, passive share, active muscles, reserve, active capacity both ways
     const dofOut = DOF.map((d, k) => {
       const ax = frames[k].ax, c = frames[k].c;
@@ -428,7 +480,7 @@ export function makePhysics(A, opts = {}) {
       jr['elbow_' + sd] = { F: reaction('fore_' + sd) };
       jr['wrist_' + sd] = { F: reaction('hand_' + sd) };
     }
-    return { W, com, act, force, FE, FP, lt, R, contactF, gripF, stF, reserve, maxRes, dofOut, jr, BW, BODY, INST, FMAX, Lm, L_STAND, paths, spP, pscale, warm: x.warm, iters: x.iters };
+    return { W, com, act, force, FE, FP, lt, R, contactF, gripF, stF, reserve, maxRes, quality, dofOut, jr, BW, BODY, INST, FMAX, Lm, L_STAND, paths, spP, pscale, warm: x.warm, iters: x.iters };
   }
 
   return { solve, DOF, dofIndex, INST, FMAX, BW, BODY, subtree, contactsOf, verticalLoads, stContacts, L_STAND, W_STAND, rotW, dpdq, ownedPath, pullOn };
@@ -447,7 +499,9 @@ function solve3(M, b) {
 // ---------- quadratic program: min 1/2 x'Px + q'x  s.t. Aeq x = beq, Ain x <= bin, lo <= x <= hi  (ADMM, OSQP-style) ----------
 // o.q: linear term (default 0). o.warm = { x: Map(key → value), y: Map(rowKey → dual), rho }: starting point from a similar
 // problem, matched through o.varKeys (per variable), o.eqKeys (per equality row) and o.inKeys (per inequality row); bound rows
-// are keyed 'b' + variable key. The result carries .warm (same shape) and .iters.
+// are keyed 'b' + variable key. The Float64Array result carries .warm, .iters
+// and .quality. Residuals describe the returned, bound-clamped vector, not an
+// earlier ADMM iterate. epsAbs/epsRel (or tol for both) set stopping tolerances.
 export function qpSolve(Pd, Aeq, beq, Ain, bin, lo, hi, o = {}) {
   const n = Pd.length;
   const rows = [];
@@ -501,7 +555,33 @@ export function qpSolve(Pd, Aeq, beq, Ain, bin, lo, hi, o = {}) {
     const ax0 = Ax(x);
     for (let r = 0; r < m; r++) { z[r] = Math.min(rows[r].u, Math.max(rows[r].l, ax0[r])); const k = rowKey(r); if (k && o.warm.y) { const v = o.warm.y.get(k); if (v !== undefined) y[r] = v; } }
   }
-  const iters = o.iters || 20000, tol = o.tol || 1e-6;
+  const iters = o.iters || 20000;
+  const epsAbs = o.epsAbs ?? o.tol ?? 1e-6, epsRel = o.epsRel ?? o.tol ?? 1e-6;
+  if (!(Number.isFinite(epsAbs) && epsAbs >= 0 && Number.isFinite(epsRel) && epsRel >= 0)) throw new Error('QP tolerances must be finite and nonnegative');
+  const clampResult = () => Float64Array.from(x, (v, c) => Math.min(hi[c], Math.max(lo[c], v)));
+  const diagnose = value => {
+    const ax = Ax(value), aty = ATv(y);
+    let primalResidual = 0, dualResidual = 0, equalityViolation = 0, inequalityViolation = 0, boundViolation = 0;
+    let maxAx = 0, maxZ = 0, maxPx = 0, maxATy = 0, maxQ = 0;
+    let finite = value.every(Number.isFinite) && y.every(Number.isFinite) && z.every(Number.isFinite);
+    for (let r = 0; r < m; r++) {
+      primalResidual = Math.max(primalResidual, Math.abs(ax[r] - z[r]));
+      maxAx = Math.max(maxAx, Math.abs(ax[r])); maxZ = Math.max(maxZ, Math.abs(z[r]));
+      if (r < Aeq.length) equalityViolation = Math.max(equalityViolation, Math.abs(ax[r] - beq[r]));
+      else if (r < Aeq.length + Ain.length) inequalityViolation = Math.max(inequalityViolation, Math.max(0, ax[r] - bin[r - Aeq.length]));
+    }
+    for (let c = 0; c < n; c++) {
+      const px = Pd[c] * value[c], q = ql ? ql[c] : 0;
+      dualResidual = Math.max(dualResidual, Math.abs(px + q + aty[c]));
+      boundViolation = Math.max(boundViolation, Math.max(0, lo[c] - value[c], value[c] - hi[c]));
+      maxPx = Math.max(maxPx, Math.abs(px)); maxATy = Math.max(maxATy, Math.abs(aty[c])); maxQ = Math.max(maxQ, Math.abs(q));
+    }
+    const primalTolerance = epsAbs + epsRel * Math.max(maxAx, maxZ);
+    const dualTolerance = epsAbs + epsRel * Math.max(maxPx, maxATy, maxQ);
+    finite &&= [primalResidual, dualResidual, equalityViolation, inequalityViolation, boundViolation, primalTolerance, dualTolerance].every(Number.isFinite);
+    const converged = finite && primalResidual <= primalTolerance && dualResidual <= dualTolerance && equalityViolation <= primalTolerance && inequalityViolation <= primalTolerance && boundViolation <= primalTolerance;
+    return { status: !finite ? 'nonfinite' : converged ? 'solved' : 'max_iterations', converged, finite, iterations: 0, primalResidual, dualResidual, equalityViolation, inequalityViolation, boundViolation, primalTolerance, dualTolerance };
+  };
   const t = new Float64Array(m);
   let it = 0;
   for (; it < iters; it++) {
@@ -523,7 +603,7 @@ export function qpSolve(Pd, Aeq, beq, Ain, bin, lo, hi, o = {}) {
       const axv = Ax(x);
       let rp = 0; for (let r = 0; r < m; r++) rp = Math.max(rp, Math.abs(axv[r] - z[r]));
       const g = ATv(y); let rd = 0; for (let c = 0; c < n; c++) rd = Math.max(rd, Math.abs(Pd[c] * x[c] + g[c] + (ql ? ql[c] : 0)));
-      if (rp < tol && rd < tol) break;
+      if (diagnose(clampResult()).converged) break;
       if (it % 400 === 399) {
         let ax = 0, zz = 0, px = 0, aty = 0;
         for (let r = 0; r < m; r++) { ax = Math.max(ax, Math.abs(axv[r])); zz = Math.max(zz, Math.abs(z[r])); }
@@ -533,14 +613,45 @@ export function qpSolve(Pd, Aeq, beq, Ain, bin, lo, hi, o = {}) {
       }
     }
   }
-  const xr = new Float64Array(n);
-  for (let c = 0; c < n; c++) xr[c] = Math.min(hi[c], Math.max(lo[c], x[c]));
+  const xr = clampResult();
   xr.iters = Math.min(it + 1, iters);
+  xr.quality = diagnose(xr); xr.quality.iterations = xr.iters;
   if (o.varKeys) {
     const wx = new Map(), wy = new Map();
-    for (let c = 0; c < n; c++) wx.set(o.varKeys[c], x[c]);
+    for (let c = 0; c < n; c++) wx.set(o.varKeys[c], xr[c]);
     for (let r = 0; r < m; r++) { const k = rowKey(r); if (k && y[r] !== 0) wy.set(k, y[r]); }
     xr.warm = { x: wx, y: wy, rho };
   }
   return xr;
+}
+
+// Retry the same mathematical problem by continuing its primal/dual state.
+// Tolerances, objective and constraints stay fixed. Unverified values are only
+// returned when a caller explicitly requests diagnostic allowUnconverged mode.
+export function qpSolveVerified(Pd, Aeq, beq, Ain, bin, lo, hi, o = {}) {
+  const retries = o.retries ?? 1, baseIters = o.iters || 20000;
+  if (!Number.isInteger(retries) || retries < 0) throw new Error('QP retries must be a nonnegative integer');
+  const keyed = {
+    ...o,
+    varKeys: o.varKeys || Array.from({ length: Pd.length }, (_, c) => 'v' + c),
+    eqKeys: o.eqKeys || Array.from({ length: Aeq.length }, (_, r) => 'e' + r),
+    inKeys: o.inKeys || Array.from({ length: Ain.length }, (_, r) => 'i' + r),
+  };
+  let warm = o.warm, result, totalIterations = 0;
+  const attemptQuality = [];
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    result = qpSolve(Pd, Aeq, beq, Ain, bin, lo, hi, { ...keyed, warm, iters: baseIters * 2 ** attempt });
+    totalIterations += result.iters;
+    attemptQuality.push({ ...result.quality });
+    if (result.quality.converged || !result.quality.finite) break;
+    warm = result.warm;
+  }
+  Object.assign(result.quality, { attempts: attemptQuality.length, totalIterations, attemptQuality });
+  if (!result.quality.converged && !o.allowUnconverged) {
+    const error = new Error('QP solution was not verified (' + result.quality.status + ', primal ' + result.quality.primalResidual + ', dual ' + result.quality.dualResidual + ')');
+    error.quality = result.quality;
+    error.solution = result;
+    throw error;
+  }
+  return result;
 }

@@ -18,6 +18,7 @@
 import fs from 'fs';
 import * as THREE from 'three';
 import { createAnatomy } from './anatomy3.js';
+import { validateCyclePhysics, packJointLoads } from './cycle_quality.mjs';
 
 const A = createAnatomy(THREE);
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
@@ -27,6 +28,9 @@ const CYCLE_F = arg('--cycle', 'cycle_keys/cycle.json'), PHYS_F = arg('--phys', 
 const cyc = JSON.parse(fs.readFileSync(CYCLE_F, 'utf8'));
 const phys = fs.existsSync(PHYS_F) ? JSON.parse(fs.readFileSync(PHYS_F, 'utf8')) : null;
 const statsIn = fs.existsSync(STATS_F) ? JSON.parse(fs.readFileSync(STATS_F, 'utf8')) : null;
+const modelQuality = validateCyclePhysics(cyc, phys, {
+  units: Object.keys(A.UNITS), ligs: [...Object.keys(A.LIGS), ...Object.keys(A.CAP_NAMES).map(id => 'cap_' + id)],
+});
 const fps = cyc.fps || 10, n = cyc.frames.length, dt = 1 / fps;
 const SEGN = A.SEG.map(s => s.name);
 const UNITS = Object.keys(A.UNITS);
@@ -126,15 +130,16 @@ if (phys && Array.isArray(phys.frames) && phys.frames.length) {
     const MAP = [['ls', 'L5S1', 0], ['tl', 'T12L1', 0]];
     for (const [j, k] of [['hip', 'hip'], ['kn', 'knee'], ['an', 'ankle'], ['gh', 'gh'], ['el', 'elbow'], ['wr', 'wrist']]) { MAP.push([j + '_L', k, 0]); MAP.push([j + '_R', k, 1]); }
     const ids = MAP.map(m => m[0]);
-    const v = new Uint8Array(n * ids.length);
+    const values = new Float64Array(n * ids.length);
     for (let i = 0; i < n; i++) {
       const T = i * dt;
       let j = 0; while (j < PT.length - 2 && PT[j + 1] < T) j++;
       const ta = PT[j], tb = PT[Math.min(PT.length - 1, j + 1)], w = tb > ta ? Math.max(0, Math.min(1, (T - ta) / (tb - ta))) : 0;
       const ja = phys.frames[j].jr || {}, jb = phys.frames[Math.min(PT.length - 1, j + 1)].jr || {};
-      MAP.forEach(([id, key, c], k) => { const a = (ja[key] || [])[c] || 0, b = (jb[key] || [])[c] || 0; v[i * ids.length + k] = Math.round(Math.max(0, Math.min(5.1, (1 - w) * a + w * b)) * 50); });
+      MAP.forEach(([id, key, c], k) => { const a = ja[key][c], b = jb[key][c]; values[i * ids.length + k] = (1 - w) * a + w * b; });
     }
-    jeff = { ids, v: b64(v), scale: 50, unit: 'BW' };
+    const packed = packJointLoads(values);
+    jeff = { ids, v: b64(packed.values), scale: packed.scale, unit: 'BW' };
   }
   if (phys.frames.some(f => f.grips && f.grips.length)) {
     grips16 = new Int16Array(n * 2 * 6);
@@ -237,6 +242,7 @@ const out = {
   ligs: LIGS, sL: b64(s16(sL)), sR: b64(s16(sR)),
   floor: floor16 ? b64(floor16) : null, regions, com: com16 ? b64(com16) : null, grips: grips16 ? b64(grips16) : null, jload: jeff,
   stats,
+  modelQuality,
   flines: flines ? { ...flines, s: b64(flS16), e: b64(flE8), placeholder: placeholderAct } : null,
 };
 const txt = JSON.stringify(out);

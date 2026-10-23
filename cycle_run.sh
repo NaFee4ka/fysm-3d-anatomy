@@ -11,3 +11,8 @@ node cycle_build.mjs $PROV
 flock ./.heavy.lock node cycle_phys.mjs --every "$EVERY" --quiet
 node cycle_stats.mjs
 node cycle_physreport.mjs
+node fascia_round.mjs
+node cycle_pack.mjs
+node books/yoga_model_dump.mjs
+node books/yoga_round.mjs --into
+node books/yoga_to_json.mjs
