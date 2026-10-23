@@ -5,21 +5,114 @@ import * as THREE from 'three';
 import { createAnatomy } from './anatomy3.js';
 import { createConnectiveSurfaces } from './connective_surface_render.js';
 
-const A = createAnatomy(THREE), R = createConnectiveSurfaces(A, THREE);
+const A = createAnatomy(THREE);
+const fitted = process.argv.includes('--fitted');
+const opts = fitted ? { capsuleRims: JSON.parse(readFileSync('joints/capsule-rims.json', 'utf8')).capsuleRims } : {};
+const R = createConnectiveSurfaces(A, THREE, opts);
 const data = JSON.parse(readFileSync('poses.json', 'utf8'));
 const paths = A.strandInstances().filter(s => s.kind === 'lig' || s.kind === 'cap');
 for (const inst of paths) assert(R.covered.has(`${inst.kind}_${inst.unit}_${inst.side}`), inst.id);
 assert.equal(R.parts.filter(p => p.kind === 'cap').length, 12);
 for (const cap of R.parts.filter(p => p.kind === 'cap')) {
-  assert.equal(cap.closed, cap.unit !== 'kn', `${cap.unit}: retain the anterior knee opening`);
+  assert.equal(cap.closed, cap.unit !== 'kn', `${cap.unit}: retain the inherited knee sector`);
+  assert.equal(cap.displayFit, fitted ? 'bone-rim' : 'source-fallback', `${cap.mesh.name}: display source status`);
 }
+const invalid = createConnectiveSurfaces(A, THREE, { capsuleRims: { hip_L: { prox: { seg: 'absent', positions: [] } } } });
+assert.equal(invalid.parts.find(p => p.mesh.name === 'cap_hip_L').displayFit, 'source-fallback');
+invalid.dispose();
 // The three centerline ligaments must not produce stacked L/R surfaces.
 for (const unit of ['nuchal', 'all', 'ssl']) {
   assert.equal(R.parts.filter(p => p.kind === 'lig' && p.unit === unit).length, 1, unit);
 }
 
-let maxAttachmentError = 0, maxSeamError = 0;
+// A displayed ligament must be a solid envelope, including its insertion ends.
+// Independent named bundles remain separate solids; only the three explicitly
+// fan-shaped structures gain a continuous web between the source fibres.
+let closedLigamentSolids = 0, fanParts = 0;
+for (const part of R.parts.filter(p => p.kind === 'lig')) {
+  const index = part.mesh.geometry.index.array, vertices = part.mesh.geometry.attributes.position.count;
+  const edges = new Map(), adjacency = Array.from({ length: vertices }, () => []);
+  for (let i = 0; i < index.length; i += 3) for (let j = 0; j < 3; j++) {
+    const a = index[i + j], b = index[i + (j + 1) % 3];
+    assert.notEqual(a, b, `${part.mesh.name}: repeated triangle vertex`);
+    const key = a < b ? `${a}/${b}` : `${b}/${a}`;
+    const edge = edges.get(key) || { count: 0, winding: 0 };
+    edge.count++; edge.winding += a < b ? 1 : -1; edges.set(key, edge);
+    adjacency[a].push(b); adjacency[b].push(a);
+  }
+  for (const edge of edges.values()) {
+    assert.equal(edge.count, 2, `${part.mesh.name}: open/nonmanifold ligament edge`);
+    assert.equal(edge.winding, 0, `${part.mesh.name}: inconsistent face winding`);
+  }
+  const visited = new Set(); let components = 0;
+  for (let vertex = 0; vertex < vertices; vertex++) if (!visited.has(vertex)) {
+    components++; const queue = [vertex]; visited.add(vertex);
+    while (queue.length) for (const next of adjacency[queue.pop()]) if (!visited.has(next)) {
+      visited.add(next); queue.push(next);
+    }
+  }
+  const fan = ['iliofem', 'deltoidLig', 'plantar'].includes(part.unit);
+  assert.equal(components, fan ? 1 : part.insts.length, `${part.mesh.name}: unexpected tissue connectivity`);
+  assert.equal(!!part.fanMid, fan, `${part.mesh.name}: wrong fan morphology`);
+  closedLigamentSolids += components; if (fan) fanParts++;
+}
+assert.equal(fanParts, 6);
+
+let maxAttachmentError = 0, maxSeamError = 0, maxAddedRadialDeficit = 0, maxRadialRoundingRatio = 0, crossingChecks = 0;
+const allStates = [];
+const inverseFrames = new Map();
+const ray = new THREE.Ray(), direction = new THREE.Vector3(), hit = new THREE.Vector3();
+function edgeCrossesTriangle(a, b, triangle) {
+  direction.subVectors(b, a); const length = direction.length();
+  if (!length) return false;
+  ray.origin.copy(a); ray.direction.copy(direction.divideScalar(length));
+  if (!ray.intersectTriangle(...triangle.points, false, hit)) return false;
+  const distance = hit.distanceTo(a);
+  return distance > 1e-7 && distance < length - 1e-7;
+}
+function checkLocalCrossings(part, label) {
+  const g = part.mesh.geometry, index = g.index.array, pos = g.attributes.position, triangles = [];
+  for (let i = 0; i < index.length; i += 3) {
+    const ids = [index[i], index[i + 1], index[i + 2]];
+    const points = ids.map(id => new THREE.Vector3().fromBufferAttribute(pos, id));
+    triangles.push({ ids, points, box: new THREE.Box3().setFromPoints(points) });
+  }
+  for (let i = 0; i < triangles.length; i++) for (let j = i + 1; j < triangles.length; j++) {
+    const a = triangles[i], b = triangles[j];
+    if (a.ids.some(id => b.ids.includes(id)) || !a.box.intersectsBox(b.box)) continue;
+    for (let k = 0; k < 3; k++) assert(
+      !edgeCrossesTriangle(a.points[k], a.points[(k + 1) % 3], b)
+      && !edgeCrossesTriangle(b.points[k], b.points[(k + 1) % 3], a),
+      `${label}/${part.mesh.name}: nonadjacent surface triangles intersect`);
+  }
+  crossingChecks++;
+}
+function normalizedRadius(p, part, W) {
+  const wrap = part.wrap, w = W[wrap.seg];
+  let inverse = inverseFrames.get(wrap.seg);
+  if (!inverse) {
+    inverse = new THREE.Matrix3().setFromMatrix4(new THREE.Matrix4().makeRotationFromQuaternion(w.q)).invert();
+    inverseFrames.set(wrap.seg, inverse);
+  }
+  return p.clone().sub(w.p).applyMatrix3(inverse)
+    .add(A.S[wrap.seg].J).sub(wrap.c).divide(wrap.r).length();
+}
+function radialFloat32Bound(p, part) {
+  // A Float32 vertex has at most half an ulp of error per world component.
+  // Propagate that component box through the exact inverse wrapping transform;
+  // the norm of the resulting box corner bounds a change in normalized radius.
+  const epsilon = 2 ** -24 / (1 - 2 ** -24), subnormal = 2 ** -149;
+  const x = Math.abs(p.x) * epsilon + subnormal, y = Math.abs(p.y) * epsilon + subnormal, z = Math.abs(p.z) * epsilon + subnormal;
+  const m = inverseFrames.get(part.wrap.seg).elements, r = part.wrap.r;
+  return Math.hypot(
+    (Math.abs(m[0]) * x + Math.abs(m[3]) * y + Math.abs(m[6]) * z) / r.x,
+    (Math.abs(m[1]) * x + Math.abs(m[4]) * y + Math.abs(m[7]) * z) / r.y,
+    (Math.abs(m[2]) * x + Math.abs(m[5]) * y + Math.abs(m[8]) * z) / r.z,
+  ) + 1e-10;
+}
 function checkGeometry(label, W) {
+  allStates.push(label);
+  inverseFrames.clear();
   const before = paths.map(s => A.pathLength(A.strandPath(W, s)));
   R.update(W);
   const after = paths.map(s => A.pathLength(A.strandPath(W, s)));
@@ -30,14 +123,67 @@ function checkGeometry(label, W) {
       assert(g.attributes[attr].array.every(Number.isFinite), `${label}/${part.mesh.name}: finite ${attr}`);
     }
     assert(Number.isFinite(part.strain), `${label}/${part.mesh.name}: finite length change`);
+    const actualLengths = part.insts.map(inst => A.pathLength(A.strandPath(W, inst)));
+    for (let f = 0; f < part.insts.length; f++)
+      assert(Math.abs(part.lengths[f] - actualLengths[f]) < 1e-12, `${label}/${part.mesh.name}: numerical path length changed`);
+    const expectedStrain = Math.max(...actualLengths.map((length, f) => length / part.restLengths[f] - 1));
+    assert(Math.abs(part.strain - expectedStrain) < 1e-12, `${label}/${part.mesh.name}: display fit altered numerical length change`);
     assert(g.boundingSphere.radius > 0 && Number.isFinite(g.boundingSphere.radius), `${label}: valid bounds`);
-    if (part.kind !== 'cap') continue;
+    // These are the actual locations of previously observed folds: an angular
+    // source route at the shoulder and a V-shaped ankle attachment rim. Verify
+    // the envelope itself, since manifold topology alone misses intersections.
+    if ((label === 'stand' || label.endsWith('/1')) && (part.fanMid || part.unit === 'coracohum'))
+      checkLocalCrossings(part, label);
     const pos = g.attributes.position, rows = part.paths[0].length;
-    for (let f = 0; f < part.insts.length; f++) for (const row of [0, rows - 1]) {
-      const actual = new THREE.Vector3().fromBufferAttribute(pos, row * part.columns + f * 4);
-      const error = actual.distanceTo(part.paths[f][row]);
+    for (const { inst, end, vertex } of part.attachmentVertices || []) {
+      const error = new THREE.Vector3().fromBufferAttribute(pos, vertex).distanceTo(part.paths[inst][end]);
       maxAttachmentError = Math.max(maxAttachmentError, error);
-      assert(error < 5e-7, `${label}/${part.mesh.name}: capsule attachment moved`);
+      assert(error < 5e-7, `${label}/${part.mesh.name}: ligament attachment moved`);
+    }
+    if (part.kind !== 'cap') continue;
+    assert(part.displayPaths.flat().every(v => [v.x, v.y, v.z].every(Number.isFinite)), `${label}: finite display paths`);
+    if (fitted) {
+      assert.equal(part.displayColumnPaths.length, part.columns, `${label}: every display column has a routed path`);
+      assert(part.displayColumnPaths.flat().every(v => [v.x, v.y, v.z].every(Number.isFinite)), `${label}: finite dense display paths`);
+      for (const end of ['prox', 'dist']) {
+        const row = end === 'prox' ? 0 : rows - 1, rim = part.displayRims[end], w = W[rim.seg];
+        assert.equal(rim.densePositions.length, part.columns);
+        for (let j = 0; j < part.columns; j++) {
+          const expected = rim.densePositions[j].clone().sub(A.S[rim.seg].J).applyQuaternion(w.q).add(w.p);
+          const actual = new THREE.Vector3().fromBufferAttribute(pos, row * part.columns + j);
+          const error = actual.distanceTo(expected);
+          maxAttachmentError = Math.max(maxAttachmentError, error);
+          assert(error < 5e-7, `${label}/${part.mesh.name}: dense rim sample left its owning bone`);
+        }
+      }
+    }
+    for (let f = 0; f < part.insts.length; f++) for (let row = 0; row < rows; row++) {
+      const actual = new THREE.Vector3().fromBufferAttribute(pos, row * part.columns + f * 4);
+      const error = actual.distanceTo(part.displayPaths[f][row]);
+      maxAttachmentError = Math.max(maxAttachmentError, error);
+      assert(error < 5e-7, `${label}/${part.mesh.name}: display capsule path knot moved`);
+      if (part.displayRims && (row === 0 || row === rows - 1)) {
+        const rim = row === 0 ? part.displayRims.prox : part.displayRims.dist;
+        const w = W[rim.seg], expected = rim.positions[f].clone().sub(A.S[rim.seg].J).applyQuaternion(w.q).add(w.p);
+        assert(expected.distanceTo(part.displayPaths[f][row]) < 1e-10, `${label}/${part.mesh.name}: display rim left its owning bone`);
+      }
+    }
+    // The interpolation must not introduce a new shortcut through the wrapping
+    // ellipsoid. Source routes themselves are simplified and are not certified
+    // collision-free against the segmented bone geometry.
+    for (let row = 0; row < rows; row++) for (let j = 0; j < part.columns; j++) {
+      const x = j / 4, f = Math.min(part.intervals - 1, Math.floor(x)), t = x - f;
+      const next = part.closed ? (f + 1) % part.paths.length : f + 1;
+      const expected = part.displayColumnPaths ? normalizedRadius(part.displayColumnPaths[j][row], part, W)
+        : normalizedRadius(part.displayPaths[f][row], part, W) * (1 - t)
+          + normalizedRadius(part.displayPaths[next][row], part, W) * t;
+      const actualPoint = new THREE.Vector3().fromBufferAttribute(pos, row * part.columns + j);
+      const actual = normalizedRadius(actualPoint, part, W);
+      const deficit = expected - actual;
+      maxAddedRadialDeficit = Math.max(maxAddedRadialDeficit, deficit);
+      const bound = radialFloat32Bound(actualPoint, part);
+      maxRadialRoundingRatio = Math.max(maxRadialRoundingRatio, deficit / bound);
+      assert(deficit <= bound, `${label}/${part.mesh.name}: displayed membrane moved inward beyond Float32 rounding bound`);
     }
     if (part.closed) for (let row = 0; row < rows; row++) {
       const a = new THREE.Vector3().fromBufferAttribute(pos, row * part.columns);
@@ -57,7 +203,8 @@ for (const pose of A.POSES) {
   }
 }
 const cycle = JSON.parse(readFileSync('cycle_keys/cycle.json', 'utf8'));
-for (const index of [0, 42, 76, 106, 140, 155, 184, 205, 235, 261]) {
+const cycleIndices = [...new Set([...Array.from({ length: Math.ceil(cycle.frames.length / 8) }, (_, i) => i * 8), cycle.frames.length - 1])];
+for (const index of cycleIndices) {
   const f = cycle.frames[index];
   const local = Object.fromEntries(Object.entries(f.local).map(([s, q]) => [s, new THREE.Quaternion(...q)]));
   checkGeometry(`cycle/${index}`, A.computeWorld(local, new THREE.Quaternion(...f.root), new THREE.Vector3(...f.rootP)));
@@ -72,7 +219,7 @@ const original = R.parts.map(p => p.mesh.geometry.attributes.position.array.slic
 // determined by the arbitrary world origin. Check that anatomical orientation
 // before testing covariance: a consistently wrong axis would pass covariance.
 let radialChecks = 0;
-for (const part of R.parts) if (part.kind === 'lig' && part.unit !== 'nuchal') {
+for (const part of R.parts) if (part.kind === 'lig' && part.widthAxes && part.unit !== 'nuchal') {
   for (let f = 0; f < part.insts.length; f++) {
     const inst = part.insts[f], pts = A.strandPath(W0, inst);
     const tangent = pts.at(-1).clone().sub(pts[0]).normalize();
@@ -99,7 +246,7 @@ const relocatedA = {
     return W;
   },
 };
-const relocated = createConnectiveSurfaces(relocatedA, THREE);
+const relocated = createConnectiveSurfaces(relocatedA, THREE, opts);
 let maxInitialFrameError = 0;
 assert.equal(relocated.parts.length, R.parts.length);
 for (let p = 0; p < R.parts.length; p++) {
@@ -132,7 +279,10 @@ for (let p = 0; p < R.parts.length; p++) {
 }
 
 console.log(JSON.stringify({
+  mode: fitted ? 'bone-rim' : 'source-fallback',
   parts: R.parts.length, triangles: R.parts.reduce((s, p) => s + p.mesh.geometry.index.count / 3, 0),
-  poses: A.POSES.length, cycleFrames: 10, radialChecks, maxAttachmentError, maxSeamError, maxRigidError, maxInitialFrameError,
+  poses: A.POSES.length, cycleFrames: cycleIndices.length, states: allStates.length,
+  closedLigamentSolids, fanParts, crossingChecks, radialChecks, maxAttachmentError, maxSeamError,
+  maxAddedRadialDeficit, maxRadialRoundingRatio, maxRigidError, maxInitialFrameError,
 }));
 R.dispose();

@@ -1,0 +1,204 @@
+{
+  "parts": 42,
+  "triangles": 41992,
+  "jointGroups": 12,
+  "degenerateTriangles": 0,
+  "manifoldClosedParts": 42,
+  "maximumCartilageDistanceMm": 1.00055,
+  "boneDistanceMetrics": [
+    {
+      "id": "humeral_head_L",
+      "maximumBoneDistanceMm": 1.00055,
+      "p95BoneDistanceMm": 1.00022
+    },
+    {
+      "id": "glenoid_L",
+      "maximumBoneDistanceMm": 0.70021,
+      "p95BoneDistanceMm": 0.70012
+    },
+    {
+      "id": "femoral_head_L",
+      "maximumBoneDistanceMm": 1.00046,
+      "p95BoneDistanceMm": 1.00023
+    },
+    {
+      "id": "acetabulum_L",
+      "maximumBoneDistanceMm": 0.80044,
+      "p95BoneDistanceMm": 0.8002
+    },
+    {
+      "id": "femoral_condyles_L",
+      "maximumBoneDistanceMm": 0.90071,
+      "p95BoneDistanceMm": 0.90034
+    },
+    {
+      "id": "tibial_plateau_L",
+      "maximumBoneDistanceMm": 0.65054,
+      "p95BoneDistanceMm": 0.65018
+    },
+    {
+      "id": "patella_L",
+      "maximumBoneDistanceMm": 0.90033,
+      "p95BoneDistanceMm": 0.90016
+    },
+    {
+      "id": "distal_humerus_L",
+      "maximumBoneDistanceMm": 0.7005,
+      "p95BoneDistanceMm": 0.70018
+    },
+    {
+      "id": "radial_head_L",
+      "maximumBoneDistanceMm": 0.55017,
+      "p95BoneDistanceMm": 0.5501
+    },
+    {
+      "id": "ulnar_notch_L",
+      "maximumBoneDistanceMm": 0.55041,
+      "p95BoneDistanceMm": 0.55016
+    },
+    {
+      "id": "distal_radius_L",
+      "maximumBoneDistanceMm": 0.50026,
+      "p95BoneDistanceMm": 0.5001
+    },
+    {
+      "id": "carpal_scaphoid_L",
+      "maximumBoneDistanceMm": 0.40017,
+      "p95BoneDistanceMm": 0.40008
+    },
+    {
+      "id": "carpal_lunate_L",
+      "maximumBoneDistanceMm": 0.40015,
+      "p95BoneDistanceMm": 0.40011
+    },
+    {
+      "id": "carpal_triquetrum_L",
+      "maximumBoneDistanceMm": 0.40013,
+      "p95BoneDistanceMm": 0.40006
+    },
+    {
+      "id": "talar_dome_L",
+      "maximumBoneDistanceMm": 0.65036,
+      "p95BoneDistanceMm": 0.65018
+    },
+    {
+      "id": "tibial_plafond_L",
+      "maximumBoneDistanceMm": 0.6005,
+      "p95BoneDistanceMm": 0.6002
+    },
+    {
+      "id": "fibular_facet_L",
+      "maximumBoneDistanceMm": 0.45025,
+      "p95BoneDistanceMm": 0.45011
+    },
+    {
+      "id": "humeral_head_R",
+      "maximumBoneDistanceMm": 1.00053,
+      "p95BoneDistanceMm": 1.00023
+    },
+    {
+      "id": "glenoid_R",
+      "maximumBoneDistanceMm": 0.70013,
+      "p95BoneDistanceMm": 0.70005
+    },
+    {
+      "id": "femoral_head_R",
+      "maximumBoneDistanceMm": 1.00047,
+      "p95BoneDistanceMm": 1.00026
+    },
+    {
+      "id": "acetabulum_R",
+      "maximumBoneDistanceMm": 0.80045,
+      "p95BoneDistanceMm": 0.80024
+    },
+    {
+      "id": "femoral_condyles_R",
+      "maximumBoneDistanceMm": 0.90074,
+      "p95BoneDistanceMm": 0.90032
+    },
+    {
+      "id": "tibial_plateau_R",
+      "maximumBoneDistanceMm": 0.65058,
+      "p95BoneDistanceMm": 0.65015
+    },
+    {
+      "id": "patella_R",
+      "maximumBoneDistanceMm": 0.90036,
+      "p95BoneDistanceMm": 0.90016
+    },
+    {
+      "id": "distal_humerus_R",
+      "maximumBoneDistanceMm": 0.70042,
+      "p95BoneDistanceMm": 0.70015
+    },
+    {
+      "id": "radial_head_R",
+      "maximumBoneDistanceMm": 0.55024,
+      "p95BoneDistanceMm": 0.55015
+    },
+    {
+      "id": "ulnar_notch_R",
+      "maximumBoneDistanceMm": 0.55029,
+      "p95BoneDistanceMm": 0.55015
+    },
+    {
+      "id": "distal_radius_R",
+      "maximumBoneDistanceMm": 0.50029,
+      "p95BoneDistanceMm": 0.50011
+    },
+    {
+      "id": "carpal_scaphoid_R",
+      "maximumBoneDistanceMm": 0.40017,
+      "p95BoneDistanceMm": 0.40007
+    },
+    {
+      "id": "carpal_lunate_R",
+      "maximumBoneDistanceMm": 0.40015,
+      "p95BoneDistanceMm": 0.40009
+    },
+    {
+      "id": "carpal_triquetrum_R",
+      "maximumBoneDistanceMm": 0.40015,
+      "p95BoneDistanceMm": 0.40007
+    },
+    {
+      "id": "talar_dome_R",
+      "maximumBoneDistanceMm": 0.65034,
+      "p95BoneDistanceMm": 0.65015
+    },
+    {
+      "id": "tibial_plafond_R",
+      "maximumBoneDistanceMm": 0.60039,
+      "p95BoneDistanceMm": 0.60018
+    },
+    {
+      "id": "fibular_facet_R",
+      "maximumBoneDistanceMm": 0.45024,
+      "p95BoneDistanceMm": 0.45013
+    }
+  ],
+  "pairedSocketSanity": [
+    {
+      "region": "glenoid",
+      "bboxRightLeftRatio": [
+        0.52558,
+        0.61992,
+        0.6464
+      ],
+      "areaRightLeftRatio": 0.3432,
+      "mirroredCentroidDistanceMm": 11.35423
+    },
+    {
+      "region": "glenoid_labrum",
+      "bboxRightLeftRatio": [
+        0.56718,
+        0.64257,
+        0.67759
+      ],
+      "areaRightLeftRatio": 0.5615,
+      "mirroredCentroidDistanceMm": 10.65228
+    }
+  ],
+  "boneBasisSha256": "6caff1cf6c7d7a43b929721f1253059d85132e86d2ed6d52499fe484dfc22f03",
+  "reproducible": true
+}

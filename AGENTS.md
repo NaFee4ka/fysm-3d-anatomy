@@ -14,6 +14,7 @@
 - Скрипты `ui_*_test.py` — Playwright с SwiftShader: открывают `dist/test.html` и делают скриншоты. Если в твоей среде нет браузера, проверку отрисовки пропусти и честно напиши об этом. После смены позы в тесте вызывай `window.__dbg.resetView(false)`: камера подгоняется плавно и в медленном рендере не успевает.
 - Мягкие ткани: `node muscle_paths_test.mjs`, `node connective_surface_check.mjs`, `node muscle_surfaces_test.mjs --actual --all-vertices`; целостность атласа — `python3 muscles/check.py` (нужен NumPy). Браузерная проверка — `python3 ui_soft_tissues_test.py --out /tmp/fysm-ui --browser /path/to/chromium`; особенности HTTPS-прокси описаны в начале скрипта.
 - Подготовка мышечного атласа: `python3 muscles/detail_test.py` проверяет точную сварку исходных швов и согласованное деление рёбер (NumPy, trimesh); `node muscle_surfaces_test.mjs --synthetic` — раскрытие швов, широкие веера и нормали тонких оболочек без исходных OBJ. Источник, параметры плотности и воспроизводимая пересборка — в `muscles/README.md`.
+- Суставные поверхности: `python3 joints/check.py` (NumPy), `node joint_surfaces_test.mjs --synthetic` и `node joint_surfaces_test.mjs --actual`; края капсул — `python3 joints/capsule_rims.py --check` (NumPy и Node). Оболочки с подгонкой — `node connective_surface_check.mjs --fitted`. Браузер — `python3 ui_joint_surfaces_test.py --out /tmp/fysm-joints --browser /usr/bin/chromium --fetch-assets`. Покрытия, мениски, губы и капсулы реконструированы по готовым костям; сборка и ограничения — в `joints/README.md`.
 
 ## Что в каких файлах
 
@@ -24,6 +25,7 @@
 - `cycle_*.mjs`, `cycle_keys/`, `cycle_data.json` — круг. `fascia3.js`, `fascia_render.js`, `books/` — фасции и линии Майерса. `skull/bones_bp3d.json` — кости.
 - `muscle_surface_render.js` и `muscles/muscles_bp3d.json` — объёмные формы мышц; происхождение и пересборка — `muscles/README.md`. 85 юнитов представлены BodyParts3D, 6 — явно отмеченными реконструкциями из `muscle_recon_build.mjs`. `connective_surface_render.js` — ленты связок и оболочки капсул. Геометрия этих поверхностей не определяет физиологический поперечник или силу.
 - `strandPath()` и `ownedStrandPath()` используют общий алгоритм в `anatomy3.js`: длина, плечо рычага и принадлежность точек силы сегментам должны оставаться согласованными. Подробности и границы точности — `docs/soft-tissues-accuracy.md`.
+- `joint_surface_render.js` и `joints/joints.json` — реконструкции суставных поверхностей шести основных групп суставов на обеих сторонах. `joints/build.py` строит их по неизменённому `skull/bones_bp3d.json`; исходных хрящей конечностей в BodyParts3D нет. Позвоночник и мелкие суставы пока схематичны. Поверхность следует своей кости; контакт и сжатие тканей не рассчитываются.
 - Остальные `*.mjs` и `*.py` в корне — исследовательские и отладочные скрипты, для обычной работы не нужны.
 - Новая поза затрагивает: запись в `POSES` и ветку в `measure()` (`anatomy3.js`), `poses_build.mjs`, `physics_params.mjs` и список поз в `physics_build.mjs`, `POSE_KEY` в `app3.js`, вкладку в `template3.html`. Образец — «Стойка на руках» (шестая поза).
 
