@@ -42,7 +42,7 @@ const TK = [0, T_KNEE, T_GRIP, DUR];
 const P = {
   spine: vecKeys(TK, [[-2, -3, -2, -12, -12], [-3, -4, -3, -8, -8], [-7, -7, -5, -7, -6.5], [-10, -10, -7, -9, -8]]),
   neck: vecKeys([0, T_GRIP, DUR], [[0, 0, 0], [-1, -1, 0], [-3, -2, 0]]),
-  knee: pchip([[0, 0], [T_KNEE, 118], [T_GRIP, 132], [DUR, KNEE_BOW]]),
+  knee: pchip([[0, 0], [T_KNEE, 118], [T_GRIP, 124], [DUR, KNEE_BOW]]),
   hipExt: pchip([[0, -4], [T_KNEE, -3.5], [T_GRIP, 3], [DUR, 22]]),
   hipAdd: pchip([[0, 0], [T_GRIP, 0.5], [DUR, 2]]),
   foot: pchip([[0, 60], [T_KNEE, 14], [T_GRIP, -10], [DUR, -15]]),
@@ -63,6 +63,7 @@ function bodyAt(t) {
   const hand = blendHand(blendHand(SOFT, OPEN, P.open(t)), GRIP, P.close(t));
   fingers(left, hand);
   setLR(L, left);
+  fitGripReach(L, t);
   return L;
 }
 
@@ -92,6 +93,28 @@ function gripTarget(W) {
   let wrist = Cg.clone(), Qh = null;
   for (let i = 0; i < 6; i++) { Qh = gripHand(wrist.clone().sub(Sh).normalize(), n); wrist = wristFor(Cg, Qh); }
   return { wrist, Qh, n };
+}
+// Keep the reaching arm close to its final extended shape while the hands take
+// the inside of the shins. A deeply folded knee brings the grip too close to
+// the shoulder and makes the final almost-straight elbow plane turn inwards.
+const FINAL_GRIP_MARGIN = LH + LF - W_BOW.hum_L.p.distanceTo(gripTarget(W_BOW).wrist);
+function fitGripReach(L, t) {
+  if (t <= 2.2 || t >= DUR) return;
+  const gripProgress = Math.max(0, Math.min(1, (t - T_GRIP) / (DUR - T_GRIP)));
+  const margin = 0.004 + (FINAL_GRIP_MARGIN - 0.004) * ease3(gripProgress);
+  const target = LH + LF - margin;
+  const original = angX(L.shank_L);
+  let lo = 90, hi = 145;
+  for (let it = 0; it < 35; it++) {
+    const angle = (lo + hi) / 2;
+    L.shank_L = qAx(X, angle); L.shank_R = mirrorQ(L.shank_L);
+    const W = computeWorld(L, HALF.rootQ, V(0, 0, 0));
+    const distance = W.hum_L.p.distanceTo(gripTarget(W).wrist);
+    if (distance > target) lo = angle; else hi = angle;
+  }
+  const u = Math.max(0, Math.min(1, (t - 2.2) / (T_GRIP - 2.2)));
+  L.shank_L = qAx(X, original + ((lo + hi) / 2 - original) * ease3(u));
+  L.shank_R = mirrorQ(L.shank_L);
 }
 // fixed references taken from the two anchors
 const ALPHA_HALF = rollOf(W_HALF), ALPHA_BOW = rollOf(W_BOW);
@@ -137,11 +160,14 @@ function solveArm(L, rootQ, t) {
   const C0 = toWorld(W, 'pelvis', START.wrist);
   const CT = W.pelvis.p.clone().add(ARC_PT);
   const C1 = W.pelvis.p.clone().add(HIP_PT);
-  const toSh = Sh.clone().sub(g.wrist).normalize();
   const up = backOf(W);
-  const C2 = g.wrist.clone().addScaledVector(toSh, 0.07).addScaledVector(g.n, -0.015).addScaledVector(up, 0.02);
+  // Approach from outside the leg rather than curling the wrist towards the
+  // shoulder. The latter folded both elbows through the body's midplane.
+  const C2 = g.wrist.clone().add(V(0.03, 0, 0)).addScaledVector(up, 0.02);
   const C3 = g.wrist.clone();
-  const wrist = catmull([C0, C0, CT, C1, C2, C3, C3], PATH(t));
+  // Shape-preserving component curves prevent the Catmull-Rom control points
+  // from overshooting inside the final grip before the hand turns onto it.
+  const wrist = V(...vecKeys([0, 1, 2, 3, 4], [C0, CT, C1, C2, C3].map(v => v.toArray()))(PATH(t)));
   // elbow direction
   const se = ELBOWP(t);
   const Eg = GRIP_SOL.elbowDir;
@@ -170,18 +196,10 @@ function initGrip() {
   GRIP_SOL = { twist: L.ulna_L.clone().invert(), swing: L.hand_L.clone(), elbowDir };
 }
 const ease3 = u => u * u * (3 - 2 * u);
-// path parameter over time: 0 at the start, 1 beside the hip, 2 just off the shin, 3 on the shin
+// Path parameter: start, open wing, beside hip, just outside shin, on shin.
 const PATH = pchip([[0, 0], [0.14, 0.03], [T_ARC, 1], [T_HIP, 2], [T_GRIP - 0.45, 3], [T_GRIP, 4]]);
 const HANDP = pchip([[0, 0], [0.3, 0.04], [1.4, 0.5], [2.25, 0.97], [T_GRIP, 1]]);
 const ROLLP = pchip([[0, 0], [0.3, 0.05], [1.4, 0.55], [2.3, 0.95], [T_GRIP, 1]]);
-function catmull(Pts, s) {
-  // centripetal-free uniform Catmull-Rom through Pts[1..n-2], s in [0, n-3]
-  const n = Pts.length - 3; const i = Math.min(n - 1, Math.floor(s)), u = s - i;
-  const p0 = Pts[i], p1 = Pts[i + 1], p2 = Pts[i + 2], p3 = Pts[i + 3];
-  const u2 = u * u, u3 = u2 * u;
-  return p1.clone().multiplyScalar(2).add(p2.clone().sub(p0).multiplyScalar(u)).add(p0.clone().multiplyScalar(2).sub(p1.clone().multiplyScalar(5)).add(p2.clone().multiplyScalar(4)).sub(p3).multiplyScalar(u2)).add(p3.clone().sub(p0).add(p1.clone().multiplyScalar(3)).sub(p2.clone().multiplyScalar(3)).multiplyScalar(u3)).multiplyScalar(0.5);
-}
-
 // ---------- rest on the floor ----------
 const PELVIS_LM = LANDMARKS.find(l => l.region === 'таз' && l.side === 'L' && !l.tag);
 const Z_PELVIS = pt(W_HALF, PELVIS_LM.seg, PELVIS_LM.pc).z;
