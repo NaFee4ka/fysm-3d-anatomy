@@ -90,6 +90,31 @@ function buildTree(triangles, THREE) {
   return { box, count: triangles.length, left: buildTree(triangles.slice(0, half), THREE), right: buildTree(triangles.slice(half), THREE) };
 }
 
+function connectedComponents(vertices, triangles, THREE) {
+  const parents = Int32Array.from(vertices, (_, i) => i), positions = new Map();
+  const find = index => {
+    while (parents[index] !== index) { parents[index] = parents[parents[index]]; index = parents[index]; }
+    return index;
+  };
+  const unite = (a, b) => { const left = find(a), right = find(b); if (left !== right) parents[right] = left; };
+  // OBJ normal/UV seams may duplicate the same geometric vertex. Weld only
+  // exactly coincident decoded coordinates; nearby distinct sheets stay apart.
+  for (const [i, p] of vertices.entries()) {
+    const key = p.x + ',' + p.y + ',' + p.z;
+    if (positions.has(key)) unite(i, positions.get(key)); else positions.set(key, i);
+  }
+  for (const triangle of triangles) {
+    unite(triangle.indices[0], triangle.indices[1]); unite(triangle.indices[0], triangle.indices[2]);
+  }
+  const groups = new Map();
+  for (const triangle of triangles) {
+    const key = find(triangle.indices[0]);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(triangle);
+  }
+  return [...groups.values()].map(group => ({ seed: group[0].indices[0], tree: buildTree(group, THREE) }));
+}
+
 export function createBodyCollision(A, THREE, boneData) {
   if (!boneData || !Array.isArray(boneData.parts) || !boneData.parts.length || typeof boneData.data !== 'string')
     throw new Error('Missing bone data for body collision checks');
@@ -127,7 +152,9 @@ export function createBodyCollision(A, THREE, boneData) {
       const box = new THREE.Box3().setFromPoints(points);
       triangles.push({ id: k / 3, indices: ids, box, center: box.getCenter(new THREE.Vector3()) });
     }
-    bones.push({ partIndex, seg: part.seg, name: part.name, side: part.seg.slice(-1), vertices, tree: buildTree(triangles, THREE) });
+    const components = connectedComponents(vertices, triangles, THREE);
+    bones.push({ partIndex, seg: part.seg, name: part.name, side: part.seg.slice(-1), vertices,
+      tree: components.length === 1 ? components[0].tree : buildTree(triangles, THREE), components });
   }
   const left = bones.filter(b => b.side === 'L'), right = bones.filter(b => b.side === 'R');
   if (!left.length || !right.length) throw new Error('Both arms are required for body collision checks');
@@ -217,9 +244,19 @@ export function createBodyCollision(A, THREE, boneData) {
       candidatePairs++;
       const hits = []; surfacePairs(a.tree, b.tree, sa, sb, hits);
       let kind = hits.length ? 'surface' : null;
-      if (!kind && (ba.containsBox(bb) || bb.containsBox(ba))) {
-        containmentTests++;
-        if (pointInside(sb.vertex(0), a, sa) || pointInside(sa.vertex(0), b, sb)) kind = 'containment';
+      if (!kind) {
+        // A part can contain several disconnected solids. Its whole AABB need
+        // not contain the other part even when one component is fully inside.
+        // Test every overlapping component and use one seed from each closed
+        // connected surface in both directions. Per-component parity also
+        // treats overlapping disconnected solids as their geometric union.
+        components: for (const ac of a.components) for (const bc of b.components) {
+          if (!boxesOverlap(sa.box(ac.tree), sb.box(bc.tree), epsilon)) continue;
+          containmentTests++;
+          if (pointInside(sa.vertex(ac.seed), bc, sb) || pointInside(sb.vertex(bc.seed), ac, sa)) {
+            kind = 'containment'; break components;
+          }
+        }
       }
       if (kind) pairs.push({ a: a.seg, b: b.seg, aName: a.name, bName: b.name,
         aPart: a.partIndex, bPart: b.partIndex, kind, triangleIntersections: hits.length,

@@ -45,7 +45,9 @@ assert.notEqual(geometryDigest(changed), actual.geometrySha256);
 // shipping data from a different motion or checker revision.
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'fysm-collision-build-'));
 try {
-  for (const [label, data] of [['stale-geometry', changed], ['missing-check', { ...packed, collisionCheck: null }]]) {
+  const staleSource = structuredClone(packed);
+  staleSource.collisionCheck.sourceSha256['body_collision.mjs'] = '0'.repeat(64);
+  for (const [label, data] of [['stale-geometry', changed], ['missing-check', { ...packed, collisionCheck: null }], ['stale-checker', staleSource]]) {
     const filename = path.join(tmp, label + '.json');
     fs.writeFileSync(filename, JSON.stringify(data));
     const result = spawnSync('python3', ['build.py', path.join(tmp, 'dist')], {
@@ -56,4 +58,4 @@ try {
   }
 } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
 console.log(JSON.stringify({ passed: true, regressionPoseRejected: true, intermediateCollisionRejected: true,
-  states: actual.states, boneParts: actual.boneParts, staleBuildsBlocked: 2 }));
+  states: actual.states, boneParts: actual.boneParts, staleBuildsBlocked: 3 }));

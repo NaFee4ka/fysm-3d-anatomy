@@ -71,6 +71,31 @@ assert(containment.colliding && containment.pairs[0].kind === 'containment', 'fu
 const movedWorld = Object.fromEntries(Object.entries(identityWorld()).map(([s, w]) => [s, { p: move(w.p), q: rotation.clone() }]));
 assert(nested.inspect(movedWorld).colliding, 'solid containment after a common rigid transform');
 
+function joinedMeshes(...pieces) {
+  const vertices = [], indices = [];
+  for (const { mesh, translation } of pieces) {
+    const offset = vertices.length;
+    vertices.push(...mesh.vertices.map(p => p.map((value, k) => value + translation[k])));
+    indices.push(...mesh.indices.map(i => i + offset));
+  }
+  return { vertices, indices };
+}
+const twoSeparated = joinedMeshes(
+  { mesh: cube(.3), translation: [-3, 0, 0] }, { mesh: cube(.3), translation: [3, 0, 0] });
+const disjointComponents = createBodyCollision(A, THREE, packageMeshes([twoSeparated, cube(.6)]));
+const componentReport = disjointComponents.inspect(identityWorld(3));
+assert(componentReport.colliding && componentReport.pairs[0].kind === 'containment',
+  'a later disconnected component is inside the other solid although neither whole-part AABB contains the other');
+const reversedComponents = createBodyCollision(A, THREE, packageMeshes([cube(.6), twoSeparated]));
+const reversedWorld = { hum_L: { p: V(3, 0, 0), q: new THREE.Quaternion() }, hum_R: { p: V(0, 0, 0), q: new THREE.Quaternion() } };
+assert(reversedComponents.inspect(reversedWorld).colliding, 'disconnected-component containment is symmetric');
+const rotatedComponents = Object.fromEntries(Object.entries(identityWorld(3)).map(([s, w]) => [s, { p: move(w.p), q: rotation.clone() }]));
+assert(disjointComponents.inspect(rotatedComponents).colliding, 'disconnected containment after a rigid transform');
+const overlappingSolids = joinedMeshes(
+  { mesh: cube(.6), translation: [-.1, 0, 0] }, { mesh: cube(.6), translation: [.1, 0, 0] });
+const union = createBodyCollision(A, THREE, packageMeshes([cube(.05), overlappingSolids]));
+assert(union.inspect(identityWorld()).colliding, 'a point inside two disconnected solids remains inside their union');
+
 const data = JSON.parse(fs.readFileSync(new URL('./skull/bones_bp3d.json', import.meta.url)));
 // Losslessly select the two original humerus chunks, without mesh rebuilding.
 const raw = gunzipSync(Buffer.from(data.data, 'base64')), humerusParts = [], humerusChunks = [];
@@ -146,7 +171,7 @@ try {
     checkSkin(frameWorld(armSegment.frames[k], armSegment.frames[k + 1], part / 20), armSegment.frames[k].t + part / 200);
   const end = armSegment.frames.at(-1); checkSkin(frameWorld(end, end, 0), end.t);
 } finally { surfaces.dispose(); }
-console.log(JSON.stringify({ analyticTriangleChecks: fixtures.length * 4, solidFixtures: 5, formerActualCrossingRejected: true,
+console.log(JSON.stringify({ analyticTriangleChecks: fixtures.length * 4, solidFixtures: 9, formerActualCrossingRejected: true,
   boneParts: collider.boneParts, segmentCount: 5, states, subdivisions: 20, candidatePairs, triangleTests,
   skin: { units: muscleUnits.size, surfaces: surfaces.pickables.length, states: skinStates, deformedVertices: skinVertices,
     minimumLeftM, maximumRightM, separationLowerBoundM: minimumLeftM - maximumRightM },
