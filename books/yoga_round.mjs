@@ -24,7 +24,7 @@ const EXPECT = {
 const ix = Object.fromEntries(U.map((u, i) => [u, i]));
 const out = { provisional: prov, segs: {} };
 let md = `## Переходы круга: что предсказывают книги и что показала модель${prov ? ' (ПРЕДВАРИТЕЛЬНО: провизорные кадры)' : ''}\n\n`;
-md += 'Пик — наибольшая активация за переход (доля максимальной силы мышцы), среднее — за время перехода; L/R — левая/правая сторона. «Работает» = пик ≥ 15 % или среднее ≥ 8 %.\n\n';
+md += 'Пик — наибольшая активная сила / Fmax за переход, среднее — за время перехода; L/R — левая/правая сторона. Это оценки квазистатической модели, а не внутренняя активация решателя или ЭМГ. «Работает» = пик ≥ 15 % или среднее ≥ 8 %. Сопоставление с книгами не является физиологической валидацией.\n\n';
 for (const s of phys.segs) {
   const E = EXPECT[s.id]; if (!E) continue;
   const fr = phys.frames.filter(f => f.seg === s.id || (f.T >= s.t0 && f.T <= s.t1 && !f.seg));
@@ -52,7 +52,7 @@ for (const s of phys.segs) {
   const byInt = [...all].sort((a, b) => b.int - a.int).slice(0, 12);
   out.round = { muscles: U.length, peak08: n08, peak40: n40, topByIntegral: byInt.map(x => ({ unit: x.u, name: x.name, int: +x.int.toFixed(2), peak: +x.peak.toFixed(3) })), T: stats.T };
   md += `### Весь круг (только переходы, без задержек в позах)\nЗа ${stats.T} с переходов хотя бы раз включились на 8 % и больше ${n08} мышц из ${U.length}, на 40 % и больше — ${n40}.\n` +
-    `Больше всего работы (интеграл активации, %·с) у: ${byInt.map(x => `${x.name} ${Math.round(x.int * 100)}`).join(', ')}.\n\n`;
+    `Больше всего работы (интеграл активной силы / Fmax, %·с) у: ${byInt.map(x => `${x.name} ${Math.round(x.int * 100)}`).join(', ')}.\n\n`;
 }
 fs.writeFileSync(new URL('books/yoga_round.md', root), md);
 if (process.argv.includes('--into')) {

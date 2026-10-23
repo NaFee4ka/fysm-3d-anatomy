@@ -11,10 +11,12 @@
 - `python3 build.py` → `dist/index.html` (страница) и `dist/test.html` (то же с отладкой `window.__dbg`). Нужен только Python 3. Все команды запускай из корня репозитория.
 - Перед каждым pull request: `python3 build.py && test "$(grep -c __dbg dist/index.html)" = 0`. Отладка не должна попадать в `index.html`. Эту же проверку делает автопубликация.
 - Node нужен, только если меняются позы или физика: `npm ci` (three 0.160), затем `node poses_build.mjs` → `poses.json`, `node physics_build.mjs` → `physics.json`. Круг: `./cycle_run.sh` (около 5 минут). Готовые данные поз и круга уже лежат в репозитории, для правки текстов и интерфейса Node не нужен.
+- После изменения расчёта пересобери сценарии: `node physics_sensitivity_build.mjs` → `research/2025-2026/sensitivity.json`. Пакет содержит хеши исходников и сравнивает заданный тонус с отсутствием этих минимумов для стойки и шести полных поз. Проверки: `node physics_qp_test.mjs`, `node physics_verification_test.mjs`, `node physics_reference_geometry_test.mjs`, `node physics_sensitivity_test.mjs`, `node cycle_quality_test.mjs --packed`. `./cycle_run.sh` пересчитывает физику, статистику, фасциальные показатели, упаковку круга и численные отчёты в `books/`; незавершённые решения не должны публиковаться. Для сценариев или круга не обходи отказ решателя через `allowUnconverged`.
 - Скрипты `ui_*_test.py` — Playwright с SwiftShader: открывают `dist/test.html` и делают скриншоты. Если в твоей среде нет браузера, проверку отрисовки пропусти и честно напиши об этом. После смены позы в тесте вызывай `window.__dbg.resetView(false)`: камера подгоняется плавно и в медленном рендере не успевает.
 - Мягкие ткани: `node muscle_paths_test.mjs`, `node connective_surface_check.mjs`, `node muscle_surfaces_test.mjs --actual --all-vertices`; целостность атласа — `python3 muscles/check.py` (нужен NumPy). Браузерная проверка — `python3 ui_soft_tissues_test.py --out /tmp/fysm-ui --browser /path/to/chromium`; особенности HTTPS-прокси описаны в начале скрипта.
 - Подготовка мышечного атласа: `python3 muscles/detail_test.py` проверяет точную сварку исходных швов и согласованное деление рёбер (NumPy, trimesh); `node muscle_surfaces_test.mjs --synthetic` — раскрытие швов, широкие веера и нормали тонких оболочек без исходных OBJ. Источник, параметры плотности и воспроизводимая пересборка — в `muscles/README.md`.
 - Суставные поверхности: `python3 joints/check.py` (NumPy), `node joint_surfaces_test.mjs --synthetic` и `node joint_surfaces_test.mjs --actual`; края капсул — `python3 joints/capsule_rims.py --check` (NumPy и Node). Оболочки с подгонкой — `node connective_surface_check.mjs --fitted`. Браузер — `python3 ui_joint_surfaces_test.py --out /tmp/fysm-joints --browser /usr/bin/chromium --fetch-assets`. Покрытия, мениски, губы и капсулы реконструированы по готовым костям; сборка и ограничения — в `joints/README.md`.
+- Исследовательские пояснения и сценарии в интерфейсе: `python3 ui_research_model_test.py --out /tmp/fysm-research --browser /usr/bin/chromium --fetch-assets` (после сборки). Пары сценариев допустимы только в стойке и полной позе, без подстановки в промежуточное положение или круг.
 
 ## Что в каких файлах
 
@@ -22,6 +24,7 @@
 - `app3.js` — страница: рендер, подсветка (`updateMaterials`), камера, карточки, режим «Круг».
 - `template3.html` — разметка, стили, вкладки поз, легенда.
 - `poses_build.mjs` → `poses.json` — положения сегментов в позах. `physics_core.mjs`, `physics_params.mjs`, `physics_build.mjs` → `physics.json` — расчёт нагрузки.
+- `docs/research-2025-2026.md` и `research/2025-2026/sources.json` — первичные источники, даты, лицензии и границы переноса результатов. `benchmark-geometry.json` — опубликованные входы двух компонентных задач и отдельно наши аналитические эталоны; это не воспроизведение авторской модели силы и не валидация йоги. `sensitivity.json` — два расчётных сценария, а не доверительный интервал.
 - `cycle_*.mjs`, `cycle_keys/`, `cycle_data.json` — круг. `fascia3.js`, `fascia_render.js`, `books/` — фасции и линии Майерса. `skull/bones_bp3d.json` — кости.
 - `muscle_surface_render.js` и `muscles/muscles_bp3d.json` — объёмные формы мышц; происхождение и пересборка — `muscles/README.md`. 85 юнитов представлены BodyParts3D, 6 — явно отмеченными реконструкциями из `muscle_recon_build.mjs`. `connective_surface_render.js` — ленты связок и оболочки капсул. Геометрия этих поверхностей не определяет физиологический поперечник или силу.
 - `strandPath()` и `ownedStrandPath()` используют общий алгоритм в `anatomy3.js`: длина, плечо рычага и принадлежность точек силы сегментам должны оставаться согласованными. Подробности и границы точности — `docs/soft-tissues-accuracy.md`.
@@ -56,6 +59,7 @@
 - Круг: в выжиме из лёжа трёхглавой не хватает при локте около 150°; в подшагах с коленом к груди не хватает сгибателей бедра.
 - Стойки на руках в круге нет: нужен новый переход Наклон → стойка (предложен Арсению, не сделан).
 - В режиме «Длина» работающая мышца зелёная, и её длину по цвету не видно.
+- У части мышц нормированная длина выходит за диапазон упрощённой кривой «сила–длина»; прежние ограничения этой кривой и нижняя граница доли волокон сохранены и отмечены в диагностике. Процент на экране — активная сила / `Fmax`, а не внутренняя активация решателя или измеренная ЭМГ. Статус `solved` подтверждает численное решение выбранной задачи, не персональную физиологическую точность.
 
 ## Среда Codex
 

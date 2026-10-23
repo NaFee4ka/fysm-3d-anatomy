@@ -14,9 +14,16 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 // ---------- typography: keep short words and dashes off line ends ----------
 const SHORT = 'в|во|и|не|ни|до|на|с|со|к|ко|о|об|от|у|по|за|из|а|но|же|для|при|без|над|под|про|или|как|что|это|то|их|его|её|ее|чем|чём|уже';
-const RE_SHORT = new RegExp('(^|[\\s(«„"])(' + SHORT + ')\\s', 'giu');
+const RE_SHORT = new RegExp('(^|[\\s(«„"])(' + SHORT + ')[\\t\\r\\n ]+', 'giu');
 function nb(s) {
-  return String(s).replace(RE_SHORT, (m, a, w) => a + w + ' ').replace(RE_SHORT, (m, a, w) => a + w + ' ').replace(/\s—/g, ' —').replace(/\s–/g, ' –').replace(/—\s/g, '— ').replace(/–\s/g, '– ').replace(/ (\S{1,4})$/, '\u00a0$1');
+  let result = String(s), previous;
+  // Match only breakable suffix spaces. Each pass protects another word in
+  // chains such as "и не в"; an existing NBSP must not consume that next match.
+  do {
+    previous = result;
+    result = result.replace(RE_SHORT, (m, a, w) => a + w + '\u00a0');
+  } while (result !== previous);
+  return result.replace(/\s—/g, ' —').replace(/\s–/g, ' –').replace(/—\s/g, '— ').replace(/–\s/g, '– ').replace(/ (\S{1,4})$/, '\u00a0$1');
 }
 function typesetStatic(root) {
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
@@ -30,6 +37,7 @@ typesetStatic(document.body);
 const A = createAnatomy(THREE);
 const POSE_DATA = /*__POSES__*/null;
 const PHYS = /*__PHYSICS__*/null;
+const RESEARCH_SENSITIVITY = /*__RESEARCH_SENSITIVITY__*/null;
 const CYC_DATA = /*__CYCLE__*/null;
 const FASCIA_MODEL = /*__FASCIA__*/null;
 const FASCIA_NOTES = /*__FASCIA_NOTES__*/null;
@@ -1112,6 +1120,75 @@ function renderCues() {
 const ZONES = [['shoulder', 'Плечи'], ['arm', 'Руки'], ['trunk', 'Корпус'], ['leg', 'Таз и ноги']];
 const KEY_JOINTS = ['gh_L', 'st_L', 'el_L', 'wr_L', 'hip_L', 'kn_L', 'an_L', 'mtp_L'];
 function mainComp(res) { return res.comps.slice().sort((a, b) => Math.abs(b.value) / (b.rom || 1) - Math.abs(a.value) / (a.rom || 1))[0]; }
+// The two scenario solves cover endpoints only. They do not describe a
+// confidence interval, an intermediate slider frame, or a frame of the round.
+function researchPoseKey() {
+  if (state.mode !== 'pose' || morph || overrideConf) return null;
+  if (state.t <= 1e-8) return 'stand';
+  return state.t >= 1 - 1e-8 ? state.poseId : null;
+}
+let lastResearchKey = null;
+const researchNumber = (value, digits = 1) => Number(value).toFixed(digits).replace('.', ',');
+function researchCase() {
+  const key = researchPoseKey(), data = key && RESEARCH_SENSITIVITY && RESEARCH_SENSITIVITY.poses[key];
+  const solved = q => q && q.status === 'solved' && q.converged !== false && q.finite !== false;
+  return data && solved(data.quality && data.quality.cue) && solved(data.quality && data.quality.noCue) ? { key, data } : null;
+}
+function researchComparisonHTML(kind, id, compact = false) {
+  const current = researchCase();
+  if (!current) return '';
+  const record = kind === 'muscle' ? current.data.muscles[id] : current.data.joints[id.replace(/_R$/, '_L')];
+  if (!record) return '';
+  const percent = n => researchNumber(n * 100) + '%';
+  const force = n => researchNumber(n, 0) + '\u00a0Н';
+  const bw = n => researchNumber(n, 2);
+  const specs = kind === 'muscle'
+    ? [['a', 'Доля максимальной силы', percent], ['forceN', 'Активная сила', force]]
+    : record.compressionN ? [['compressionN', compact ? 'L5–S1: сжатие' : 'Сжатие', force], ...(!compact ? [['shearN', 'Сдвигающая сила', force]] : [])]
+      : [['bw', 'Реакция сустава, в весах тела', bw], ...(!compact ? [['forceN', 'Сила реакции', force]] : [])];
+  const rows = specs.map(([key, title, format]) => {
+    const metric = record[key];
+    if (!metric || !Array.isArray(metric.range) || metric.range.length !== 2 || ![metric.cue, metric.noCue, ...metric.range].every(Number.isFinite)) return '';
+    return `<div class="research-row" data-research-metric="${key}" data-cue="${metric.cue}" data-no-cue="${metric.noCue}" data-low="${metric.range[0]}" data-high="${metric.range[1]}">
+      <dt>${nb(title)}</dt><dd>${nb(format(metric.cue))}</dd><dd>${nb(format(metric.noCue))}</dd>
+      <dd class="research-range">${nb('Диапазон двух сценариев: ' + format(metric.range[0]) + '–' + format(metric.range[1]))}</dd></div>`;
+  }).filter(Boolean).join('');
+  if (!rows) return '';
+  return `<section class="research-comparison" data-research-pose="${current.key}" data-research-kind="${kind}" data-research-id="${id}">
+    <h3 class="card-sub">${nb('Как подсказки меняют оценку')}</h3>
+    <p class="meter-foot">${nb(current.key === 'stand' ? 'Обычная стойка. Два расчёта одной позы:' : 'Полная поза. Два расчёта одного положения:')}</p>
+    <div class="research-columns" aria-hidden="true"><span></span><span>${nb('С подсказками')}</span><span>${nb('Без подсказок')}</span></div>
+    <dl class="research-values">${rows}</dl>
+    <p class="meter-foot">${nb('Меняется только минимальный тонус, заданный подсказками. Это диапазон этих двух сценариев, не доверительный интервал и не оценка персональной точности.')}</p>
+    ${kind === 'muscle' ? `<p class="meter-foot">${nb('Доля максимальной силы — не внутренняя активация решателя и не измеренная ЭМГ.')}</p>` : ''}
+  </section>`;
+}
+function updateResearchQuality() {
+  const node = document.getElementById('model-quality');
+  if (!node) return;
+  const lines = [];
+  const small = (n, unit) => Math.abs(n) < 0.01 ? 'менее 0,01 ' + unit : researchNumber(Math.abs(n), 2) + ' ' + unit;
+  if (state.mode === 'cycle') {
+    const q = CYC && CYC.modelQuality;
+    lines.push('Круг рассчитан по кадрам как последовательность статических равновесий. Инерция не учитывается; диапазон двух сценариев для круга не рассчитывался.');
+    if (q && q.verified && Number.isFinite(q.frameCount)) lines.push('Численное равновесие проверено для ' + q.frameCount + ' расчётных кадров.');
+    if (q && Number.isFinite(q.maxForceResidualN) && Number.isFinite(q.maxMomentResidualNm)) lines.push('Наибольший остаток баланса сил: ' + small(q.maxForceResidualN, 'Н') + '; моментов: ' + small(q.maxMomentResidualNm, 'Н·м') + '.');
+    if (q && Number.isFinite(q.maxReserveTotalNm)) lines.push('Наибольшая сумма резервных моментов за кадр: ' + researchNumber(q.maxReserveTotalNm, 1) + ' Н·м. Резервы показывают, где одних рассчитанных мышц недостаточно для равновесия.');
+    if (q && q.forceLengthLimitedFrames > 0) lines.push('В части кадров мышцы выходят за диапазон упрощённой кривой «сила–длина»; это ограничивает оценку их усилия.');
+  } else {
+    const key = researchPoseKey();
+    if (!key) lines.push('В промежуточном положении усилия интерполированы. Отдельное равновесие и диапазон двух сценариев здесь не рассчитывались.');
+    else {
+      const ph = PHYS[key], diag = ph && ph.diag, q = diag && diag.quality;
+      lines.push(q ? (q.status === 'solved' && q.converged && q.finite ? 'Численное равновесие прошло проверки решения.' : 'Численное решение не прошло все проверки; это ограничение показанных оценок.') : 'Диагностика численного решения для этой позы недоступна.');
+      if (q && Number.isFinite(q.forceResidualN) && Number.isFinite(q.momentResidualNm)) lines.push('Остаток баланса сил: ' + small(q.forceResidualN, 'Н') + '; моментов: ' + small(q.momentResidualNm, 'Н·м') + '.');
+      if (diag && Number.isFinite(diag.reserves)) lines.push('Сумма резервных моментов: ' + researchNumber(diag.reserves, 1) + ' Н·м. Резервы дополняют мышцы и отражают ограничение модели.');
+      const limits = ph && ph.modelLimits;
+      if (limits && limits.forceLengthClampedUnits && limits.forceLengthClampedUnits.length) lines.push('У части мышц длина выходит за диапазон упрощённой кривой «сила–длина». Это ограничение модели мышц, даже когда равновесие решено.');
+    }
+  }
+  node.innerHTML = lines.map(line => `<p class="meter-foot">${nb(line)}</p>`).join('');
+}
 function renderSummary() {
   const P = POSE[state.poseId], S = STATS[state.poseId];
   const byZone = z => UNIT_IDS.filter(u => (z === 'shoulder' ? ['shoulder', 'arm'].includes(A.UNITS[u].zone) : A.UNITS[u].zone === z));
@@ -1129,11 +1206,12 @@ function renderSummary() {
     <p class="card-eyebrow">${nb('Что меняется относительно стойки')}</p>
     <h2 class="card-title">${nb('Сильнее всего удлиняются')}</h2>
     ${stretchGroups.map(g => `<h3 class="card-sub">${nb(g.label)}</h3><ul class="rank">${g.items.map(o => `<li><button class="rank-row" data-unit="${o.u}"><span class="rank-name">${nb(A.UNITS[o.u].name)}</span><span class="num warm-t">${fmtPct(o.s)}</span>${barHTML(o.s)}</button></li>`).join('')}</ul>`).join('')}
-    <h3 class="card-sub">${nb('Работают сильнее всего, доля максимальной силы')}</h3>
-    <ul class="rank">${working.map(([u, m]) => `<li><button class="rank-row" data-unit="${u}"><span class="rank-name">${nb(A.UNITS[u].name)}</span><span class="num work-t">${pctTxt(m.a)}</span>${effBar(m.a, 'work')}${m.cue ? `<span class="rank-sub">${nb('часть усилия задана подсказкой')}</span>` : ''}</button></li>`).join('')}</ul>
+    <h3 class="card-sub">${nb('Работают сильнее всего в полной позе, доля максимальной силы')}</h3>
+    <ul class="rank">${working.map(([u, m]) => `<li><button class="rank-row" data-unit="${u}"><span class="rank-name">${nb(A.UNITS[u].name)}</span><span class="num work-t">${pctTxt(m.a)}</span>${effBar(m.a, 'work')}${m.tone > 0 ? `<span class="rank-sub">${nb('Для мышцы задан минимальный тонус по подсказке; итоговая сила определяется совместным расчётом.')}</span>` : ''}</button></li>`).join('')}</ul>
     <h3 class="card-sub">${nb('Нагрузка на суставы, доля силы окружающих мышц')}</h3>
     <ul class="rank">${jointLoad.map(o => { const c = mainLoad(o.J); return `<li><button class="rank-row" data-joint="${o.id}"><span class="rank-name">${nb(jointById[o.id].def.name)}</span><span class="num gold-t">${pctTxt(o.e)}</span>${effBar(o.e)}<span class="rank-sub">${nb((c.group ? c.group + ', ' : '') + Math.round(Math.abs(c.need)) + ' Н·м')}</span></button></li>`; }).join('')}</ul>
-    ${spine ? `<p class="meter-foot">${nb('Диск L5–S1 сжат силой ' + fBW(spine.comp / ph.bw) + ' веса тела, около ' + kgf(spine.comp) + '\u00a0кг. В стойке ' + fBW(spine0.comp / PHYS.stand.bw) + '.')}</p>` : ''}
+    ${spine ? `<p class="meter-foot">${nb('В полной позе диск L5–S1 сжат силой ' + fBW(spine.comp / ph.bw) + ' веса тела, около ' + kgf(spine.comp) + '\u00a0кг. В стойке ' + fBW(spine0.comp / PHYS.stand.bw) + '.')}</p>` : ''}
+    ${researchComparisonHTML('joint', 'ls', true)}
     ${ligTop.length ? `<h3 class="card-sub">${nb('Связки под натяжением')}</h3><ul class="rank">${ligTop.map(o => `<li><button class="rank-row" data-lig="${o.u}"><span class="rank-name">${nb(A.LIGS[o.u].name)}</span><span class="word warm-t">${nb(tensionWord(o.s))}</span></button></li>`).join('')}</ul>` : ''}
     <h3 class="card-sub">${nb('Суставы')}</h3>
     <ul class="joints">${KEY_JOINTS.map(id => { const j = jointById[id], c = mainComp(S.joint[id]); return `<li><button class="rank-row" data-joint="${id}"><span class="rank-name">${nb(j.def.name)}</span><span class="num gold-t">${fmtDeg(c.value)}</span><span class="rank-sub">${nb(c.label.toLowerCase() + ', норма до ' + c.rom + '°')}</span></button></li>`; }).join('')}</ul>
@@ -1161,8 +1239,8 @@ function effortBlock(unit) {
     foot = 'В полной позе ' + pctTxt(m.a) + ' максимальной силы, тянет примерно на ' + kgf(m.F) + '\u00a0кг';
     foot += m.Fp >= 20 ? '. Растянутые волокна добавляют пассивное натяжение ещё ' + kgf(m.Fp) + '\u00a0кг.' : '.';
   } else foot = m.Fp >= 20 ? 'Сама почти не работает, но растянутые волокна тянут пассивно примерно на ' + kgf(m.Fp) + '\u00a0кг.' : 'В полной позе по расчёту почти не работает.';
-  if (m.cue) foot += ' Это усилие задано подсказкой, остальное следует из равновесия.';
-  return `<h3 class="card-sub">${nb('Усилие по расчёту статики')}</h3>
+  if (m.tone > 0) foot += ' Для мышцы задан минимальный тонус по подсказке; итоговая сила определяется совместным расчётом.';
+  return `<h3 class="card-sub">${nb('Доля максимальной силы по расчёту')}</h3>
     <div class="meter"><span class="meter-label">${nb('Сейчас')}</span><span class="num work-t big">${pctTxt(a)}</span></div>
     ${effBar(a, 'work')}
     <p class="meter-foot">${nb(foot)}</p>`;
@@ -1178,12 +1256,13 @@ function renderMuscle(unit) {
     <h2 class="card-title">${nb(U.name)}</h2>
     <p class="latin">${U.latin}</p>
     ${muscleSourceHTML(unit)}
-    <div class="tags"><span class="tag">${U.deep ? 'глубокая' : 'внешняя'}</span>${activeSet.has(unit) ? '<span class="tag tag-active">работает</span>' : ''}<span class="tag tag-${cls}">${nb(strainWord(s))}</span></div>
+    <div class="tags"><span class="tag">${U.deep ? 'глубокая' : 'внешняя'}</span>${effortOf(unit) >= ACTIVE_MIN ? '<span class="tag tag-active">работает</span>' : ''}<span class="tag tag-${cls}">${nb(strainWord(s))}</span></div>
     <div class="meter"><span class="meter-label">${nb('Длина сейчас')}</span><span class="num ${cls}-t big">${fmtPct(s)}</span></div>
     ${barHTML(s)}
     <p class="meter-foot">${nb('В полной позе: ' + fmtPct(sf) + ' к длине в стойке' + (parts.length > 1 ? ', среднее по ' + parts.length + ' пучкам' : ''))}</p>
     ${partRows}
     ${effortBlock(unit)}
+    ${researchComparisonHTML('muscle', unit)}
     ${poseNote(P.notes[unit])}
     <h3 class="card-sub">${nb('Что делает')}</h3><p class="role">${nb(U.fn)}</p>
     ${focusBtn()}`;
@@ -1245,7 +1324,7 @@ function jointLoadBlock(id, j) {
   if (J.pf && J.pf.F > 20) foot.push('Надколенник прижат к бедру силой ' + fBW(J.pf.bw) + ' веса тела, около ' + kgf(J.pf.F) + '\u00a0кг.');
   if (J.st) foot.push('Лопатка давит на рёбра силой ' + fBW(J.st.bw) + ' веса тела, около ' + kgf(J.st.F) + '\u00a0кг.');
   if (!rows.length && !foot.length) return '';
-  return `<h3 class="card-sub">${nb('Нагрузка по расчёту статики')}</h3>${rows.length ? `<ul class="parts comps">${rows.join('')}</ul>` : ''}${foot.map(t => `<p class="meter-foot">${nb(t)}</p>`).join('')}`;
+  return `<h3 class="card-sub">${nb('Нагрузка в полной позе по расчёту статики')}</h3>${rows.length ? `<ul class="parts comps">${rows.join('')}</ul>` : ''}${foot.map(t => `<p class="meter-foot">${nb(t)}</p>`).join('')}`;
 }
 function renderJoint(id) {
   const jj = jointById[id], j = jj.def, r = jj.res, rf = STATS[state.poseId].joint[id], P = POSE[state.poseId];
@@ -1262,6 +1341,7 @@ function renderJoint(id) {
     <ul class="parts comps">${comps}</ul>
     ${regRow}${capRow}${jointSourceHTML(id)}
     ${jointLoadBlock(id, j)}
+    ${researchComparisonHTML('joint', id)}
     ${poseNote(P.joints[j.type === 'st' ? 'st' : j.type])}
     ${ligRows}
     ${focusBtn()}`;
@@ -1278,6 +1358,8 @@ function renderBone(d) {
 function renderInfo() {
   renderInfoBase();
   appendLinesOf();
+  lastResearchKey = researchPoseKey();
+  updateResearchQuality();
 }
 function renderInfoBase() {
   const s = state.sel;
@@ -2080,7 +2162,7 @@ function frame(now) {
     applyPose(state.t); poseDirty = false;
     if (state.mode === 'cycle') cyc.cardDirty = true;
     // the open card follows the slider, and is redrawn once the switch to another pose has finished
-    else if (state.sel && (morphDone || Math.abs(state.t - lastInfoT) > 0.004)) { renderInfo(); lastInfoT = state.t; }
+    else if (researchPoseKey() !== lastResearchKey || (state.sel && (morphDone || Math.abs(state.t - lastInfoT) > 0.004))) { renderInfo(); lastInfoT = state.t; }
     morphDone = false;
   }
   if (state.mode === 'cycle' && cyc.cardDirty) cycCardTick(now);

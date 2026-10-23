@@ -158,6 +158,8 @@ function record(r, extra) {
     grips: r.gripF.map(g => ({ side: g.side, P: arr(g.P), F: [r1(g.F.x), r1(g.F.y), r1(g.F.z)] })),
     com: arr(r.com), margin: r3(margin(poly, [r.com.x, r.com.z])), jr,
     resid: +r.maxRes.toPrecision(3), reserves: r1(Object.values(r.reserve).reduce((a, x) => a + Math.abs(x), 0)), iters: r.iters,
+    quality: r.quality,
+    modelLimits: { forceLengthClampedStrands: r.lt.filter(length => length < 0.4 || length > 1.7).length },
   };
 }
 function solveFrame(c, tone, grips, prev) {

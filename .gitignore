@@ -5,3 +5,4 @@ __pycache__/
 .DS_Store
 poses_dbg.json
 physics_dbg.json
+.heavy.lock
