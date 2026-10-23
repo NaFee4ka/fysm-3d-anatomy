@@ -19,6 +19,7 @@ import fs from 'fs';
 import * as THREE from 'three';
 import { createAnatomy } from './anatomy3.js';
 import { validateCyclePhysics, packJointLoads } from './cycle_quality.mjs';
+import { validateMotionCollisions } from './cycle_collision_check.mjs';
 
 const A = createAnatomy(THREE);
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
@@ -245,6 +246,9 @@ const out = {
   modelQuality,
   flines: flines ? { ...flines, s: b64(flS16), e: b64(flE8), placeholder: placeholderAct } : null,
 };
+// Check the normalized, quantized quaternions and their slerp exactly as the
+// browser decodes them, rather than approving only the original keyframes.
+out.collisionCheck = await validateMotionCollisions(out);
 const txt = JSON.stringify(out);
 fs.writeFileSync(OUT_F, txt);
 console.log(OUT_F, (txt.length / 1024).toFixed(0), 'KB,', n, 'frames,', r2(cyc.T), 's,', 'activation:', out.placeholder.act ? 'PLACEHOLDER (zeros)' : 'physics', provisional ? '| provisional frames' : '| real frames', '| floor', !!floor16, '| stats', statsIn ? 'cycle_stats.json' : 'computed here');

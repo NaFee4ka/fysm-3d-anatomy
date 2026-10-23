@@ -7,6 +7,21 @@ import os
 cyc_file = pathlib.Path(os.environ.get('CYCLE_DATA', str(root / 'cycle_data.json')))
 cycle = cyc_file.read_text() if cyc_file.exists() else 'null'
 import json
+import hashlib
+if cycle != 'null':
+    cycle_object = json.loads(cycle)
+    collision = cycle_object.get('collisionCheck') or {}
+    geometry = [cycle_object.get(key) for key in ('n', 'fps', 'segNames', 'q', 'root', 'p')]
+    geometry_sha = hashlib.sha256(json.dumps(geometry, separators=(',', ':'), ensure_ascii=False).encode()).hexdigest()
+    required_sources = ('anatomy3.js', 'collision_geometry.mjs', 'body_collision.mjs', 'cycle_collision_check.mjs', 'skull/bones_bp3d.json')
+    source_hashes = collision.get('sourceSha256') or {}
+    if not (collision.get('verified') is True and collision.get('scope') == 'opposite-arm-bones'
+            and collision.get('substeps', 0) >= 20 and collision.get('frameCount') == cycle_object.get('n')
+            and collision.get('states') == (cycle_object.get('n', 0) - 1) * collision.get('substeps', 0) + 1
+            and collision.get('geometrySha256') == geometry_sha
+            and all(source_hashes.get(filename) == hashlib.sha256((root / filename).read_bytes()).hexdigest()
+                    for filename in required_sources)):
+        raise SystemExit('Round collision verification is missing or stale. Run node cycle_pack.mjs before building.')
 fl = (root / 'fascia3.js').read_text().replace('export function', 'function').replace('export const', 'const')
 fr = (root / 'fascia_render.js').read_text().replace('export function', 'function')
 fascia_lib = 'const FASCIA_LIB = (() => {\n' + fl + '\nreturn { createFascia, LINE_COLORS };\n})();\n' + fr

@@ -2,6 +2,7 @@
 // usage: node cycle_build.mjs [--prov]   (--prov: a missing segN.json is replaced by prov_segN.json)
 import fs from 'fs';
 import { A, V, THREE, computeWorld, pt, LANDMARKS } from './cycle_lib.mjs';
+import { validateMotionCollisions } from './cycle_collision_check.mjs';
 
 const prov = process.argv.includes('--prov');
 const ORDER = ['seg1', 'seg2', 'seg3', 'seg4', 'seg5'];
@@ -39,5 +40,8 @@ for (const fr of frames) fr.rootP = [fr.rootP[0], fr.rootP[1], +(fr.rootP[2] + d
 const holds = [{ pose: 'dog', T: 0 }];
 segInfo.forEach(s => { if (POSE_NAME[s.to] && s.to !== 'highplank') holds.push({ pose: s.to, T: s.t1 }); });
 const out = { fps: 10, T: r2(T), shiftZ: +dz.toFixed(4), footprint: [+(zmin + dz).toFixed(3), +(zmax + dz).toFixed(3)], minY: +ymin.toFixed(4), segs: segInfo, holds, frames };
+// Reject crossed arm cores before spending time on the force calculation.
+// The packer subsequently checks actual bone surfaces after quantization.
+await validateMotionCollisions(out, { preflight: true });
 fs.writeFileSync('cycle_keys/cycle.json', JSON.stringify(out));
 console.log('cycle.json', frames.length, 'frames,', r2(T), 's, footprint', out.footprint, 'shift', out.shiftZ, 'minY', out.minY, segInfo.map(s => s.id + (s.provisional ? '(prov)' : '')).join(' '));
