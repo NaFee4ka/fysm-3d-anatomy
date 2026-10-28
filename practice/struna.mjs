@@ -7,6 +7,7 @@ import {
   scapulaPose, mirrorQ,
 } from '../cycle_lib.mjs';
 import { fingers, SPREAD, SOFT, GRIP, handBasis } from '../seg5_util.mjs';
+import { rotateElbowPlane, graspDistalForearm } from './kinematics_helpers.mjs';
 
 function pair(L, name, q) { setSide(L, 'L', name, q); setSide(L, 'R', name, q); }
 function digits(L, style = SOFT) {
@@ -63,12 +64,14 @@ function balanceFeet(c, plantar = 0) {
     c.rootQ.premultiply(qAx(X, step));
   }
 }
-function lockBehind(c) {
+function lockBehind(c, palmRoll = 0) {
   shoulders(c.local, 5, 7, -12); digits(c.local, GRIP);
   const target = bodyPoint(c, [.145, 1.12, -.49]);
   const pole = bodyPoint(c, [.29, 1.20, -.24]);
   // Hands approach beside one another, preserving separate palm volumes.
-  const Q = handBasis(V(-1, -.12, 0), V(0, 0, -1));
+  const fingerDirection = V(-1, -.12, 0).normalize();
+  const palmNormal = V(0, 0, -1).applyAxisAngle(fingerDirection, palmRoll * Math.PI / 180);
+  const Q = handBasis(fingerDirection, palmNormal);
   symmetricArm(c, target, pole, Q);
 }
 function closeFingerLock(c, { width, dy, dz = 0, flex, bend, spread }) {
@@ -83,26 +86,32 @@ function closeFingerLock(c, { width, dy, dz = 0, flex, bend, spread }) {
 }
 function closeWristLock(c) {
   const W = world(c);
-  for (const side of ['L', 'R']) {
-    const f = {};
-    fingers(f, side === 'L' ? { flex: [[0, 55, 35]], thumb: { abd: 35, flex: 25, mcp: 25, ip: 20 } } : SOFT);
-    for (const [name, q] of Object.entries(f)) setSide(c.local, side, name, q);
-    const target = W['hand_' + side].p.clone(); target.x = side === 'L' ? .11 : -.05;
-    if (side === 'L') { target.y += .012; target.z += .025; }
-    const Q = side === 'L' ? W.hand_L.q : mirrorQ(handBasis(V(1, 0, 0), V(0, 0, -1)));
-    arm(c, side, target, W['fore_' + side].p, Q);
-  }
+  // The free right hand continues inward instead of folding back toward its
+  // own elbow. Its palm roll and elbow branch keep pronation and wrist motion
+  // inside the model ranges; no range or tissue stiffness is enlarged.
+  const rightTarget = W.hand_R.p.clone(); rightTarget.x = -.05;
+  const rightQ = qAx(X, -180).multiply(mirrorQ(handBasis(V(-1, 0, 0), V(0, 0, -1))));
+  arm(c, 'R', rightTarget, W.fore_R.p, rightQ);
+  rotateElbowPlane(c, 'R', 45);
+  // This is an explicit wrist grip around the distal forearm, rather than
+  // fingers entering the carpal bones of a reversed free hand.
+  graspDistalForearm(c, { pole: W.fore_L.p, elbowPlaneDeg: -30 });
+  const free = {}; fingers(free, SOFT);
+  for (const [name, q] of Object.entries(free)) setSide(c.local, 'R', name, q);
 }
 function handsBehindHead(c) {
-  shoulders(c.local, 28, 8, 2); digits(c.local, SOFT);
+  shoulders(c.local, 28, 8, 2); digits(c.local, GRIP);
   const W = world(c), h = W.head.p;
   for (const side of ['L', 'R']) {
     const sign = side === 'L' ? 1 : -1;
-    const target = h.clone().add(V(sign * .115, .030, -.090).applyQuaternion(W.head.q));
+    const target = h.clone().add(V(sign * .15, .030 + sign * .015, -.14 + sign * .007).applyQuaternion(W.head.q));
     const pole = bodyPoint(c, [sign * .45, 1.63, -.07]);
-    const Ql = handBasis(V(-.20, 1, .05), V(0, 0, 1));
+    // Fingers run across the occiput; pointing them along the neck produced
+    // almost ninety degrees of ulnar wrist deviation in the old reconstruction.
+    const Ql = handBasis(V(-.95, .30, 0), V(0, 0, 1));
     const Q = W.head.q.clone().multiply(side === 'L' ? Ql : mirrorQ(Ql));
     arm(c, side, target, pole, Q);
+    rotateElbowPlane(c, side, side === 'L' ? 30 : -30);
   }
 }
 
@@ -112,17 +121,21 @@ function upwardLock() {
   shoulders(c.local, 45, 16, -2); digits(c.local, GRIP);
   pair(c.local, 'foot', qAx(X, 28)); pair(c.local, 'toes', qAx(X, -37));
   const W = world(c), sh = W.hum_L.p;
-  symmetricArm(c, V(.145, sh.y + .49, sh.z - .19), V(.22, sh.y + .25, sh.z - .08), handBasis(V(-1, .2, 0), V(0, .2, 1)));
+  symmetricArm(c, V(.145, sh.y + .52, sh.z - .19), V(.22, sh.y + .25, sh.z - .08), handBasis(V(-1, 1.7, 0), V(0, .2, 1)));
   balanceFeet(c, 28);
-  closeFingerLock(c, { width: .125, dy: .012, flex: 25, bend: 45, spread: 30 });
+  closeFingerLock(c, { width: .09, dy: .012, flex: 25, bend: 45, spread: 30 });
   return place(c, [-1, .20, .55], ['Пальцевый замок и подъём пяток восстановлены по фотографии; индивидуальное переплетение пальцев приближённое.']);
 }
 function backwardLock() {
   const c = base(-1);
   for (const k of ['lumA', 'lumB', 'thA', 'thB', 'thC']) c.local[k] = qAx(X, -1.2);
-  lockBehind(c);
+  // A palm roll and the matching elbow branches keep the backward lock from
+  // demanding 120 degrees of humeral internal rotation. The finger phases
+  // follow the rolled palms so the interlace retains separate bone volumes.
+  lockBehind(c, -120);
   balanceFeet(c);
-  closeFingerLock(c, { width: .155, dy: .008, dz: .005, flex: 0, bend: 45, spread: 30 });
+  closeFingerLock(c, { width: .155, dy: .01, dz: -.01, flex: 0, bend: 45, spread: 30 });
+  rotateElbowPlane(c, 'L', -60); rotateElbowPlane(c, 'R', 60);
   return place(c, [-1, .24, .6], ['Пальцевый замок за спиной показан геометрической реконструкцией.']);
 }
 function chair(wings = false) {
@@ -141,13 +154,15 @@ function chair(wings = false) {
   return place(c, [-1, .23, .5], wings ? ['Пятки подняты, ладони обращены вверх, как на исходной фотографии.'] : ['Запястный замок за спиной восстановлен по фотографии.']);
 }
 function spider() {
-  const c = base(45); c.rootP = V(0, .235, 0);
+  // Keep shoulders closer to the supports instead of putting almost straight
+  // forearms behind the palms and demanding 114 degrees of wrist extension.
+  const c = base(15); c.rootP = V(0, .115, 0);
   shoulders(c.local, 5, 5, 12); digits(c.local, SPREAD);
   for (const side of ['L', 'R']) {
     const sign = side === 'L' ? 1 : -1;
     legIK(c.local, c.rootQ, c.rootP, side, V(sign * .025, side === 'L' ? .34 : .41, .45), V(sign * .45, .65, .30));
     const Q = handBasis(V(0, 0, 1), V(0, -1, 0));
-    const wl = palmWrist('L', V(.285, .003, .17), Q);
+    const wl = palmWrist('L', V(.285, .003, .14), Q);
     arm(c, side, V(sign * wl.x, wl.y, wl.z), V(sign * .33, .36, -.04), side === 'L' ? Q : mirrorQ(Q));
   }
   feet(c, -15);
@@ -155,9 +170,14 @@ function spider() {
 }
 function sumoTwist() {
   const c = base(40); c.rootP = V(0, .575, 0);
-  c.local.thA = qAx(Y, -13).multiply(qAx(Z, -5));
-  c.local.thB = qAx(Y, -13).multiply(qAx(Z, -5));
-  c.local.thC = qAx(Y, -10).multiply(qAx(Z, -5));
+  // Retain the reconstructed total trunk rotation, but share it across all
+  // five model joints. Concentrating 13 degrees at T8–T9 exceeded that joint's
+  // 10-degree range and generated an artificial exponential passive moment.
+  const trunkRotation = qAx(Y, -13).multiply(qAx(Z, -5))
+    .multiply(qAx(Y, -13).multiply(qAx(Z, -5)))
+    .multiply(qAx(Y, -10).multiply(qAx(Z, -5)));
+  const trunkStep = IDQ.clone().slerp(trunkRotation, 1 / 5);
+  for (const segment of ['lumA', 'lumB', 'thA', 'thB', 'thC']) c.local[segment] = trunkStep.clone();
   c.local.neckA = qAx(Y, -8); c.local.head = qAx(Y, -10);
   shoulders(c.local, 8, 5, 8); digits(c.local, SOFT);
   for (const side of ['L', 'R']) {
@@ -165,9 +185,11 @@ function sumoTwist() {
     legIK(c.local, c.rootQ, c.rootP, side, V(sign * .56, .082, .10), V(sign * .7, .55, .33));
     orientFoot(c.local, c.rootQ, c.rootP, side, qAx(Y, sign * 45));
     const W = world(c), knee = W['shank_' + side].p;
-    const Ql = handBasis(V(.45, 0, .8), V(0, -1, 0));
+    const yaw = (side === 'L' ? 20 : 30) * Math.PI / 180;
+    const Ql = handBasis(V(.45, 0, .8).applyAxisAngle(Y, yaw), V(0, -1, 0));
     const Q = side === 'L' ? Ql : mirrorQ(Ql);
     arm(c, side, palmWrist(side, knee.clone().add(V(0, .055, .015)), Q), knee.clone().add(V(sign * -.05, .22, .12)), Q);
+    rotateElbowPlane(c, side, side === 'L' ? -105 : 135);
   }
   return place(c, [0.2, .35, 1], ['Сторона скрутки восстановлена по фотографии; поза асимметричная.']);
 }
@@ -191,6 +213,22 @@ function singleLegLowPlank() {
     if (Math.abs(f - h) < .0001) break;
     c.rootQ.premultiply(qAx(X, (h - f) * 57.3 / .88));
   }
+  // Fit the bent knee to the posed upper arm, rather than hoping that an
+  // arbitrary ankle target and pole will produce the photographed contact.
+  // Keep both segment lengths and use the old ankle only for the free shin's
+  // direction; neither joint is translated independently of its parent.
+  const W = world(c), hip = W.thigh_L.p;
+  const upper = W.hum_L.p.clone().lerp(W.fore_L.p, .25);
+  const thighLength = A.S.shank_L.J.distanceTo(A.S.thigh_L.J);
+  const shankLength = A.S.foot_L.J.distanceTo(A.S.shank_L.J);
+  const knee = upper.add(V(.035, .095, 0)).sub(hip).normalize().multiplyScalar(thighLength).add(hip);
+  const ankle = W.foot_L.p.clone().sub(knee).normalize().multiplyScalar(shankLength).add(knee);
+  legIK(c.local, c.rootQ, c.rootP, 'L', ankle, knee);
+  // The airborne shin can open without moving the supporting knee or hip.
+  // The original arbitrary ankle direction folded this knee to 173 degrees;
+  // 147.5 is a photographic reconstruction, not a measured subject angle.
+  c.local.shank_L = qAx(X, 147.5);
+  c.local.foot_L = qAx(X, 15); c.local.toes_L = IDQ.clone();
   return place(c, [-1, .22, .6], ['Односторонний вариант: левое колено к плечу, правая нога вытянута.']);
 }
 function seatedBoat() {

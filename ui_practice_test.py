@@ -2,7 +2,9 @@
 
 python3 ui_practice_test.py --out /tmp/fysm-practice --browser /usr/bin/chromium --fetch-assets
 The test snapshots the built HTML before opening it. It verifies presentation,
-geometry selection and mode isolation; it does not validate anatomy or forces.
+geometry selection and navigation, including computed or unavailable physics.
+ui_practice_physics_test.py separately checks saved side-aware force values.
+Neither test validates anatomy or personal biomechanics.
 """
 import argparse
 import fcntl
@@ -67,17 +69,21 @@ def verify_frame(page, step, algorithm):
     assert result['mode'] == 'practice' and result['algorithm'] == algorithm['id'], result
     assert result['positionErrorM'] < 1e-10 and result['rootErrorM'] < 1e-10, result
     assert abs(result['quaternionDotError']) < 1e-8, result
-    assert abs(result['minMarkerM']) < 1e-5, result
-    assert result['activeMuscles'] == result['greenSurfaceVertices'] == result['visibleForceSets'] == 0, result
+    # Surface contacts and explicitly disclosed soft pads can support a pose
+    # without the lowest old anatomical landmark lying exactly on y=0.
+    assert result['visibleForceSets'] == 0, result
     assert not any(result[k] for k in ['playing', 'cyclePlaying', 'morph', 'forces', 'overflow', 'webgl']), result
     assert result['t'] == 1 and result['lightMode'] == 'length', result
     assert page.locator('#pose-player').is_hidden() and page.locator('#cycle-player').is_hidden()
-    assert page.locator('[data-lightmode="effort"]').is_hidden()
-    assert page.locator('[data-layer="forces"]').is_hidden()
+    computed = page.locator('#cues [data-practice-quality="verified"]').count() == 1
+    assert page.locator('[data-lightmode="effort"]').is_visible() == computed
+    assert page.locator('[data-layer="forces"]').is_visible() == computed
+    if not computed:
+        assert result['activeMuscles'] == result['greenSurfaceVertices'] == 0, result
     assert page.locator('.research-comparison').count() == 0
     assert ' '.join(page.locator('#pose-name').inner_text().split()) == step['name']
     assert ' '.join(page.locator('#pose-sanskrit').text_content().split()) == step['sanskrit']
-    assert 'не рассчитана' in ' '.join(page.locator('#practice-caption').inner_text().split())
+    assert ('оценки' if computed else 'недоступна') in ' '.join(page.locator('#practice-caption').inner_text().split())
     assert page.locator('#practice-prev').is_disabled() == (step['number'] == 1)
     assert page.locator('#practice-next').is_disabled() == (step['number'] == 8)
     assert page.locator('[data-practice-step][aria-current="step"]').count() == 1
@@ -183,13 +189,19 @@ def main():
                     context.close()
                     continue
 
-                # The controls cannot force practice geometry into a made-up
-                # standing interpolation, effort mode or a stale force set.
+                # Only saved static practice physics may enable effort/forces.
+                # Controls cannot turn the geometry into a standing morph.
                 before = frame_report(page)
+                computed = page.locator('#cues [data-practice-quality="verified"]').count() == 1
                 page.evaluate('window.__dbg.setT(.2);window.__dbg.setLightMode("effort");window.__dbg.setLayer("forces",true)')
                 settle(page)
                 after = frame_report(page)
-                assert before == after, (before, after)
+                stable = ['id', 'mode', 'algorithm', 'step', 'positionErrorM', 'quaternionDotError',
+                          'rootErrorM', 'minMarkerM', 'playing', 'cyclePlaying', 'morph', 't']
+                assert {key: before[key] for key in stable} == {key: after[key] for key in stable}, (before, after)
+                assert after['lightMode'] == ('effort' if computed else 'length'), after
+                assert after['forces'] is computed and after['visibleForceSets'] == int(computed), after
+                page.evaluate('window.__dbg.setLightMode("length");window.__dbg.setLayer("forces",false)')
 
                 # Compare both actual side strains, rather than a mirrored
                 # left-only value from the original static physics exporter.
@@ -254,7 +266,7 @@ def main():
                 page.locator('.practice-reference summary').click()
 
                 # Real click picking still works when the stage shows a
-                # practice configuration instead of a calculated pose.
+                # practice configuration with its own static force estimates.
                 page.locator('#view').scroll_into_view_if_needed()
                 candidates = page.evaluate('''() => {const d=window.__dbg,rect=document.getElementById('view').getBoundingClientRect();
                   return d.strands.filter(s=>s.inst.kind==='muscle').slice(0,100).map(s=>{

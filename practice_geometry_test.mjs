@@ -14,6 +14,10 @@ import { createAnatomy } from './anatomy3.js';
 import { createBodyCollision } from './body_collision.mjs';
 import { createMuscleSurfaces } from './muscle_surface_render.js';
 import { createArmFootCollision } from './practice/arm_foot_collision.mjs';
+import { createPracticeContacts } from './practice/contacts.mjs';
+import { createPracticeGroundFitter } from './practice/ground_fit.mjs';
+import { spineJointTorque } from './physics_core.mjs';
+import { SPINE_PASSIVE } from './physics_params.mjs';
 
 const read = name => JSON.parse(fs.readFileSync(new URL(name, import.meta.url)));
 const SOURCE_SHA = 'a23ca63b746b87eca51e813ada626840fcd0fbfbaec1731b0fa6c37a19dee041';
@@ -70,6 +74,8 @@ assert.equal(data.sourceSha256, SOURCE_SHA);
 assert.equal(data.kind, 'static-photo-reconstructions');
 const sourceFiles = ['anatomy3.js', 'cycle_lib.mjs', 'seg5_util.mjs', 'poses_build.mjs', 'package-lock.json', 'practice_build.mjs',
   'practice/algorithms.json', 'practice/struna.mjs', 'practice/detali.mjs', 'practice/centering.mjs',
+  'practice/kinematics_helpers.mjs', 'practice/ground_fit.mjs', 'practice/contacts.mjs',
+  'muscle_surface_render.js', 'muscles/muscles_bp3d.json',
   'body_collision.mjs', 'collision_geometry.mjs', 'skull/bones_bp3d.json', 'practice/arm_foot_collision.mjs'];
 assert.deepEqual(Object.keys(data.sourceHashes || {}).sort(), [...sourceFiles].sort());
 for (const name of sourceFiles) {
@@ -183,12 +189,14 @@ function distalFemurVertices(data) {
   return output;
 }
 const distalFemurs = distalFemurVertices(boneData);
+const contactFactory = await createPracticeContacts(A, THREE, read('./muscles/muscles_bp3d.json'), { boneData });
+const groundFitter = createPracticeGroundFitter({ A, THREE, contactFactory, boneData });
 const kneeSurfaces = await createMuscleSurfaces(A, THREE, read('./muscles/muscles_bp3d.json'), {
   instances: A.strandInstances().filter(instance => instance.kind === 'muscle' && instance.unit === 'vastMed'),
 });
 assert(kneeSurfaces && kneeSurfaces.pickables.length === 2,
   'both original vastus medialis surfaces must load for the lateral knee support check');
-const FLOOR_TOLERANCE = 1e-5;
+const FLOOR_TOLERANCE = 2e-6; // Actual decoded geometry; landmarks are diagnostics.
 const CONTACT_HEIGHT = .004; // The same geometric contact threshold used by anatomy3.js.
 const FOOT = new Set(['пятки', 'подушечки стоп', 'наружный край стопы', 'пальцы стоп', 'тыл стоп']);
 const HAND = new Set(['ладони', 'пальцы рук', 'кисти']);
@@ -200,6 +208,11 @@ const ASYMMETRIC = new Set(['struna-06', 'struna-07', 'detali-04', 'detali-08',
 let candidatePairs = 0, triangleTests = 0, armFootCandidatePairs = 0, armFootTriangleTests = 0;
 const check = (condition, label) => { if (!condition) failures.push(label); };
 const finiteArray = (value, length) => Array.isArray(value) && value.length === length && value.every(Number.isFinite);
+const spineSegments = { ls: 'lumA', l34: 'lumB', tl: 'thA', t89: 'thB', t45: 'thC', ct: 'neckA', c45: 'neckB', ao: 'head' };
+// Regression for concentrating a photographed regional turn in one small
+// model hinge. This is an input-quality check, not a human strength limit.
+assert(Math.max(...spineJointTorque(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -25 * Math.PI / 180), SPINE_PASSIVE.t89).map(Math.abs)) > 1e6,
+  'the old C7 concentrated-rotation fixture must expose extreme spring extrapolation');
 const quat = (value, label) => {
   assert(finiteArray(value, 4), label + ' must contain four finite quaternion components');
   assert(Math.abs(Math.hypot(...value) - 1) <= 1e-6, label + ' must be a unit quaternion');
@@ -224,17 +237,25 @@ for (const id of ids) {
     const markers = A.LANDMARKS.map(marker => ({ ...marker, world: A.pt(W, marker.seg, marker.pc) }));
     assert(markers.every(marker => marker.world.toArray().every(Number.isFinite)), id + ': finite floor markers');
     const minY = Math.min(...markers.map(marker => marker.world.y));
-    check(Math.abs(minY) <= FLOOR_TOLERANCE, `${id}: lowest floor marker is ${minY} m`);
-    const contacts = markers.filter(marker => marker.world.y < CONTACT_HEIGHT);
+    const actualGround = groundFitter.measure({ id, local, rootQ: root, rootP: new THREE.Vector3(...pose.rootP) });
+    check(actualGround.minimum.heightM >= -FLOOR_TOLERANCE, `${id}: actual bone/muscle/skin floor penetration ${actualGround.minimum.heightM} m`);
+    check(actualGround.primary.every(group => group.present), `${id}: an intended anatomical support is missing`);
+    const contactModel = contactFactory.build(id, W, { audit: true });
+    check(contactModel.diagnostics.surfaceGeometryValid, `${id}: actual outer muscle penetrates floor`);
+    check(Number.isFinite(contactModel.diagnostics.unclusteredSupport.margin)
+      && contactModel.diagnostics.unclusteredSupport.margin >= -1e-6, `${id}: COM outside geometric support`);
+    const contacts = contactModel.contacts.map(c => ({ ...c, world: c.P }));
     const has = (regions, side) => contacts.some(marker => regions.has(marker.region) && (!side || marker.side === side));
     const sides = regions => ['L', 'R'].filter(side => has(regions, side));
     const both = (regions, label) => check(sides(regions).length === 2, id + ': missing bilateral ' + label + ' floor support');
     const any = (regions, label) => check(has(regions), id + ': missing ' + label + ' floor support');
     const regionSides = [...new Set(contacts.map(marker => marker.region + ':' + marker.side))].sort();
+    const markerRegionSides = [...new Set(markers.filter(marker => marker.world.y < CONTACT_HEIGHT)
+      .map(marker => marker.region + ':' + marker.side))].sort();
     check(contacts.length >= (['detali-03', 'detali-05', 'detali-06', 'detali-07', 'detali-08'].includes(id) ? 1 : 2),
       id + ': insufficient geometric floor markers');
-    // Source-photo support constraints. These use the existing skin markers;
-    // they do not claim that a contact force or a stable equilibrium was solved.
+    // Source-photo support constraints, evaluated on actual near-floor patches
+    // and explicitly identified missing-skin proxies. This is geometry only.
     if (['struna-01', 'struna-02', 'struna-03', 'struna-04', 'struna-06',
       'centering-01', 'centering-03', 'centering-04'].includes(id)) both(FOOT, 'foot');
     if (['struna-05', 'detali-01', 'struna-07', 'centering-02'].includes(id)) both(HAND, 'hand');
@@ -256,6 +277,13 @@ for (const id of ids) {
     // tolerances. These distinguish the photographed heel lift, hand locks,
     // hands behind the head and lunges from substantially different poses.
     const variant = {};
+    if (['struna-06', 'centering-07', 'centering-08'].includes(id)) {
+      const moments = Object.entries(spineSegments).map(([joint, segment]) => ({ joint, segment,
+        torqueNm: Array.from(spineJointTorque(local[segment], SPINE_PASSIVE[joint])) }));
+      variant.spinalRotationRegression = moments;
+      check(moments.every(m => m.torqueNm.every(n => Number.isFinite(n) && Math.abs(n) < 100)),
+        id + ': concentrated spinal rotation causes extreme passive spring extrapolation');
+    }
     const fingerTips = side => markers.filter(marker => marker.side === side && /^tip[1-5]$/.test(marker.tag || ''))
       .map(marker => marker.world);
     const jointFlex = (type, side) => {
@@ -361,13 +389,16 @@ for (const id of ids) {
     // Compare saved diagnostics with the independently decoded geometry.
     assert(pose.geometry && Number.isFinite(pose.geometry.minMarkerHeightM), id + ': floor diagnostic');
     check(Math.abs(pose.geometry.minMarkerHeightM - minY) <= 1e-8, id + ': stale floor diagnostic');
-    check(JSON.stringify([...pose.geometry.contacts].sort()) === JSON.stringify(regionSides), id + ': stale contact diagnostic');
+    check(JSON.stringify([...pose.geometry.contacts].sort()) === JSON.stringify(markerRegionSides), id + ': stale marker contact diagnostic');
+    check(Math.abs(pose.geometry.ground.after.minimum.heightM - actualGround.minimum.heightM) <= 1e-8,
+      id + ': stale actual floor diagnostic');
     results.push({ id, minY, contacts: regionSides, variant, asymmetryDeg: asymmetryRad * 180 / Math.PI,
       colliding: collision.colliding, pairs: collision.pairs,
       armFootColliding: armFootCollision.colliding, armFootPairs: armFootCollision.pairs });
   } catch (error) { failures.push(id + ': ' + error.message); }
 }
 kneeSurfaces.dispose();
+contactFactory.dispose();
 
 // Exercise the real Python publication gate in an isolated checkout-like
 // fixture. Every file that is changed here is a private copy, never a symlink.
@@ -375,7 +406,8 @@ kneeSurfaces.dispose();
 function negativeBuildChecks() {
   const root = path.dirname(fileURLToPath(import.meta.url));
   const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'fysm-practice-build-'));
-  const privateCopies = new Set(['build.py', ...sourceFiles, 'practice/poses.json', 'practice/check.json']);
+  const privateCopies = new Set(['build.py', ...sourceFiles, 'practice/poses.json', 'practice/check.json',
+    'practice/physics.json', 'practice/physics-check.json', 'physics.json', 'cycle_data.json', 'cycle_phys.json']);
   const privateDirectories = new Set(['practice', 'skull']);
   const skipped = new Set(['.git', '.heavy.lock', 'node_modules', 'dist']);
   function snapshotDirectory(relative = '') {
@@ -406,6 +438,17 @@ function negativeBuildChecks() {
     const originalPoses = fs.readFileSync(posesPath);
     const originalCheck = fs.readFileSync(checkPath);
     const originalBuilder = fs.readFileSync(builderPath);
+    const physicsPath = path.join(fixture, 'practice/physics.json');
+    const physicsCheckPath = path.join(fixture, 'practice/physics-check.json');
+    const numericOriginals = Object.fromEntries(['practice/physics.json', 'practice/physics-check.json',
+      'physics.json', 'cycle_data.json', 'cycle_phys.json'].map(name => [name, fs.readFileSync(path.join(fixture, name))]));
+    const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+    const rewritePhysics = mutate => {
+      const changed = JSON.parse(numericOriginals['practice/physics.json']); mutate(changed);
+      const bytes = JSON.stringify(changed); fs.writeFileSync(physicsPath, bytes);
+      const witness = JSON.parse(numericOriginals['practice/physics-check.json']); witness.physicsSha256 = sha(bytes);
+      fs.writeFileSync(physicsCheckPath, JSON.stringify(witness));
+    };
     const cases = [
       ['changed-geometry', () => {
         const changed = JSON.parse(originalPoses);
@@ -417,16 +460,28 @@ function negativeBuildChecks() {
         const changed = JSON.parse(originalCheck); delete changed.verified;
         fs.writeFileSync(checkPath, JSON.stringify(changed));
       }],
+      ['changed-practice-forces', () => fs.appendFileSync(physicsPath, ' '), /Practice physics verification/],
+      ['unverified-force-assembly', () => rewritePhysics(p => { p.poses['struna-01'].diag.physicalBalance.verified = false; }), /Practice physics verification/],
+      ['unverified-contact-geometry', () => rewritePhysics(p => { p.poses['struna-01'].diag.contactGeometryVerified = false; }), /Practice physics verification/],
+      ['contradictory-physical-tolerance', () => rewritePhysics(p => { p.poses['struna-01'].diag.physicalBalance.forceResidualN = 1e6; }), /Practice physics verification/],
+      ['missing-pad-sensitivity', () => rewritePhysics(p => { delete p.poses['struna-08'].modelLimits.softTissueContactSensitivity; }), /Practice soft-tissue contact sensitivity/],
+      ['stale-legacy-force-output', () => fs.appendFileSync(path.join(fixture, 'physics.json'), ' '), /Static physics verification/],
+      ['stale-cycle-force-output', () => fs.appendFileSync(path.join(fixture, 'cycle_phys.json'), ' '), /Round physics verification/],
+      ['unverified-packed-cycle', () => {
+        const p = JSON.parse(numericOriginals['cycle_data.json']); p.modelQuality.physicalBalanceVerified = false;
+        fs.writeFileSync(path.join(fixture, 'cycle_data.json'), JSON.stringify(p));
+      }, /Round physics verification/],
     ];
-    for (const [name, mutate] of cases) {
+    for (const [name, mutate, expected = /Practice geometry is missing or stale/] of cases) {
       fs.writeFileSync(posesPath, originalPoses);
       fs.writeFileSync(checkPath, originalCheck);
       fs.writeFileSync(builderPath, originalBuilder);
+      for (const [name, bytes] of Object.entries(numericOriginals)) fs.writeFileSync(path.join(fixture, name), bytes);
       fs.rmSync(output, { recursive: true, force: true });
       mutate();
       const result = run();
       assert.notEqual(result.status, 0, name + ' must block publication');
-      assert.match(result.stderr, /Practice geometry is missing or stale/, name + ': fail for the actual practice guard');
+      assert.match(result.stderr, expected, name + ': fail for the actual publication guard');
       assert(!fs.existsSync(output), name + ': no page may be emitted after rejection');
     }
     return cases.length;
@@ -440,7 +495,7 @@ if (!failures.some(message => message.startsWith('stale practice input:'))) {
 
 console.log(JSON.stringify({ passed: failures.length === 0, algorithms: 3, sourcePoses: 24,
   testedPoses: results.length, boneParts: collider.boneParts, scope: collider.scope,
-  floorMarkerToleranceM: FLOOR_TOLERANCE, contactMarkerHeightM: CONTACT_HEIGHT,
+  actualFloorToleranceM: FLOOR_TOLERANCE, floorMarkersDiagnosticOnly: true, contactMarkerHeightM: CONTACT_HEIGHT,
   candidatePairs, triangleTests, armFootCandidatePairs, armFootTriangleTests,
   armFootScope: armFootCollider.scope, armFootPairGroups: armFootCollider.pairGroups,
   adapterFixtureCases, formerGripRejected, staleBuildsBlocked, poses: results, failures }, null, 2));

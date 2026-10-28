@@ -6,6 +6,7 @@ import {
   blankLocal, rootPlaced, armIK, legIK, orientHand, orientFoot, scapulaPose,
 } from '../cycle_lib.mjs';
 import { buildFold, buildPlank } from '../poses_build.mjs';
+import { rotateElbowPlane, graspDistalForearm } from './kinematics_helpers.mjs';
 
 const ZERO = V(0, 0, 0);
 const SIDES = ['L', 'R'];
@@ -42,7 +43,8 @@ function shoulder(L, up = 15, post = 10, pro = 3) {
 }
 function spine(L, angles = [0, 0, 0, 0, 0], twist = [0, 0, 0]) {
   ['lumA', 'lumB', 'thA', 'thB', 'thC'].forEach((name, i) => {
-    L[name] = qAx(X, angles[i]).multiply(qAx(Y, i >= 2 ? twist[i - 2] : 0));
+    const axial = twist.length === 5 ? twist[i] : i >= 2 ? twist[i - 2] : 0;
+    L[name] = qAx(X, angles[i]).multiply(qAx(Y, axial));
   });
 }
 function arm(p, side, target, pole, orientation = null, fingerMode = 'flat') {
@@ -108,8 +110,8 @@ function kneelingFeet(p) {
 function lockedFold() {
   const b = buildFold({ hipFlex: 150, lum: [6, 6], thor: [4, 4, 4] });
   const p = { local: b.L, rootQ: b.rootQ, rootP: rootPlaced(b.L, b.rootQ) };
-  // The two wrists remain distinct. The closed lock is represented by curved
-  // fingers approaching the other hand rather than coincident palm centres.
+  // The two wrists remain distinct; the left fingers close around the distal
+  // right forearm instead of placing the two palm centres at the same point.
   const W = wOf(p), Q = W.thC.q;
   for (const sd of SIDES) {
     const x = sign(sd);
@@ -119,6 +121,9 @@ function lockedFold() {
     const handQ = handBasis(V(0, .2, -1).applyQuaternion(Q), V(x, 0, 0).applyQuaternion(Q));
     arm(p, sd, target, pole, handQ, 'grip');
   }
+  const beforeLock = wOf(p);
+  rotateElbowPlane(p, 'R', 3);
+  graspDistalForearm(p, { pole: beforeLock.fore_L.p });
   return finish(p, ['Закрытый замок за спиной восстановлен по фотографии; положение пальцев — геометрическая реконструкция.']);
 }
 
@@ -178,6 +183,7 @@ function sideWarrior() {
     const sh = W[`hum_${sd}`].p;
     arm(p, sd, sh.clone().add(V(-.32, .47, 0)), sh.clone().add(V(-.24, .4, sign(sd) * .08)), handBasis(V(-.5, .85, 0), V(0, 0, sign(sd))), 'soft');
   }
+  rotateElbowPlane(p, 'R', 126);
   return finish(p, ['Широкая стойка с боковым наклоном и поднятыми руками показана по варианту на листе FYSM.'], [.15, .30, 1]);
 }
 
@@ -212,11 +218,14 @@ function halfCrane() {
   supportedForearm(p, 'R', 0, .20);
   let y = shL.y - .292;
   for (let i = 0; i < 4; i++) {
-    floorArm(p, 'L', V(shL.x + .015, y, shL.z - .35), shL.clone().add(V(.08, -.12, -.6)));
+    // Keep the supporting palm nearer the shoulder. The previous 35 cm
+    // setback required more than 100 degrees of extension in this rig.
+    floorArm(p, 'L', V(shL.x + .015, y, shL.z - .28), shL.clone().add(V(.08, -.12, -.6)));
     const palm = floorMin(p, l => l.side === 'L' && l.region === 'ладони');
     const fore = floorMin(p, l => l.side === 'R' && l.region === 'предплечья');
     y -= palm - fore;
   }
+  rotateElbowPlane(p, 'L', -15);
   W = wOf(p);
   const upper = W.hum_L.p.clone().lerp(W.fore_L.p, .55);
   const hip = W.thigh_L.p;
@@ -233,28 +242,50 @@ function halfCrane() {
 
 function kneelingTwist() {
   const p = newPose(90, .46), L = p.local;
-  spine(L, [0, 0, -3, -3, -3], [-20, -25, -25]); shoulder(L, 12, 8, 5);
+  // The photograph does not measure individual spinal angles. Share the
+  // torso turn across the lumbar and thoracic model joints, inside each
+  // model range, instead of assigning 25 degrees to a 10-degree joint.
+  const oldTrunk = qAx(X, -3).multiply(qAx(Y, -20))
+    .multiply(qAx(X, -3).multiply(qAx(Y, -25)))
+    .multiply(qAx(X, -3).multiply(qAx(Y, -25)));
+  spine(L, [0, 0, -3, -3, -3], [-14, -14, -12, -10, -10]);
+  const newTrunk = ['lumA', 'lumB', 'thA', 'thB', 'thC']
+    .reduce((q, segment) => q.multiply(L[segment]), IDQ.clone());
+  // Preserve the source head orientation while sharing the remaining turn
+  // between the three cervical model joints as well.
+  const cervical = IDQ.clone().slerp(newTrunk.clone().invert()
+    .multiply(oldTrunk).multiply(qAx(Y, -20)), 1 / 3);
+  shoulder(L, 12, 8, 5);
   for (const sd of SIDES) {
     L[`thigh_${sd}`] = p.rootQ.clone().invert();
-    L[`shank_${sd}`] = qAx(X, 90);
+    // The curled-foot stance leaves room for the visible calf behind the
+    // supported knee; a perfectly horizontal shin cut that surface by 8 mm.
+    L[`shank_${sd}`] = qAx(X, 92);
     orientFoot(L, p.rootQ, p.rootP, sd, qAx(X, 162));
     L[`toes_${sd}`] = qAx(X, -75);
   }
   kneelingFeet(p);
   const kneeFloor = floorMin(p, l => l.region === 'колени');
-  supportedForearm(p, 'L', kneeFloor);
+  // Fit the exposed forearm tissue to the mat, not its internal skin marker.
+  supportedForearm(p, 'L', kneeFloor + .006);
   const sr = wOf(p).hum_R.p;
   arm(p, 'R', sr.clone().add(V(0, .565, -.015)), sr.clone().add(V(-.1, .4, -.05)), handBasis(V(0, 1, 0), V(0, 0, 1)), 'soft');
-  L.neckA = qAx(Y, -10); L.neckB = qAx(Y, -10);
+  rotateElbowPlane(p, 'R', -72);
+  L.neckA = cervical.clone(); L.neckB = cervical.clone(); L.head = cervical.clone();
   return finish(p, ['Колени и пальцы стоп у пола; грудная клетка развёрнута, левая рука опирается предплечьем, правая вытянута вверх.'], [.8, .34, .75]);
 }
 
 function puppy() {
   const p = newPose(145, .46), L = p.local;
-  spine(L, [-10, -10, -8, -8, -6]); shoulder(L, 43, 18, 3);
+  // A distributed trunk extension lets the upper chest and knees reach the
+  // same plane with the neck shared between its three anatomical joints.
+  // The former flatter trunk required 70 degrees at CT alone to lift the chin.
+  spine(L, [-12, -12, -10, -10, -10]); shoulder(L, 43, 18, 3);
   for (const sd of SIDES) {
     L[`thigh_${sd}`] = p.rootQ.clone().invert();
-    L[`shank_${sd}`] = qAx(X, 90);
+    // A slightly higher ankle keeps the displayed calf above the mat while
+    // preserving the knee position; the curled toes are fitted again below.
+    L[`shank_${sd}`] = qAx(X, 92);
     orientFoot(L, p.rootQ, p.rootP, sd, qAx(X, 162));
     L[`toes_${sd}`] = qAx(X, -75);
   }
@@ -270,13 +301,21 @@ function puppy() {
   }, 140, 170);
   p.rootQ = qAx(X, pitch);
   for (const sd of SIDES) L[`thigh_${sd}`] = p.rootQ.clone().invert();
+  kneelingFeet(p);
   const W = wOf(p);
   for (const sd of SIDES) {
     const sh = W[`hum_${sd}`].p;
-    floorArm(p, sd, V(sh.x, kneeFloor + .014, sh.z + .565), sh.clone().add(V(sign(sd) * .06, .15, .8)));
+    // Keep the elbow above the mat. Rotating this overhead arm around its
+    // reach only to reduce the clinical shoulder Euler angle put its triceps
+    // below the support plane; that angle has an ambiguous overhead branch.
+    // The displayed palm bulk, rather than the internal palm marker alone,
+    // determines this reconstruction's final hand support after ground-fit.
+    floorArm(p, sd, V(sh.x, kneeFloor + .020, sh.z + .565), sh.clone().add(V(sign(sd) * .06, .15, .8)));
   }
-  L.neckA = qAx(X, -55); L.neckB = qAx(X, -10);
-  return finish(p, ['Таз находится над коленями, грудная клетка опущена, руки вытянуты вперёд. Пальцы стоп подогнуты, как на фотографии.'], [-1, .25, .3]);
+  // Preserve the total 80-degree reconstructed head turn while sharing the
+  // extension between CT, C4–C5 and the atlas/occiput within their ranges.
+  L.neckA = qAx(X, -30); L.neckB = qAx(X, -25); L.head = qAx(X, -25);
+  return finish(p, ['Таз находится над коленями, грудная клетка опущена, руки направлены вперёд с согнутыми локтями. Пальцы стоп подогнуты, как на фотографии.'], [-1, .25, .3]);
 }
 
 export function buildCentering() {

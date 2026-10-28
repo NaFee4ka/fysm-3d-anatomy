@@ -1,6 +1,8 @@
 // Static photographic reconstructions of FYSM «Детали», PDF page 5.
 // Angles are reconstruction parameters, not measurements or training advice.
 // This module does not modify the anatomy or infer recruitment from a photograph.
+import { readFileSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
 import {
   A, THREE, V, S, SEG, qAx, X, Y, Z, IDQ, blankLocal, setSide,
   armIK, legIK, orientHand, orientFoot, computeWorld, pt,
@@ -10,6 +12,38 @@ import {
 const ZERO = V(0, 0, 0);
 const SIDES = ['L', 'R'];
 const sign = s => s === 'L' ? 1 : -1;
+let sourceBoneParts = null;
+function boneParts() {
+  if (sourceBoneParts) return sourceBoneParts;
+  const data = JSON.parse(readFileSync(new URL('../skull/bones_bp3d.json', import.meta.url)));
+  const payload = gunzipSync(Buffer.from(data.data, 'base64'));
+  let offset = 0;
+  sourceBoneParts = data.parts.map(part => {
+    const points = [], accumulator = [0, 0, 0];
+    for (let i = 0; i < part.n; i++) {
+      const point = [];
+      for (let axis = 0; axis < 3; axis++) {
+        accumulator[axis] = (accumulator[axis] + payload.readUInt16LE(offset)) & 65535;
+        offset += 2;
+        point.push(part.lo[axis] + (part.hi[axis] - part.lo[axis]) * accumulator[axis] / 65535);
+      }
+      points.push(V(...point));
+    }
+    offset += part.m * 6;
+    return { seg: part.seg, points };
+  });
+  if (offset !== payload.length) throw new Error('Practice bone-floor payload length mismatch');
+  return sourceBoneParts;
+}
+function boneFloor(W, predicate) {
+  let lowest = Infinity;
+  for (const part of boneParts()) if (predicate(part.seg)) {
+    const transform = W[part.seg];
+    for (const point of part.points)
+      lowest = Math.min(lowest, point.clone().applyQuaternion(transform.q).add(transform.p).y);
+  }
+  return lowest;
+}
 function world(k) { return computeWorld(k.local, k.rootQ, ZERO); }
 function base(pitch = 0) { return { local: blankLocal(), rootQ: qAx(X, pitch), rootP: null }; }
 function both(k, bone, rotation) { for (const side of SIDES) setSide(k.local, side, bone, rotation); }
@@ -50,6 +84,65 @@ function palmAt(k, side, center, pole, direction = V(0, 0, 1)) {
   const flex = armIK(k.local, k.rootQ, ZERO, side, wrist, pole);
   orientHand(k.local, k.rootQ, ZERO, side, q, flex);
   fingers(k, side);
+}
+// Reconstruct the elbow plane and hand roll together. An unconstrained
+// swing/twist split can leave a plausible palm position with an impossible
+// wrist deviation or forearm turn. These fixed photographic-fit corrections
+// preserve the wrist point for free hands, or the palm contact for a grip.
+// They do not change the rig, joint limits or force parameters.
+function refitHand(k, side, { yaw = 0, roll = 0, pole = 0 } = {}) {
+  const W = world(k), hand = 'hand_' + side;
+  const shoulder = W['hum_' + side].p;
+  const direction = V(0, -1, 0).applyQuaternion(W[hand].q);
+  const normal = V(side === 'L' ? -1 : 1, 0, 0).applyQuaternion(W[hand].q);
+  let target = W[hand].p.clone(), Q = W[hand].q.clone();
+  if (yaw) {
+    const landmark = A.lmkTag('palm', side);
+    const contact = pt(W, hand, landmark.p);
+    direction.applyAxisAngle(normal, yaw * Math.PI / 180);
+    Q = handBasis(direction, normal, side);
+    target = contact.sub(landmark.p.clone().sub(S[hand].J).applyQuaternion(Q));
+  }
+  if (roll) Q.premultiply(new THREE.Quaternion().setFromAxisAngle(direction, roll * Math.PI / 180));
+  const axis = target.clone().sub(shoulder).normalize();
+  const polePoint = W['fore_' + side].p.clone().sub(shoulder)
+    .applyAxisAngle(axis, pole * Math.PI / 180).add(shoulder);
+  const flex = armIK(k.local, k.rootQ, ZERO, side, target, polePoint);
+  orientHand(k.local, k.rootQ, ZERO, side, Q, flex);
+}
+function fingertipSupport(k, side) {
+  // The hand under the trunk in the source photograph is arched and stands on
+  // bent fingers. Forcing its entire palm flat used to rotate the wrist past
+  // 160 degrees. Fit the actual finger markers to the same support plane with
+  // a 30-degree wrist and a modest forearm turn instead.
+  const W = world(k), shoulder = W['hum_' + side].p;
+  const elbow = W['fore_' + side].p;
+  const wrist = W['hand_' + side].p.clone();
+  const floor = Math.min(...A.LANDMARKS.filter(l => l.region === 'таз' && l.side === 'R')
+    .map(l => pt(W, l.seg, l.pc).y));
+  for (let n = 2; n <= 5; n++) {
+    setSide(k.local, side, 'f' + n + 'a', qAx(Z, -20));
+    setSide(k.local, side, 'f' + n + 'b', qAx(Z, -35));
+    setSide(k.local, side, 'f' + n + 'c', qAx(Z, -15));
+  }
+  const foreAxis = S.hand_L.J.clone().sub(S.fore_L.J).normalize();
+  const twist = new THREE.Quaternion().setFromAxisAngle(foreAxis, -20 * Math.PI / 180);
+  wrist.y = floor + .08;
+  for (let i = 0; i < 16; i++) {
+    const axis = wrist.clone().sub(shoulder).normalize();
+    const pole = elbow.clone().sub(shoulder).applyAxisAngle(axis, 20 * Math.PI / 180).add(shoulder);
+    const flex = armIK(k.local, k.rootQ, ZERO, side, wrist, pole);
+    setSide(k.local, side, 'fore', flex.clone().multiply(twist));
+    setSide(k.local, side, 'ulna', twist.clone().invert());
+    setSide(k.local, side, 'hand', qAx(Z, 30));
+    const posed = world(k);
+    // The fitted atlas phalanges extend beyond some schematic fingertip
+    // markers. Use every original finger-bone vertex, with 2 mm of geometric
+    // clearance, instead of placing those actual bones through the floor.
+    const gap = boneFloor(posed, seg => /^f[1-5][mabc]_/.test(seg) && seg.endsWith('_' + side)) - (floor + .002);
+    if (Math.abs(gap) < 1e-5) break;
+    wrist.y -= gap * .65;
+  }
 }
 function feet(k, quaternion) { for (const side of SIDES) orientFoot(k.local, k.rootQ, ZERO, side, quaternion); }
 function settleSagittal(k) {
@@ -125,6 +218,7 @@ function staff() {
   feet(k, qAx(X, -90));
   scap(k, 10, 8, 2, 0);
   behindHead(k);
+  for (const side of SIDES) refitHand(k, side, { roll: sign(side) * 15, pole: -sign(side) * 35 });
   return finish(k, ['Вариант из пособия: руки за головой, локти разведены.']);
 }
 function supineBoat() {
@@ -140,17 +234,24 @@ function supineBoat() {
     const target = sh.clone().add(V(-s * .025, .12, .53));
     arm(k, side, target, sh.clone().add(V(s * .12, .1, .4)), V(0, .18, 1), V(-s, 0, 0));
   }
+  for (const side of SIDES) refitHand(k, side, { pole: -sign(side) * 25 });
   return finish(k, ['Корпус и прямые ноги приподняты; руки направлены к ногам. Углы — реконструкция снимка.'], [-1, .34, .6], true);
 }
 function singleBridge() {
   const k = base(-125);
-  spine(k, [-8, -8, 5, 10, 12], [15, 15, 15]);
+  spine(k, [-8, -8, 8, 13, 15], [5, 5, 5]);
   scap(k, 28, 10, 0);
   // Fit the support foot to the upper back instead of placing the entire pose
   // on the lowest toe and leaving the shoulders suspended above the floor.
   let W = world(k);
   const upper = A.LANDMARKS.filter(l => (l.region === 'спина' && l.p.y > 1.28) || l.region === 'голова');
-  const upperY = Math.min(...upper.map(l => pt(W, l.seg, l.pc).y));
+  // A distributed thoracic/cervical curve lets the upper back lie down
+  // instead of balancing the bridge on the occiput. The 10 mm offset fits
+  // the fixed atlas upper-back surface relative to its schematic markers;
+  // it is a geometric reconstruction parameter, not tissue indentation.
+  // The unchanged head/neck bones retain at least 2 mm of bare-bone clearance.
+  const upperY = Math.min(Math.min(...upper.map(l => pt(W, l.seg, l.pc).y)),
+    boneFloor(W, seg => ['head', 'neckA', 'neckB', 'thC'].includes(seg)) - .002) - .010;
   setSide(k.local, 'L', 'thigh', qAx(X, -55));
   setSide(k.local, 'L', 'shank', IDQ);
   setSide(k.local, 'L', 'foot', qAx(X, 25));
@@ -171,10 +272,19 @@ function singleBridge() {
   for (const side of SIDES) {
     const s = sign(side); W = world(k);
     const sh = W['hum_' + side].p;
-    const target = V(sh.x + s * .02, upperY + .01, sh.z - .50);
-    arm(k, side, target, sh.clone().add(V(s * .1, -.02, -.3)), V(0, 0, -1), V(0, 1, 0));
+    const target = V(sh.x + s * .02, upperY + .01, sh.z - .57);
+    for (let i = 0; i < 5; i++) {
+      arm(k, side, target, sh.clone().add(V(s * .1, -.02, -.3)), V(0, 0, -1), V(0, 1, 0));
+      const height = boneFloor(world(k), seg => /^(hand|f[1-5][mabc])_/.test(seg) && seg.endsWith('_' + side));
+      const clearance = upperY + .002 - height;
+      if (clearance <= 1e-5) break;
+      target.y += clearance;
+    }
   }
-  return finish(k, ['Левая нога поднята, правая опирается передним отделом стопы; пятка поднята, как на вставке в пособии.'], [-1, .32, .55]);
+  // Keep the nearly straight overhead arms in a feasible elbow plane while
+  // preserving the fitted world wrist points and hand orientations.
+  for (const side of SIDES) refitHand(k, side, { pole: -sign(side) * 20 });
+  return finish(k, ['Левая нога поднята, правая опирается передним отделом стопы; пятка поднята, как на вставке в пособии.', 'Опора восстановлена на верхней части спины и стопе; руки лежат за головой. Изгиб грудного отдела и шеи согласован с исходными костями и поверхностями модели.'], [-1, .32, .55]);
 }
 function lowBoat() {
   const k = base(-85);
@@ -188,6 +298,7 @@ function lowBoat() {
     arm(k, side, sh.clone().add(V(-s * .045, .39, -.38)),
       sh.clone().add(V(s * .05, .3, -.25)), V(0, .7, -.7), V(s, 0, 0));
   }
+  for (const side of SIDES) refitHand(k, side, { roll: -sign(side) * 25 });
   return finish(k, ['Вариант из пособия: руки вытянуты за голову, ноги остаются низко над полом.'], [-1, .34, .6], true);
 }
 function lightFingerGrip(k, side, bend) {
@@ -208,7 +319,9 @@ function wideSupine() {
     const s = sign(side);
     // The knees contact the floor on their medial soft-tissue side. The
     // anterior patellar marker does not represent that side of the knee.
-    legIK(k.local, k.rootQ, ZERO, side, V(s * .34, .17, -.42), V(s * .85, -.22, -.05));
+    // A roughly 5-degree change of the knee plane keeps
+    // the medial thigh surface above the shared knee/back support plane.
+    legIK(k.local, k.rootQ, ZERO, side, V(s * .34, .17, -.42), V(s * .85, -.30, -.05));
     orientFoot(k.local, k.rootQ, ZERO, side, qAx(X, -160).multiply(qAx(Z, s * -10)));
   }
   for (const side of SIDES) {
@@ -222,7 +335,11 @@ function wideSupine() {
     orientHand(k.local, k.rootQ, ZERO, side, Q, flex);
     lightFingerGrip(k, side, 20);
   }
-  return finish(k, ['Колени разведены к полу, кисти у наружных краёв стоп. Контакт восстановлен геометрически; давление и сжатие тканей не рассчитываются.'], [-.85, .8, .65], true);
+  for (const side of SIDES) refitHand(k, side, { yaw: -sign(side) * 10, pole: -sign(side) * 40 });
+  // Keep the intended supine trunk. A marker-only sagittal hull tilt would
+  // rotate the side of the knees below the actual thigh surface; the shared
+  // rendered-geometry ground fit places this frozen posture afterwards.
+  return finish(k, ['Колени разведены к полу, кисти у наружных краёв стоп. Контакт восстановлен геометрически; давление и сжатие тканей не рассчитываются.'], [-.85, .8, .65]);
 }
 function supineStretch() {
   const k = base(-90);
@@ -255,6 +372,7 @@ function supineStretch() {
     orientHand(k.local, k.rootQ, ZERO, g.side, g.Q, flex);
     lightFingerGrip(k, g.side, 10);
   }
+  for (const side of SIDES) refitHand(k, side, { yaw: sign(side) * 30 });
   return finish(k, ['Прямые ноги направлены вверх и к голове, ладони у подошв. Глубина сгибания подобрана по досягаемости неизменённого рига, а не измерена по фотографии.'], [-1, .34, .6], true);
 }
 function mermaid() {
@@ -270,7 +388,8 @@ function mermaid() {
   palmAt(k, 'L', V(-.86, -.125, .02), V(-.72, -.03, .1), V(-1, 0, 0));
   W = world(k);
   palmAt(k, 'R', V(-.40, -.125, .30), V(-.35, -.1, .5), V(1, 0, .1));
-  return finish(k, ['Опора на правом боку; обе прямые ноги приподняты. Положение рук и боковой наклон — реконструкция фронтального снимка.'], [.1, .45, 1]);
+  fingertipSupport(k, 'R');
+  return finish(k, ['Опора на правом боку; обе прямые ноги приподняты. Кисть под корпусом опирается кончиками согнутых пальцев, как на фотографии.', 'Положение рук и боковой наклон — реконструкция фронтального снимка.'], [.1, .45, 1]);
 }
 
 export function buildDetali() {
