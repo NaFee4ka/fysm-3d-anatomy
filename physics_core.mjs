@@ -11,6 +11,34 @@ import { MUSCLE, PASSIVE, SPINE_PASSIVE, JOINT_STOPS, CONTACT_K, FRICTION } from
 
 export const G = 9.81;
 
+// Rigid-tendon approximation: the supplied phi is the fibre fraction at the
+// standing reference. It is not silently replaced by a different parameter.
+export function fiberLengthRatio(length, referenceLength, phi) {
+  if (![length, referenceLength, phi].every(Number.isFinite) || length < 0
+      || referenceLength <= 0 || phi <= 0 || phi > 1) throw new Error('Invalid muscle length/reference/fibre fraction');
+  return 1 + (length / referenceLength - 1) / phi;
+}
+export function activeForceLengthFactor(length) {
+  if (!Number.isFinite(length)) throw new Error('Nonfinite normalized fibre length');
+  // A shortened unit can be slack under the rigid-tendon approximation. A
+  // negative fibre length is not a small positive length with finite capacity.
+  return length <= 0 ? 0 : Math.exp(-((length - 1) ** 2) / 0.45);
+}
+
+// The 20 face normals of an icosahedron. Its vertices lie on the requested
+// force-radius sphere; the inscribed approximation never exceeds that bound.
+const PHI = (1 + Math.sqrt(5)) / 2;
+const FORCE_BALL_INRADIUS = Math.sqrt((5 + 2 * Math.sqrt(5)) / 15);
+export function forceBallFacets(radius) {
+  if (!Number.isFinite(radius) || radius < 0) throw new Error('Invalid force capacity');
+  const normals = [];
+  for (const a of [-1, 1]) for (const b of [-1, 1]) {
+    for (const c of [-1, 1]) normals.push([a, b, c]);
+    normals.push([0, a * PHI, b / PHI], [a * PHI, b / PHI, 0], [a / PHI, 0, b * PHI]);
+  }
+  return normals.map(v => ({ normal: new THREE.Vector3(...v).normalize(), bound: radius * FORCE_BALL_INRADIUS }));
+}
+
 // A regular polygon inscribed in the isotropic Coulomb circle. The former
 // four-face diamond reduced available traction by 29% along a world diagonal.
 // Sixteen faces keep every admissible force inside the same unchanged mu*N
@@ -55,7 +83,9 @@ export function spineJointTorque(q, parameter) {
 
 export function makePhysics(A, opts = {}) {
   const { V, S, SEG, pt, LANDMARKS, MASS, strandPath, pathLength } = A;
-  const BODY = opts.mass || 70, BW = BODY * G;
+  const BODY = opts.mass ?? 70;
+  if (!Number.isFinite(BODY) || BODY <= 0) throw new Error('Body mass must be finite and positive');
+  const BW = BODY * G;
   const children = {};
   for (const s of SEG) children[s.name] = [];
   for (const s of SEG) if (s.parent) children[s.parent].push(s.name);
@@ -98,6 +128,10 @@ export function makePhysics(A, opts = {}) {
     if (d.kind === 'trans') return ax.clone();
     return ax.clone().cross(P.clone().sub(c));
   };
+  const pairedDisplacement = (k, segA, segB, P, ax, c) => {
+    const a = dpdq(k, segA, P, ax, c), b = dpdq(k, segB, P, ax, c);
+    return V(0, 0, 0).add(a || V(0, 0, 0)).sub(b || V(0, 0, 0));
+  };
   const rotW = (W, k, ang, ax, c) => {
     const d = DOF[k];
     const R = new THREE.Quaternion().setFromAxisAngle(ax, ang);
@@ -135,8 +169,7 @@ export function makePhysics(A, opts = {}) {
   const W_STAND = A.placeW(A.STAND.local, A.STAND.rootQ);
   const L_STAND = INST.map(i => pathLength(strandPath(W_STAND, i)));
   // fibre length relative to standing; force-length factor (Gaussian, width as in Thelen 2003)
-  const fiberLen = (j, L) => 1 + (L / L_STAND[j] - 1) / Math.max(0.3, MUSCLE[INST[j].unit].phi);
-  const fLactive = lt => Math.exp(-((Math.min(1.7, Math.max(0.4, lt)) - 1) ** 2) / 0.45);
+  const fiberLen = (j, L) => fiberLengthRatio(L, L_STAND[j], MUSCLE[INST[j].unit].phi);
   const expRise = (u, k) => (Math.exp(k * u) - 1) / (Math.exp(k) - 1);
   // passive pull of stretched long muscles: starts at slack strain e0 of the muscle-tendon unit,
   // reaches frac*Fmax at the strain eLim (end of a flexible person's range)
@@ -179,12 +212,73 @@ export function makePhysics(A, opts = {}) {
 
   // ---------- contacts ----------
   function contactsOf(W, thr = 0.004) {
+    if (!Number.isFinite(thr) || thr < 0) throw new Error('Contact threshold must be finite and nonnegative');
     const out = [];
     LANDMARKS.forEach((l, li) => {
       const P = pt(W, l.seg, l.pc);
-      if (P.y < thr) out.push({ region: l.region, side: l.side, seg: l.seg, tag: l.tag, li, P: V(P.x, 0, P.z), h: Math.max(0, P.y), k: CONTACT_K[l.region] || 1.5, mu: FRICTION[l.region] ?? 0.6 });
+      if (P.y < thr) out.push({ id: 'landmark:' + li, source: 'landmark', region: l.region, side: l.side, seg: l.seg, tag: l.tag, li, P: V(P.x, 0, P.z), h: Math.max(0, P.y), k: CONTACT_K[l.region] || 1.5, mu: FRICTION[l.region] ?? 0.6 });
     });
     return out;
+  }
+  const point = (value, label) => {
+    const xyz = Array.isArray(value) ? value : value && [value.x, value.y, value.z];
+    if (!xyz || xyz.length !== 3 || !xyz.every(Number.isFinite)) throw new Error('Invalid contact point/vector: ' + label);
+    return V(...xyz);
+  };
+  const cap = (value, label) => {
+    if (value === undefined) return undefined;
+    if (!Number.isFinite(value) || value < 0) throw new Error('Invalid contact capacity: ' + label);
+    return value;
+  };
+  function floorContacts(W, override, threshold) {
+    if (override === undefined) return contactsOf(W, threshold);
+    if (!Array.isArray(override)) throw new Error('Floor contacts override must be an array');
+    const maxHeight = threshold ?? .004;
+    if (!Number.isFinite(maxHeight) || maxHeight < 0) throw new Error('Contact threshold must be finite and nonnegative');
+    const ids = new Set();
+    return override.map(c => {
+      if (!c || typeof c.id !== 'string' || !c.id.length || ids.has(c.id) || typeof c.seg !== 'string' || !Object.hasOwn(S, c.seg))
+        throw new Error('Floor contact needs a unique id and known segment');
+      ids.add(c.id);
+      const P = point(c.P, c.id);
+      if (Math.abs(P.y) > 1e-6) throw new Error('Floor contact point must lie on y=0: ' + c.id);
+      const h = c.h ?? 0, k = c.k ?? CONTACT_K[c.region] ?? 1.5, mu = c.mu ?? FRICTION[c.region] ?? .6;
+      if (!Number.isFinite(h) || h < 0 || h > maxHeight + 1e-6 || !Number.isFinite(k) || k <= 0 || !Number.isFinite(mu) || mu < 0)
+        throw new Error('Invalid floor contact height, stiffness or friction: ' + c.id);
+      return { ...c, P: V(P.x, 0, P.z), h, k, mu, maxNormalN: cap(c.maxNormalN, c.id), li: c.id };
+    });
+  }
+  function internalContacts(W, legacy, additional) {
+    if (!Array.isArray(legacy) || !Array.isArray(additional)) throw new Error('Internal contacts/grips must be arrays');
+    const ids = new Set();
+    return legacy.map((g, index) => ({ ...g, id: g.id ?? 'legacy-grip:' + (g.side ?? index),
+      segA: g.hand, segB: g.shank, kind: g.from ? 'pull' : 'bilateral',
+      mu: g.cone ?? 1, maxComponentN: (g.max ?? .8) * BW, legacy: true }))
+      .concat(additional.map(g => ({ ...g, legacy: false }))).map(g => {
+        if (!g || typeof g.id !== 'string' || !g.id.length || ids.has(g.id)
+            || typeof g.segA !== 'string' || typeof g.segB !== 'string'
+            || !Object.hasOwn(S, g.segA) || !Object.hasOwn(S, g.segB) || g.segA === g.segB)
+          throw new Error('Internal contact needs a unique id and two distinct known segments');
+        ids.add(g.id);
+        if (!['bilateral', 'pull', 'unilateral'].includes(g.kind)) throw new Error('Invalid internal contact kind: ' + g.id);
+        const P = point(g.P, g.id), out = { ...g, P, hand: g.segA, shank: g.segB };
+        for (const key of ['maxForceN', 'maxNormalN', 'maxComponentN']) out[key] = cap(g[key], g.id + ':' + key);
+        if (g.kind === 'bilateral' && g.maxNormalN !== undefined)
+          throw new Error('Bilateral contact has no signed normal capacity: ' + g.id);
+        if (g.kind !== 'bilateral') {
+          if (g.normal !== undefined) out.normal = point(g.normal, g.id + ':normal');
+          else if (typeof g.from === 'string' && Object.hasOwn(S, g.from)) out.normal = P.clone().sub(W[g.from].p);
+          else throw new Error('Unilateral/pull contact needs a normal or known from segment: ' + g.id);
+          if (out.normal.lengthSq() < 1e-16) throw new Error('Internal contact normal must be nonzero: ' + g.id);
+          out.normal.normalize();
+          out.mu = g.mu ?? 0;
+          if (!Number.isFinite(out.mu) || out.mu < 0) throw new Error('Invalid internal contact friction: ' + g.id);
+          const helper = Math.abs(out.normal.y) < .9 ? V(0, 1, 0) : V(1, 0, 0);
+          out.tangent1 = helper.cross(out.normal).normalize();
+          out.tangent2 = out.normal.clone().cross(out.tangent1).normalize();
+        }
+        return out;
+      });
   }
   // elastic foundation: compression d0 + a*x + b*z - h under a rigid body; balance of weight and its moments
   function verticalLoads(cs, com) {
@@ -287,7 +381,7 @@ export function makePhysics(A, opts = {}) {
     // muscle moment arms: central differences of path length (wrapping included)
     const delta = 0.3 * Math.PI / 180;
     const Lm = INST.map(i => pathLength(strandPath(W, i)));
-    const R = INST.map(() => new Float64Array(ND));
+    const RLength = INST.map(() => new Float64Array(ND));
     for (let k = 0; k < ND; k++) {
       const d = DOF[k];
       if (d.joint === 'root') continue;
@@ -295,23 +389,87 @@ export function makePhysics(A, opts = {}) {
       INST.forEach((m, j) => { let inn = false, out = false; for (const s of TOUCH[j]) { if (d.moved.has(s)) inn = true; else out = true; } if (inn && out) cross.push(j); });
       if (!cross.length) continue;
       const Wp = rotW(W, k, delta, frames[k].ax, frames[k].c), Wm = rotW(W, k, -delta, frames[k].ax, frames[k].c);
-      for (const j of cross) R[j][k] = -(pathLength(strandPath(Wp, INST[j])) - pathLength(strandPath(Wm, INST[j]))) / (2 * delta);
+      for (const j of cross) RLength[j][k] = -(pathLength(strandPath(Wp, INST[j])) - pathLength(strandPath(Wm, INST[j]))) / (2 * delta);
     }
-    // a muscle never acts against its anatomical direction: where the model's lines of action cross the joint axis
-    // (deep flexion of the hip, knee or elbow; the tissue that keeps tendons on their side is not modelled) the lever is set to zero
-    for (const g of GUARDS) for (const j of g.js) { const r = R[j][g.k]; if (r && Math.sign(r) !== g.sign) R[j][g.k] = 0; }
+    // Derive the actual moment of unit tension from the same owned force path
+    // used for joint reactions. A heuristic wrap is not an exact geodesic, so
+    // -dL/dq can differ from this force moment; retain that difference explicitly.
+    const paths = INST.map(i => ownedPath(W, i));
+    const unitLoads = paths.map(path => {
+      const loads = new Map();
+      const add = (node, force) => {
+        if (!loads.has(node.seg)) loads.set(node.seg, { F: V(0, 0, 0), M: V(0, 0, 0) });
+        const load = loads.get(node.seg); load.F.add(force); load.M.add(node.p.clone().cross(force));
+      };
+      for (let i = 1; i < path.length; i++) {
+        const force = path[i].p.clone().sub(path[i - 1].p).normalize();
+        add(path[i - 1], force); add(path[i], force.clone().negate());
+      }
+      return loads;
+    });
+    const R = unitLoads.map(loads => Float64Array.from(DOF, (d, k) => {
+      if (d.joint === 'root') return 0;
+      let work = 0;
+      for (const [segment, load] of loads) if (d.moved.has(segment))
+        work += (d.kind === 'trans' ? load.F : load.M.clone().sub(frames[k].c.clone().cross(load.F))).dot(frames[k].ax);
+      return work;
+    }));
+    const violations = INST.map(() => []);
+    for (const guard of GUARDS) for (const j of guard.js) {
+      const lever = R[j][guard.k];
+      if (Math.abs(lever) > 1e-6 && Math.sign(lever) !== guard.sign)
+        violations[j].push({ dof: DOF[guard.k].id, expectedSign: guard.sign, momentArmM: lever,
+          geometricMomentArmM: RLength[j][guard.k] });
+    }
     const lt = Lm.map((L, j) => fiberLen(j, L));
-    const FE = FMAX.map((F, j) => F * fLactive(lt[j]));
-    const FP = Lm.map((L, j) => passiveForce(j, L));
+    const capacity = FMAX.map((F, j) => F * activeForceLengthFactor(lt[j]));
+    const muscleQuality = INST.map((instance, j) => ({ id: instance.id, unit: instance.unit, side: instance.side,
+      status: violations[j].length ? 'quarantined' : lt[j] <= 0 ? 'slack' : 'estimated',
+      quarantined: violations[j].length > 0, available: !violations[j].length && capacity[j] > 0,
+      violations: violations[j], normalizedFiberLength: lt[j],
+      activeForceLengthFactor: activeForceLengthFactor(lt[j]), slackFiber: lt[j] <= 0 }));
+    // Invalid anatomical paths are quarantined as a whole, including passive
+    // tension. Zeroing one moment while retaining its actual force would break
+    // mechanical equilibrium. The mesh and Fmax remain visible and unchanged.
+    const FE = capacity.map((force, j) => muscleQuality[j].quarantined ? 0 : force);
+    const FP = Lm.map((L, j) => muscleQuality[j].quarantined ? 0 : passiveForce(j, L));
+    let maxDerivativeMismatchM = 0, maxDerivativeMismatch = null;
+    for (let j = 0; j < INST.length; j++) {
+      let strandMismatch = 0;
+      for (let k = 0; k < ND; k++) {
+        const differenceM = Math.abs(R[j][k] - RLength[j][k]);
+        strandMismatch = Math.max(strandMismatch, differenceM);
+        if (differenceM > maxDerivativeMismatchM) {
+          maxDerivativeMismatchM = differenceM;
+          maxDerivativeMismatch = { id: INST[j].id, unit: INST[j].unit, side: INST[j].side,
+            dof: DOF[k].id, forceMomentArmM: R[j][k], lengthDerivativeMomentArmM: RLength[j][k], differenceM };
+        }
+      }
+      muscleQuality[j].derivativeMismatchM = strandMismatch;
+    }
+    const invalidPaths = muscleQuality.filter(p => p.quarantined);
+    const pathQuality = { invalidPaths, quarantinedStrands: invalidPaths.length,
+      quarantinedUnits: [...new Set(invalidPaths.map(p => p.unit))].sort(),
+      disabledNominalCapacityN: FMAX.reduce((sum, force, j) => sum + (muscleQuality[j].quarantined ? force : 0), 0),
+      disabledActiveCapacityN: capacity.reduce((sum, force, j) => sum + (muscleQuality[j].quarantined ? force : 0), 0),
+      maxDerivativeMismatchM, maxDerivativeMismatch, momentArmDefinition: 'owned-path-unit-tension-virtual-work',
+      maxQuarantinedMomentArmM: Math.max(0, ...invalidPaths.flatMap(p => p.violations.map(v => Math.abs(v.momentArmM)))) };
+    const unidentifiedUnits = ['thenar', 'hypothenar', 'interossei'];
+    const constitutive = { assumption: 'rigid-tendon-relative-to-standing', fibreFractionFloorApplied: false,
+      forceLengthClamped: false, slackFiberStrands: muscleQuality.filter(p => p.slackFiber).length,
+      slackFiberUnits: [...new Set(muscleQuality.filter(p => p.slackFiber).map(p => p.unit))].sort(),
+      negligibleActiveCapacityStrands: capacity.filter(force => force < 1e-6).length,
+      minNormalizedFiberLength: Math.min(...lt), maxNormalizedFiberLength: Math.max(...lt) };
     const spP = spinePassive(conf.local);
     STOPS = o.stops ? Object.assign({}, JOINT_STOPS, o.stops) : JOINT_STOPS;
     for (const [id, q] of Object.entries(jointStops(W))) spP[id] = (spP[id] || 0) + q;
 
     const com = A.comOf(W);
-    const contacts = contactsOf(W, o.contactThr);
+    const contacts = floorContacts(W, o.contacts, o.contactThr);
+    if (!contacts.length) throw new Error('Static equilibrium requires external floor support');
     const Nv = verticalLoads(contacts, com);
     const st = stContacts(W);
-    const grips = (o.grips || []).map(g => ({ ...g }));
+    const grips = internalContacts(W, o.grips ?? [], o.internalContacts ?? []);
 
     const NM = INST.length, NC = contacts.length, NG = grips.length, NS = st.length;
     const iM = 0, iC = NM, iG = iC + 3 * NC, iS = iG + 3 * NG, iR = iS + NS;
@@ -338,8 +496,7 @@ export function makePhysics(A, opts = {}) {
       for (let j = 0; j < NM; j++) if (R[j][k]) row[iM + j] = R[j][k] * FE[j] / sc;
       contacts.forEach((ct, i) => { const v = dpdq(k, ct.seg, ct.P, ax, c); if (!v) return; row[iC + 3 * i] += v.y * BW / sc; row[iC + 3 * i + 1] += v.x * BW / sc; row[iC + 3 * i + 2] += v.z * BW / sc; });
       grips.forEach((g, i) => {
-        const vh = dpdq(k, g.hand, g.P, ax, c), vs = dpdq(k, g.shank, g.P, ax, c);
-        const v = V(0, 0, 0); if (vh) v.add(vh); if (vs) v.sub(vs);
+        const v = pairedDisplacement(k, g.segA, g.segB, g.P, ax, c);
         row[iG + 3 * i] += v.x * BW / sc; row[iG + 3 * i + 1] += v.y * BW / sc; row[iG + 3 * i + 2] += v.z * BW / sc;
       });
       st.forEach((s, i) => {
@@ -358,27 +515,42 @@ export function makePhysics(A, opts = {}) {
     }
 
     const lo = new Float64Array(NX).fill(-1e3), hi = new Float64Array(NX).fill(1e3);
-    const tone = o.tone || {};
-    for (let j = 0; j < NM; j++) { lo[iM + j] = Math.min(0.95, tone[INST[j].unit] || 0); hi[iM + j] = 1; }
-    for (let i = 0; i < NC; i++) { lo[iC + 3 * i] = 0; hi[iC + 3 * i] = 3; }
-    for (let i = 0; i < NG; i++) for (let a = 0; a < 3; a++) { lo[iG + 3 * i + a] = -(grips[i].max || 0.8); hi[iG + 3 * i + a] = grips[i].max || 0.8; }
+    const tone = o.tone ?? {};
+    if (!tone || typeof tone !== 'object' || Object.values(tone).some(t => !Number.isFinite(t) || t < 0 || t > 1))
+      throw new Error('Prescribed activation bounds must lie in [0,1]');
+    for (let j = 0; j < NM; j++) {
+      lo[iM + j] = muscleQuality[j].quarantined || lt[j] <= 0 ? 0 : tone[INST[j].unit] ?? 0;
+      hi[iM + j] = muscleQuality[j].quarantined || lt[j] <= 0 ? 0 : 1;
+    }
+    for (let i = 0; i < NC; i++) { lo[iC + 3 * i] = 0; hi[iC + 3 * i] = contacts[i].maxNormalN === undefined ? 3 : contacts[i].maxNormalN / BW; }
+    for (let i = 0; i < NG; i++) for (let a = 0; a < 3; a++) {
+      const bound = grips[i].maxComponentN === undefined ? 1e3 : grips[i].maxComponentN / BW;
+      lo[iG + 3 * i + a] = -bound; hi[iG + 3 * i + a] = bound;
+    }
     for (let i = 0; i < NS; i++) { lo[iS + i] = 0; hi[iS + i] = o.noST ? 0 : 1; }
     for (let i = 0; i < pgroups.length; i++) { lo[iP + i] = (o.passiveLo ?? 0.5) - 1; hi[iP + i] = (o.passiveHi ?? 2) - 1; }
     // Isotropic Coulomb friction, approximated by an inscribed 16-sided cone.
-    const Ain = [], bin = [];
-    for (let i = 0; i < NC; i++) for (const facet of frictionFacets(contacts[i].mu)) { const r = new Map(); r.set(iC + 3 * i, facet.normal); r.set(iC + 3 * i + 1, facet.x); r.set(iC + 3 * i + 2, facet.z); Ain.push(r); bin.push(0); }
-    // a grip that only pulls: the shank pulls the hand away from the shoulder, inside a cone round the arm line
+    const Ain = [], bin = [], inKeys = [];
+    for (let i = 0; i < NC; i++) for (const [facetIndex, facet] of frictionFacets(contacts[i].mu).entries()) {
+      const r = new Map(); r.set(iC + 3 * i, facet.normal); r.set(iC + 3 * i + 1, facet.x); r.set(iC + 3 * i + 2, facet.z);
+      Ain.push(r); bin.push(0); inKeys.push('floor:' + contacts[i].id + ':coulomb:' + facetIndex);
+    }
+    // A common contact point gives the two bodies equal/opposite forces with
+    // zero net whole-body force AND moment. Normal is the force on segment A.
     grips.forEach((g, i) => {
-      if (!g.from) return;
-      const u = g.P.clone().sub(W[g.from].p).normalize();
-      const e1 = Math.abs(u.y) < 0.9 ? V(0, 1, 0).cross(u).normalize() : V(1, 0, 0).cross(u).normalize();
-      const e2 = u.clone().cross(e1);
-      const c = g.cone ?? 1;
-      for (const [s1, s2] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
-        const r = new Map();
-        for (let a = 0; a < 3; a++) r.set(iG + 3 * i + a, s1 * e1.getComponent(a) + s2 * e2.getComponent(a) - c * u.getComponent(a));
-        Ain.push(r); bin.push(0);
+      const add = (direction, bound, key) => {
+        const row = new Map();
+        for (let a = 0; a < 3; a++) row.set(iG + 3 * i + a, direction.getComponent(a));
+        Ain.push(row); bin.push(bound); inKeys.push('internal:' + g.id + ':' + key);
+      };
+      if (g.kind !== 'bilateral') {
+        add(g.normal.clone().negate(), 0, 'nonnegative-normal');
+        for (const [facetIndex, facet] of frictionFacets(g.mu).entries())
+          add(g.normal.clone().multiplyScalar(facet.normal).addScaledVector(g.tangent1, facet.x).addScaledVector(g.tangent2, facet.z), 0, 'coulomb:' + facetIndex);
+        if (g.maxNormalN !== undefined) add(g.normal, g.maxNormalN / BW, 'normal-capacity');
       }
+      if (g.maxForceN !== undefined) for (const [face, facet] of forceBallFacets(g.maxForceN / BW).entries())
+        add(facet.normal, facet.bound, 'force-capacity:' + face);
     });
 
     const P = new Float64Array(NX), qlin = new Float64Array(NX);
@@ -395,20 +567,17 @@ export function makePhysics(A, opts = {}) {
     // identity of variables and rows, so that a neighbouring frame can seed the solver
     const varKeys = new Array(NX);
     for (let j = 0; j < NM; j++) varKeys[iM + j] = 'm' + j;
-    contacts.forEach((ct, i) => { for (let a = 0; a < 3; a++) varKeys[iC + 3 * i + a] = 'c' + ct.li + '_' + a; });
-    grips.forEach((g, i) => { for (let a = 0; a < 3; a++) varKeys[iG + 3 * i + a] = 'g' + (g.side || i) + '_' + a; });
+    contacts.forEach((ct, i) => { for (let a = 0; a < 3; a++) varKeys[iC + 3 * i + a] = 'floor:' + ct.id + ':' + a; });
+    grips.forEach((g, i) => { for (let a = 0; a < 3; a++) varKeys[iG + 3 * i + a] = 'internal:' + g.id + ':' + a; });
     for (let i = 0; i < NS; i++) varKeys[iS + i] = 's' + i;
     for (const [k, ix] of resIdx) varKeys[ix] = 'r' + k;
     pgroups.forEach((g, i) => { varKeys[iP + i] = 'p' + g.name + g.side; });
     const eqKeys = DOF.map((d, k) => 'e' + k);
-    const inKeys = [];
-    for (let i = 0; i < NC; i++) for (let facet = 0; facet < COULOMB_FACETS; facet++) inKeys.push('f' + contacts[i].li + '_coulomb' + COULOMB_FACETS + '_' + facet);
-    grips.forEach((g, i) => { if (g.from) for (let s4 = 0; s4 < 4; s4++) inKeys.push('k' + (g.side || i) + '_' + s4); });
     // without a warm start the vertical loads of the rigid-body solution are a good first guess for the floor
     let warm = o.warm || null;
     if (warm) {
       warm = { x: new Map(warm.x), y: warm.y, rho: warm.rho };
-      contacts.forEach((ct, i) => { const k = 'c' + ct.li + '_0'; if (!warm.x.has(k)) warm.x.set(k, Nv[i] / BW); });
+      contacts.forEach((ct, i) => { const k = 'floor:' + ct.id + ':0'; if (!warm.x.has(k)) warm.x.set(k, Nv[i] / BW); });
     }
     const equilibriumResiduals = value => {
       let forceResidualN = 0, momentResidualNm = 0;
@@ -436,8 +605,13 @@ export function makePhysics(A, opts = {}) {
     pgroups.forEach((g, i) => { const k = 1 + x[iP + i]; pscale[g.name + '_' + g.side] = k; for (const j of g.js) FP[j] *= k; });
     const act = Array.from(x.slice(iM, iM + NM));
     const force = act.map((a, j) => a * FE[j]);
+    const geometricMomentDifferenceNm = DOF.map((d, k) => ({ id: d.id,
+      differenceNm: R.reduce((sum, row, j) => sum + (row[k] - RLength[j][k]) * (force[j] + FP[j]), 0) }));
+    pathQuality.geometricForceMomentMismatchNm = Math.max(0, ...geometricMomentDifferenceNm.map(d => Math.abs(d.differenceNm)));
+    pathQuality.geometricMomentDifferenceNm = geometricMomentDifferenceNm;
     const contactF = contacts.map((ct, i) => ({ ...ct, F: V(x[iC + 3 * i + 1], x[iC + 3 * i], x[iC + 3 * i + 2]).multiplyScalar(BW), Nrigid: Nv[i] }));
-    const gripF = grips.map((g, i) => ({ ...g, F: V(x[iG + 3 * i], x[iG + 3 * i + 1], x[iG + 3 * i + 2]).multiplyScalar(BW) }));
+    const pairedF = grips.map((g, i) => ({ ...g, F: V(x[iG + 3 * i], x[iG + 3 * i + 1], x[iG + 3 * i + 2]).multiplyScalar(BW) }));
+    const gripF = pairedF.filter(g => g.legacy), internalContactF = pairedF.filter(g => !g.legacy);
     const stF = st.map((s, i) => ({ ...s, F: s.n.clone().multiplyScalar(x[iS + i] * BW) }));
     const reserve = {};
     for (const [k, ix] of resIdx) reserve[DOF[k].id] = x[ix] * 10;
@@ -449,7 +623,7 @@ export function makePhysics(A, opts = {}) {
       let ext = 0;
       for (const m of MASS) { const Pm = pt(W, m.seg, m.p); const v = dpdq(k, m.seg, Pm, ax, c); if (v) ext += v.y * (-m.m * BW); }
       for (const ct of contactF) { const v = dpdq(k, ct.seg, ct.P, ax, c); if (v) ext += v.dot(ct.F); }
-      for (const g of gripF) { const vh = dpdq(k, g.hand, g.P, ax, c), vs = dpdq(k, g.shank, g.P, ax, c); if (vh) ext += vh.dot(g.F); if (vs) ext -= vs.dot(g.F); }
+      for (const g of pairedF) { const vh = dpdq(k, g.hand, g.P, ax, c), vs = dpdq(k, g.shank, g.P, ax, c); if (vh) ext += vh.dot(g.F); if (vs) ext -= vs.dot(g.F); }
       let stm = 0;
       for (const s of stF) { const va = dpdq(k, s.segA, s.P, ax, c), vb = dpdq(k, s.segB, s.P, ax, c); if (va) stm += va.dot(s.F); if (vb) stm -= vb.dot(s.F); }
       let mus = 0, pas = spP[d.id] || 0, capPos = 0, capNeg = 0;
@@ -457,13 +631,12 @@ export function makePhysics(A, opts = {}) {
       return { id: d.id, joint: d.joint, comp: d.comp, ext, st: stm, mus, pas, res: reserve[d.id] || 0, capPos, capNeg };
     });
     // joint reaction forces: what the proximal bone pushes on the rest of the limb/trunk across the joint
-    const paths = INST.map(i => ownedPath(W, i));
     const reaction = (childSeg, exclude) => {
       const set = subtree(childSeg); if (exclude) for (const s of subtree(exclude)) set.delete(s);
       const F = V(0, 0, 0);
       for (const m of MASS) if (set.has(m.seg)) F.y -= m.m * BW;
       for (const ct of contactF) if (set.has(ct.seg)) F.add(ct.F);
-      for (const g of gripF) { if (set.has(g.hand)) F.add(g.F); if (set.has(g.shank)) F.sub(g.F); }
+      for (const g of pairedF) { if (set.has(g.hand)) F.add(g.F); if (set.has(g.shank)) F.sub(g.F); }
       for (const s of stF) { if (set.has(s.segA)) F.add(s.F); if (set.has(s.segB)) F.sub(s.F); }
       for (let j = 0; j < NM; j++) { const f = force[j] + FP[j]; if (f > 0.5) F.add(pullOn(paths[j], set, f)); }
       return F.negate();
@@ -480,10 +653,62 @@ export function makePhysics(A, opts = {}) {
       jr['elbow_' + sd] = { F: reaction('fore_' + sd) };
       jr['wrist_' + sd] = { F: reaction('hand_' + sd) };
     }
-    return { W, com, act, force, FE, FP, lt, R, contactF, gripF, stF, reserve, maxRes, quality, dofOut, jr, BW, BODY, INST, FMAX, Lm, L_STAND, paths, spP, pscale, warm: x.warm, iters: x.iters };
+    // Assemble all real point loads independently of the QP moment-arm matrix.
+    // This catches a lost action/reaction pair, a sign/scaling error, and the
+    // former combination of a clipped lever with an unclipped physical force.
+    const bodyLoads = Object.fromEntries(SEG.map(s => [s.name, { F: V(0, 0, 0), M: V(0, 0, 0) }]));
+    const addLoad = (segment, P, F) => {
+      bodyLoads[segment].F.add(F); bodyLoads[segment].M.add(P.clone().cross(F));
+    };
+    for (const m of MASS) addLoad(m.seg, pt(W, m.seg, m.p), V(0, -m.m * BW, 0));
+    for (const c of contactF) addLoad(c.seg, c.P, c.F);
+    for (const g of pairedF) { addLoad(g.segA, g.P, g.F); addLoad(g.segB, g.P, g.F.clone().negate()); }
+    for (const s of stF) { addLoad(s.segA, s.P, s.F); addLoad(s.segB, s.P, s.F.clone().negate()); }
+    for (let j = 0; j < NM; j++) {
+      const tension = force[j] + FP[j];
+      for (let i = 1; i < paths[j].length; i++) {
+        const a = paths[j][i - 1], b = paths[j][i], pull = b.p.clone().sub(a.p).normalize().multiplyScalar(tension);
+        addLoad(a.seg, a.p, pull); addLoad(b.seg, b.p, pull.clone().negate());
+      }
+    }
+    let forceResidualN = 0, momentResidualNm = 0, maxAssemblyDifference = 0;
+    const byDof = DOF.map((d, k) => {
+      let physical = 0;
+      for (const name of d.moved) {
+        const load = bodyLoads[name];
+        physical += (d.kind === 'trans' ? load.F : load.M.clone().sub(frames[k].c.clone().cross(load.F))).dot(frames[k].ax);
+      }
+      physical += (spP[d.id] || 0) + (reserve[d.id] || 0);
+      const scaledError = Aeq[k].reduce((sum, value, index) => sum + value * x[index], 0) - beq[k];
+      const qpError = scaledError * (d.kind === 'trans' ? BW : MOMS);
+      maxAssemblyDifference = Math.max(maxAssemblyDifference, Math.abs(physical - qpError));
+      if (d.kind === 'trans') forceResidualN = Math.max(forceResidualN, Math.abs(physical));
+      else momentResidualNm = Math.max(momentResidualNm, Math.abs(physical));
+      return { id: d.id, kind: d.kind, residual: physical };
+    });
+    const forceToleranceN = quality.primalTolerance * BW + 1e-7;
+    const momentToleranceNm = quality.primalTolerance * MOMS + 1e-7;
+    const assemblyVerified = maxAssemblyDifference <= 1e-7;
+    const physicalBalance = { verified: quality.converged && assemblyVerified
+        && forceResidualN <= forceToleranceN && momentResidualNm <= momentToleranceNm,
+      assemblyVerified, forceResidualN, momentResidualNm, forceToleranceN, momentToleranceNm,
+      maxAssemblyDifference, byDof };
+    if (!assemblyVerified) throw new Error('Physical force assembly disagrees with the QP equilibrium: ' + maxAssemblyDifference);
+    if (quality.converged && !physicalBalance.verified) throw new Error('Physical force balance failed despite numerical QP convergence');
+    const contactQuality = { floorContacts: contacts.length, internalContacts: internalContactF.length,
+      floorSource: o.contacts === undefined ? 'landmarks' : 'explicit-surface-patches',
+      missingStrengthLimitIds: internalContactF.filter(g => g.maxForceN === undefined && g.maxNormalN === undefined && g.maxComponentN === undefined).map(g => g.id),
+      numericalInternalForceGuardN: 1e3 * BW,
+      numericalForceGuardActiveIds: pairedF.filter(g => g.maxComponentN === undefined && Math.max(Math.abs(g.F.x), Math.abs(g.F.y), Math.abs(g.F.z)) >= .999e3 * BW).map(g => g.id),
+      optionalForceCapacityApproximation: 'inscribed-icosahedron-20-faces' };
+    Object.assign(quality, { physicalBalanceVerified: physicalBalance.verified,
+      physicalForceResidualN: forceResidualN, physicalMomentResidualNm: momentResidualNm });
+    return { W, com, act, force, FE, FP, lt, R, RLength, contactF, gripF, internalContactF, stF, reserve, maxRes, quality, dofOut, jr, BW, BODY, INST, FMAX, Lm, L_STAND, paths, spP, pscale,
+      muscleQuality, pathQuality, constitutive, physicalBalance, contactQuality, unidentifiedUnits,
+      warm: x.warm, iters: x.iters };
   }
 
-  return { solve, DOF, dofIndex, INST, FMAX, BW, BODY, subtree, contactsOf, verticalLoads, stContacts, L_STAND, W_STAND, rotW, dpdq, ownedPath, pullOn };
+  return { solve, DOF, dofIndex, INST, FMAX, BW, BODY, subtree, contactsOf, verticalLoads, stContacts, L_STAND, W_STAND, rotW, dpdq, pairedDisplacement, ownedPath, pullOn };
 }
 
 function solve3(M, b) {

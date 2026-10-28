@@ -18,7 +18,8 @@ const physPath = arg('--phys', 'cycle_phys.json');
 const CP = fs.existsSync(physPath) ? JSON.parse(fs.readFileSync(physPath, 'utf8')) : null;
 const PS = JSON.parse(fs.readFileSync('physics.json', 'utf8'));
 const HOLD = +arg('--hold', 15);
-const Fmax = Object.fromEntries(Object.entries(PS.dog.muscles).map(([u, m]) => [u, m.Fmax]));
+const Fmax = Object.fromEntries(Object.entries(PS.stand.muscles).map(([u, m]) =>
+  [u, m.status === 'unidentified' ? 0 : m.Fmax]));
 const q = a => new THREE.Quaternion(...a);
 // activations at time T: linear between the solved frames
 const pf = CP ? CP.frames.slice().sort((a, b) => a.T - b.T) : [];

@@ -18,7 +18,8 @@ function fixture() {
     return [id, {
       muscles: { example: { a: cue ? .125 : .1, activation: cue ? .4 : .32, F: cue ? 125 : 100, Fmax: 1000 } },
       joints: { ls: { jr: { bw: cue ? 1.4 : 1.2, F: cue ? 980 : 840, comp: cue ? 900 : 800, shear: cue ? 100 : 80 } }, st_L: { st: { F: 50 } } },
-      diag: { quality: { status: 'solved', converged: true, finite: true, forceResidualN: .001, momentResidualNm: .001, iterations: 10, ms: 1234 } },
+      diag: { quality: { status: 'solved', converged: true, finite: true, physicalBalanceVerified: true, forceResidualN: .001, momentResidualNm: .001, iterations: 10, ms: 1234 },
+        physicalBalance: { verified: true, assemblyVerified: true, maxAssemblyDifference: 1e-12, forceResidualN: .001, momentResidualNm: .001, forceToleranceN: .01, momentToleranceNm: .01 } },
       balance: { weightN: 700, forceN: [0, 700, 0], forceErrorN: [0, 0, 0], momentErrorNm: [0, 0, 0] },
     }];
   }))]));
@@ -34,6 +35,12 @@ const missing = fixture(); delete missing.dog.noCue.muscles.example.activation;
 assert.throws(() => assembleSensitivity(missing, {}), /Non-finite/);
 const failed = fixture(); failed.dog.cue.diag.quality.converged = false;
 assert.throws(() => assembleSensitivity(failed, {}), /Unverified/);
+const falseAssembly = fixture(); falseAssembly.dog.cue.diag.physicalBalance.maxAssemblyDifference = .1;
+assert.throws(() => assembleSensitivity(falseAssembly, {}), /Unverified physical force assembly/);
+const missingPhysical = fixture(); delete missingPhysical.dog.cue.diag.physicalBalance;
+assert.throws(() => assembleSensitivity(missingPhysical, {}), /Unverified physical force assembly/);
+const falsePhysicalTolerance = fixture(); falsePhysicalTolerance.dog.cue.diag.physicalBalance.forceResidualN = 1;
+assert.throws(() => assembleSensitivity(falsePhysicalTolerance, {}), /Physical equilibrium exceeds tolerance/);
 const imbalance = fixture(); imbalance.dog.cue.balance.forceN[1] -= 1;
 assert.throws(() => assembleSensitivity(imbalance, {}), /Inconsistent floor/);
 imbalance.dog.cue.balance.forceErrorN[1] = -1;
@@ -89,7 +96,7 @@ function checkPackage(data, baseline) {
   // Reuse the acceptance contract with the actual per-scenario diagnostics;
   // published floor groups are deliberately not used for mass balance.
   const replay = Object.fromEntries(SENSITIVITY_POSES.map(id => [id, Object.fromEntries(Object.keys(data.scenarios).map(scenario => [scenario, {
-    muscles: {}, joints: {}, diag: { quality: data.poses[id].quality[scenario] }, balance: data.poses[id].floor[scenario],
+    muscles: {}, joints: {}, diag: { quality: data.poses[id].quality[scenario], physicalBalance: data.poses[id].physicalBalance[scenario] }, balance: data.poses[id].floor[scenario],
   }]))]));
   assembleSensitivity(replay, {});
   return metrics;

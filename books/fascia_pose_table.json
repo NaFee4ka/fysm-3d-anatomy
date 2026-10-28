@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-18T18:33:47.646Z",
+ "generated": "2026-10-28T21:04:32.781Z",
  "poses": [
   "stand",
   "dog",
@@ -652,36 +652,36 @@
     "fold": 0.0814
    },
    "engage": {
-    "stand": 0.0291,
-    "dog": 0.1228,
-    "plank": 0.0296,
-    "half": 0.0792,
-    "bow": 0.0387,
-    "fold": 0.1593
+    "stand": 0.0253,
+    "dog": 0.1247,
+    "plank": 0.0287,
+    "half": 0.0862,
+    "bow": 0.0253,
+    "fold": 0.1486
    },
    "actMean": {
-    "stand": 0.0223,
-    "dog": 0.0577,
-    "plank": 0.0292,
-    "half": 0.055,
-    "bow": 0.0337,
-    "fold": 0.0886
+    "stand": 0.0206,
+    "dog": 0.0646,
+    "plank": 0.0283,
+    "half": 0.049,
+    "bow": 0.019,
+    "fold": 0.083
    },
    "actMax": {
     "stand": {
-     "a": 0.061,
-     "unit": "erector"
+     "a": 0.062,
+     "unit": "semispinalis"
     },
     "dog": {
-     "a": 0.138,
-     "unit": "gastroM"
+     "a": 0.17,
+     "unit": "gastroL"
     },
     "plank": {
-     "a": 0.081,
+     "a": 0.076,
      "unit": "semispinalis"
     },
     "half": {
-     "a": 0.18,
+     "a": 0.254,
      "unit": "erector"
     },
     "bow": {
@@ -689,17 +689,17 @@
      "unit": "semispinalis"
     },
     "fold": {
-     "a": 0.204,
+     "a": 0.226,
      "unit": "gastroM"
     }
    },
    "Tact": {
-    "stand": 223,
-    "dog": 568,
-    "plank": 218,
-    "half": 607,
-    "bow": 297,
-    "fold": 766
+    "stand": 194,
+    "dog": 582,
+    "plank": 211,
+    "half": 661,
+    "bow": 194,
+    "fold": 684
    },
    "Tpas": {
     "stand": 0,
@@ -913,40 +913,40 @@
     "fold": -0.0792
    },
    "engage": {
-    "stand": 0,
-    "dog": 0.0076,
-    "plank": 0.0967,
-    "half": 0.0917,
-    "bow": 0.1058,
+    "stand": 0.0001,
+    "dog": 0.0037,
+    "plank": 0.1131,
+    "half": 0.1096,
+    "bow": 0.1006,
     "fold": 0
    },
    "actMean": {
-    "stand": 0,
-    "dog": 0.0056,
-    "plank": 0.0927,
-    "half": 0.0421,
-    "bow": 0.0809,
+    "stand": 0.0002,
+    "dog": 0.0019,
+    "plank": 0.1105,
+    "half": 0.0615,
+    "bow": 0.076,
     "fold": 0
    },
    "actMax": {
     "stand": {
-     "a": 0,
-     "unit": null
+     "a": 0.001,
+     "unit": "rectAbd"
     },
     "dog": {
-     "a": 0.02,
+     "a": 0.012,
      "unit": "rectAbd"
     },
     "plank": {
-     "a": 0.246,
+     "a": 0.361,
      "unit": "rectAbd"
     },
     "half": {
-     "a": 0.12,
-     "unit": "rectFem"
+     "a": 0.223,
+     "unit": "rectAbd"
     },
     "bow": {
-     "a": 0.195,
+     "a": 0.19,
      "unit": "tibAnt"
     },
     "fold": {
@@ -956,10 +956,10 @@
    },
    "Tact": {
     "stand": 0,
-    "dog": 18,
-    "plank": 300,
-    "half": 138,
-    "bow": 274,
+    "dog": 5,
+    "plank": 351,
+    "half": 193,
+    "bow": 258,
     "fold": 0
    },
    "Tpas": {
@@ -1175,53 +1175,53 @@
    },
    "engage": {
     "stand": 0.0121,
-    "dog": 0.067,
-    "plank": 0.0907,
-    "half": 0.0727,
-    "bow": 0.0753,
-    "fold": 0.0268
+    "dog": 0.0521,
+    "plank": 0.073,
+    "half": 0.0819,
+    "bow": 0.0796,
+    "fold": 0.025
    },
    "actMean": {
-    "stand": 0.0126,
-    "dog": 0.0432,
-    "plank": 0.0995,
-    "half": 0.0724,
-    "bow": 0.0565,
-    "fold": 0.0239
+    "stand": 0.0127,
+    "dog": 0.0391,
+    "plank": 0.0834,
+    "half": 0.0764,
+    "bow": 0.0589,
+    "fold": 0.0214
    },
    "actMax": {
     "stand": {
-     "a": 0.074,
+     "a": 0.072,
      "unit": "splenius"
     },
     "dog": {
-     "a": 0.131,
+     "a": 0.154,
      "unit": "extObl"
     },
     "plank": {
-     "a": 0.326,
-     "unit": "tfl"
+     "a": 0.28,
+     "unit": "splenius"
     },
     "half": {
-     "a": 0.268,
+     "a": 0.267,
      "unit": "splenius"
     },
     "bow": {
-     "a": 0.228,
+     "a": 0.229,
      "unit": "splenius"
     },
     "fold": {
-     "a": 0.1,
+     "a": 0.094,
      "unit": "splenius"
     }
    },
    "Tact": {
     "stand": 63,
-    "dog": 341,
-    "plank": 473,
-    "half": 376,
-    "bow": 373,
-    "fold": 140
+    "dog": 264,
+    "plank": 380,
+    "half": 424,
+    "bow": 395,
+    "fold": 131
    },
    "Tpas": {
     "stand": 0,
@@ -1411,54 +1411,54 @@
     "fold": 0.0521
    },
    "engage": {
-    "stand": 0.0303,
-    "dog": 0.0895,
-    "plank": 0.0776,
-    "half": 0.1131,
-    "bow": 0.0794,
-    "fold": 0.0679
+    "stand": 0.0259,
+    "dog": 0.0964,
+    "plank": 0.073,
+    "half": 0.1565,
+    "bow": 0.0809,
+    "fold": 0.0571
    },
    "actMean": {
-    "stand": 0.0225,
-    "dog": 0.0535,
-    "plank": 0.0823,
-    "half": 0.0862,
-    "bow": 0.0791,
-    "fold": 0.0373
+    "stand": 0.02,
+    "dog": 0.0575,
+    "plank": 0.0748,
+    "half": 0.1111,
+    "bow": 0.0798,
+    "fold": 0.0276
    },
    "actMax": {
     "stand": {
-     "a": 0.074,
+     "a": 0.072,
      "unit": "splenius"
     },
     "dog": {
-     "a": 0.131,
-     "unit": "extObl"
+     "a": 0.177,
+     "unit": "serratus"
     },
     "plank": {
-     "a": 0.326,
-     "unit": "tfl"
+     "a": 0.28,
+     "unit": "splenius"
     },
     "half": {
-     "a": 0.268,
+     "a": 0.267,
      "unit": "splenius"
     },
     "bow": {
-     "a": 0.228,
+     "a": 0.229,
      "unit": "splenius"
     },
     "fold": {
-     "a": 0.1,
+     "a": 0.094,
      "unit": "splenius"
     }
    },
    "Tact": {
-    "stand": 262,
-    "dog": 645,
-    "plank": 673,
-    "half": 891,
-    "bow": 669,
-    "fold": 418
+    "stand": 225,
+    "dog": 705,
+    "plank": 633,
+    "half": 1268,
+    "bow": 682,
+    "fold": 324
    },
    "Tpas": {
     "stand": 0,
@@ -1792,54 +1792,54 @@
     "fold": 0.0356
    },
    "engage": {
-    "stand": 0.0026,
-    "dog": 0.0562,
-    "plank": 0.1036,
-    "half": 0.0395,
-    "bow": 0.0555,
-    "fold": 0.0631
+    "stand": 0.0016,
+    "dog": 0.0416,
+    "plank": 0.1205,
+    "half": 0.058,
+    "bow": 0.0578,
+    "fold": 0.0576
    },
    "actMean": {
-    "stand": 0.0034,
-    "dog": 0.0527,
-    "plank": 0.0834,
-    "half": 0.0354,
-    "bow": 0.0382,
-    "fold": 0.0445
+    "stand": 0.003,
+    "dog": 0.0407,
+    "plank": 0.0984,
+    "half": 0.049,
+    "bow": 0.0432,
+    "fold": 0.0432
    },
    "actMax": {
     "stand": {
-     "a": 0.007,
+     "a": 0.008,
      "unit": "fdl"
     },
     "dog": {
-     "a": 0.142,
+     "a": 0.225,
      "unit": "fhl"
     },
     "plank": {
-     "a": 0.299,
+     "a": 0.411,
      "unit": "psoas"
     },
     "half": {
-     "a": 0.083,
+     "a": 0.17,
      "unit": "psoas"
     },
     "bow": {
-     "a": 0.193,
+     "a": 0.196,
      "unit": "addMag"
     },
     "fold": {
-     "a": 0.153,
+     "a": 0.242,
      "unit": "addLong"
     }
    },
    "Tact": {
-    "stand": 18,
-    "dog": 280,
-    "plank": 724,
-    "half": 276,
-    "bow": 377,
-    "fold": 287
+    "stand": 11,
+    "dog": 178,
+    "plank": 842,
+    "half": 406,
+    "bow": 393,
+    "fold": 248
    },
    "Tpas": {
     "stand": 0,
@@ -2125,54 +2125,54 @@
     "fold": -0.0065
    },
    "engage": {
-    "stand": 0.0005,
-    "dog": 0.0778,
-    "plank": 0.0142,
-    "half": 0.0152,
-    "bow": 0.0501,
-    "fold": 0.0321
+    "stand": 0,
+    "dog": 0.0791,
+    "plank": 0.0089,
+    "half": 0.0229,
+    "bow": 0.0512,
+    "fold": 0.0298
    },
    "actMean": {
-    "stand": 0.0005,
-    "dog": 0.0207,
-    "plank": 0.0059,
-    "half": 0.0117,
-    "bow": 0.0691,
-    "fold": 0.0164
+    "stand": 0,
+    "dog": 0.0381,
+    "plank": 0.0021,
+    "half": 0.0167,
+    "bow": 0.0828,
+    "fold": 0.0142
    },
    "actMax": {
     "stand": {
-     "a": 0.002,
-     "unit": "lat"
+     "a": 0,
+     "unit": null
     },
     "dog": {
-     "a": 0.058,
+     "a": 0.08,
      "unit": "wristFlex"
     },
     "plank": {
-     "a": 0.026,
+     "a": 0.011,
      "unit": "fingerFlex"
     },
     "half": {
-     "a": 0.031,
-     "unit": "wristFlex"
+     "a": 0.034,
+     "unit": "lat"
     },
     "bow": {
-     "a": 0.128,
+     "a": 0.169,
      "unit": "palmaris"
     },
     "fold": {
-     "a": 0.046,
+     "a": 0.047,
      "unit": "pecMaj"
     }
    },
    "Tact": {
-    "stand": 2,
-    "dog": 77,
-    "plank": 33,
-    "half": 20,
-    "bow": 174,
-    "fold": 126
+    "stand": 0,
+    "dog": 83,
+    "plank": 11,
+    "half": 52,
+    "bow": 178,
+    "fold": 116
    },
    "Tpas": {
     "stand": 0,
@@ -2314,54 +2314,54 @@
     "fold": -0.0738
    },
    "engage": {
-    "stand": 0.0058,
-    "dog": 0.0139,
-    "plank": 0.043,
-    "half": 0.0481,
-    "bow": 0.0184,
-    "fold": 0.0239
+    "stand": 0.0056,
+    "dog": 0,
+    "plank": 0.0521,
+    "half": 0.0222,
+    "bow": 0.0195,
+    "fold": 0.0279
    },
    "actMean": {
-    "stand": 0.0062,
-    "dog": 0.0079,
-    "plank": 0.0291,
-    "half": 0.0462,
-    "bow": 0.0125,
-    "fold": 0.0226
+    "stand": 0.0054,
+    "dog": 0,
+    "plank": 0.032,
+    "half": 0.0136,
+    "bow": 0.0119,
+    "fold": 0.024
    },
    "actMax": {
     "stand": {
-     "a": 0.015,
+     "a": 0.013,
      "unit": "bicLong"
     },
     "dog": {
-     "a": 0.149,
-     "unit": "thenar"
+     "a": 0,
+     "unit": null
     },
     "plank": {
-     "a": 0.173,
+     "a": 0.19,
      "unit": "pecMin"
     },
     "half": {
-     "a": 0.067,
+     "a": 0.081,
      "unit": "pecMin"
     },
     "bow": {
-     "a": 0.074,
+     "a": 0.071,
      "unit": "pecMin"
     },
     "fold": {
-     "a": 0.043,
+     "a": 0.046,
      "unit": "bicLong"
     }
    },
    "Tact": {
-    "stand": 9,
-    "dog": 22,
-    "plank": 69,
-    "half": 77,
-    "bow": 30,
-    "fold": 38
+    "stand": 8,
+    "dog": 0,
+    "plank": 76,
+    "half": 32,
+    "bow": 28,
+    "fold": 41
    },
    "Tpas": {
     "stand": 0,
@@ -2503,54 +2503,54 @@
     "fold": -0.0166
    },
    "engage": {
-    "stand": 0.0098,
-    "dog": 0.2086,
-    "plank": 0.044,
-    "half": 0.1037,
-    "bow": 0.0746,
-    "fold": 0.0156
+    "stand": 0.0092,
+    "dog": 0.2099,
+    "plank": 0.0387,
+    "half": 0.1287,
+    "bow": 0.0726,
+    "fold": 0.015
    },
    "actMean": {
-    "stand": 0.0125,
-    "dog": 0.1431,
-    "plank": 0.0301,
-    "half": 0.0911,
-    "bow": 0.0473,
-    "fold": 0.0243
+    "stand": 0.011,
+    "dog": 0.1473,
+    "plank": 0.0229,
+    "half": 0.1059,
+    "bow": 0.0457,
+    "fold": 0.0226
    },
    "actMax": {
     "stand": {
-     "a": 0.042,
-     "unit": "trapLow"
+     "a": 0.038,
+     "unit": "trapUp"
     },
     "dog": {
-     "a": 0.595,
+     "a": 0.603,
      "unit": "deltAnt"
     },
     "plank": {
-     "a": 0.148,
+     "a": 0.14,
      "unit": "deltMid"
     },
     "half": {
-     "a": 0.204,
+     "a": 0.252,
      "unit": "deltMid"
     },
     "bow": {
-     "a": 0.205,
+     "a": 0.199,
      "unit": "deltMid"
     },
     "fold": {
-     "a": 0.062,
+     "a": 0.065,
      "unit": "trapUp"
     }
    },
    "Tact": {
-    "stand": 43,
-    "dog": 916,
-    "plank": 193,
-    "half": 450,
-    "bow": 326,
-    "fold": 68
+    "stand": 40,
+    "dog": 921,
+    "plank": 170,
+    "half": 560,
+    "bow": 317,
+    "fold": 66
    },
    "Tpas": {
     "stand": 0,
@@ -2692,24 +2692,24 @@
     "fold": 0.0969
    },
    "engage": {
-    "stand": 0.007,
-    "dog": 0.1785,
-    "plank": 0.0303,
-    "half": 0.0291,
-    "bow": 0.0154,
-    "fold": 0.036
+    "stand": 0.0055,
+    "dog": 0.1754,
+    "plank": 0.0334,
+    "half": 0.0349,
+    "bow": 0.0139,
+    "fold": 0.0377
    },
    "actMean": {
-    "stand": 0.0102,
-    "dog": 0.1932,
-    "plank": 0.0231,
-    "half": 0.0268,
-    "bow": 0.0184,
-    "fold": 0.0395
+    "stand": 0.0084,
+    "dog": 0.1888,
+    "plank": 0.0253,
+    "half": 0.0311,
+    "bow": 0.0171,
+    "fold": 0.0412
    },
    "actMax": {
     "stand": {
-     "a": 0.061,
+     "a": 0.059,
      "unit": "levScap"
     },
     "dog": {
@@ -2717,12 +2717,12 @@
      "unit": "tricMed"
     },
     "plank": {
-     "a": 0.061,
-     "unit": "infra"
+     "a": 0.089,
+     "unit": "supra"
     },
     "half": {
-     "a": 0.192,
-     "unit": "rhomb"
+     "a": 0.206,
+     "unit": "supra"
     },
     "bow": {
      "a": 0.135,
@@ -2734,12 +2734,12 @@
     }
    },
    "Tact": {
-    "stand": 44,
-    "dog": 1114,
-    "plank": 156,
-    "half": 154,
-    "bow": 97,
-    "fold": 218
+    "stand": 34,
+    "dog": 1077,
+    "plank": 172,
+    "half": 187,
+    "bow": 86,
+    "fold": 225
    },
    "Tpas": {
     "stand": 0,
@@ -2905,28 +2905,28 @@
     "fold": 0.0777
    },
    "engage": {
-    "stand": 0.0005,
-    "dog": 0.0539,
-    "plank": 0.1079,
-    "half": 0.0899,
-    "bow": 0.1295,
-    "fold": 0.0211
+    "stand": 0,
+    "dog": 0.0347,
+    "plank": 0.1074,
+    "half": 0.0984,
+    "bow": 0.1314,
+    "fold": 0.0057
    },
    "actMean": {
-    "stand": 0.0007,
-    "dog": 0.0202,
-    "plank": 0.0916,
-    "half": 0.0779,
-    "bow": 0.1292,
-    "fold": 0.007
+    "stand": 0,
+    "dog": 0.0246,
+    "plank": 0.0909,
+    "half": 0.0898,
+    "bow": 0.1318,
+    "fold": 0.0053
    },
    "actMax": {
     "stand": {
-     "a": 0.002,
-     "unit": "lat"
+     "a": 0,
+     "unit": null
     },
     "dog": {
-     "a": 0.046,
+     "a": 0.056,
      "unit": "vastLat"
     },
     "plank": {
@@ -2938,29 +2938,29 @@
      "unit": "gluteMax"
     },
     "bow": {
-     "a": 0.268,
+     "a": 0.269,
      "unit": "vastLat"
     },
     "fold": {
-     "a": 0.02,
+     "a": 0.015,
      "unit": "lat"
     }
    },
    "Tact": {
-    "stand": 2,
-    "dog": 86,
-    "plank": 437,
-    "half": 380,
-    "bow": 548,
-    "fold": 21
+    "stand": 0,
+    "dog": 105,
+    "plank": 435,
+    "half": 416,
+    "bow": 556,
+    "fold": 16
    },
    "Tpas": {
     "stand": 0,
-    "dog": 142,
+    "dog": 42,
     "plank": 19,
     "half": 0,
     "bow": 0,
-    "fold": 68
+    "fold": 8
    },
    "groups": {
     "stand": [
@@ -3118,20 +3118,20 @@
     "fold": -0.0258
    },
    "engage": {
-    "stand": 0.0005,
-    "dog": 0.0946,
-    "plank": 0.0896,
-    "half": 0.0378,
-    "bow": 0.0445,
-    "fold": 0.0553
+    "stand": 0.0007,
+    "dog": 0.0906,
+    "plank": 0.1114,
+    "half": 0.0663,
+    "bow": 0.0448,
+    "fold": 0.0704
    },
    "actMean": {
-    "stand": 0.0007,
-    "dog": 0.0138,
-    "plank": 0.1827,
-    "half": 0.0531,
-    "bow": 0.0415,
-    "fold": 0.0496
+    "stand": 0.0012,
+    "dog": 0.0088,
+    "plank": 0.2431,
+    "half": 0.1238,
+    "bow": 0.0424,
+    "fold": 0.0713
    },
    "actMax": {
     "stand": {
@@ -3139,15 +3139,15 @@
      "unit": "addLong"
     },
     "dog": {
-     "a": 0.02,
+     "a": 0.012,
      "unit": "rectAbd"
     },
     "plank": {
-     "a": 0.262,
-     "unit": "addLong"
+     "a": 0.361,
+     "unit": "rectAbd"
     },
     "half": {
-     "a": 0.098,
+     "a": 0.223,
      "unit": "rectAbd"
     },
     "bow": {
@@ -3155,17 +3155,17 @@
      "unit": "addLong"
     },
     "fold": {
-     "a": 0.153,
+     "a": 0.242,
      "unit": "addLong"
     }
    },
    "Tact": {
-    "stand": 1,
-    "dog": 35,
-    "plank": 226,
-    "half": 54,
-    "bow": 64,
-    "fold": 144
+    "stand": 2,
+    "dog": 24,
+    "plank": 283,
+    "half": 128,
+    "bow": 65,
+    "fold": 183
    },
    "Tpas": {
     "stand": 0,
@@ -3283,40 +3283,40 @@
     "fold": -0.1142
    },
    "engage": {
-    "stand": 0.0073,
-    "dog": 0.1025,
-    "plank": 0.1118,
-    "half": 0.0548,
-    "bow": 0.0231,
-    "fold": 0.0333
+    "stand": 0.0085,
+    "dog": 0.089,
+    "plank": 0.0412,
+    "half": 0.091,
+    "bow": 0.0362,
+    "fold": 0.0308
    },
    "actMean": {
-    "stand": 0.0058,
-    "dog": 0.1826,
-    "plank": 0.1771,
-    "half": 0.0394,
-    "bow": 0.0079,
-    "fold": 0.0147
+    "stand": 0.0038,
+    "dog": 0.0289,
+    "plank": 0.0143,
+    "half": 0.0424,
+    "bow": 0.0142,
+    "fold": 0.0132
    },
    "actMax": {
     "stand": {
-     "a": 0.014,
+     "a": 0.02,
      "unit": "extObl"
     },
     "dog": {
-     "a": 0.309,
-     "unit": "sartorius"
+     "a": 0.154,
+     "unit": "extObl"
     },
     "plank": {
-     "a": 0.275,
-     "unit": "sartorius"
+     "a": 0.076,
+     "unit": "extObl"
     },
     "half": {
-     "a": 0.12,
+     "a": 0.171,
      "unit": "extObl"
     },
     "bow": {
-     "a": 0.023,
+     "a": 0.029,
      "unit": "lat"
     },
     "fold": {
@@ -3325,12 +3325,12 @@
     }
    },
    "Tact": {
-    "stand": 16,
-    "dog": 167,
-    "plank": 218,
-    "half": 113,
-    "bow": 29,
-    "fold": 63
+    "stand": 18,
+    "dog": 139,
+    "plank": 68,
+    "half": 190,
+    "bow": 57,
+    "fold": 57
    },
    "Tpas": {
     "stand": 0,

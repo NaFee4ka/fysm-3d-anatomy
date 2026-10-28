@@ -76,15 +76,24 @@ export function buildPose(id, options = {}) {
   const mus = {};
   r.INST.forEach((s, j) => {
     if (s.side !== 'L') return;
-    const m = (mus[s.unit] ||= { F: 0, Fp: 0, Fmax: 0, Fe: 0, activationNumerator: 0 });
+    const m = (mus[s.unit] ||= { F: 0, Fp: 0, Fmax: 0, Fe: 0, activationNumerator: 0,
+      strands: 0, quarantinedStrands: 0, slackFiberStrands: 0, normalizedFiberLengthRange: [Infinity, -Infinity] });
     m.F += r.force[j]; m.Fp += r.FP[j]; m.Fmax += r.FMAX[j]; m.Fe += r.FE[j];
     m.activationNumerator += r.act[j] * r.FMAX[j];
+    m.strands++;
+    if (r.muscleQuality?.[j]?.quarantined) m.quarantinedStrands++;
+    if (r.lt[j] <= 0) m.slackFiberStrands++;
+    m.normalizedFiberLengthRange[0] = Math.min(m.normalizedFiberLengthRange[0], r.lt[j]);
+    m.normalizedFiberLengthRange[1] = Math.max(m.normalizedFiberLengthRange[1], r.lt[j]);
   });
   for (const [u, m] of Object.entries(mus)) {
     m.a = m.F / m.Fmax;
     // Recruitment activation and active force/Fmax differ when force-length
     // capacity is reduced. Keep the existing displayed force fraction in `a`.
     m.activation = r3(m.activationNumerator / m.Fmax);
+    m.status = (r.unidentifiedUnits || []).includes(u) ? 'unidentified'
+      : m.quarantinedStrands === m.strands ? 'quarantined' : 'estimated';
+    m.normalizedFiberLengthRange = m.normalizedFiberLengthRange.map(r3);
     delete m.activationNumerator;
     // Presence of a prescribed minimum, not a binding constraint or a causal
     // share of active force. Tone bounds activation, whereas `a` is force/Fmax.
@@ -169,11 +178,14 @@ export function buildPose(id, options = {}) {
     muscles: mus, joints,
     balance: { forceN: supportForce.toArray(), weightN: BW,
       forceErrorN: supportForce.clone().add(V(0, -BW, 0)).toArray(), momentErrorNm: supportMoment.toArray() },
-    modelLimits: { forceLengthClampedStrands: outsideCurve.length,
-      forceLengthClampedUnits: [...new Set(outsideCurve.map(s => s.unit))].sort(),
-      fibreFractionFloorUnits: Object.keys(MUSCLE).filter(u => MUSCLE[u].phi < 0.3).sort() },
+    modelLimits: { forceLengthClampedStrands: 0, forceLengthClampedUnits: [], fibreFractionFloorUnits: [],
+      forceLengthOutsideTypicalStrands: outsideCurve.length,
+      forceLengthOutsideTypicalUnits: [...new Set(outsideCurve.map(s => s.unit))].sort(),
+      pathQuality: r.pathQuality, constitutive: r.constitutive, contactQuality: r.contactQuality,
+      unidentifiedUnits: r.unidentifiedUnits || [] },
     diag: { resid: r.maxRes, reserves: r1(Object.values(r.reserve).reduce((a, x) => a + Math.abs(x), 0)), ms: Date.now() - t0,
-      quality: r.quality, forceResidualN: r.quality?.forceResidualN, momentResidualNm: r.quality?.momentResidualNm },
+      quality: r.quality, physicalBalance: r.physicalBalance,
+      forceResidualN: r.quality?.forceResidualN, momentResidualNm: r.quality?.momentResidualNm },
   };
   return out;
 }
