@@ -44,6 +44,14 @@ const FASCIA_NOTES = /*__FASCIA_NOTES__*/null;
 const MUSCLE_SURFACE_DATA = /*__MUSCLE_SURFACES__*/null;
 const JOINT_SURFACE_DATA = /*__JOINT_SURFACES__*/null;
 const CAPSULE_RIM_DATA = /*__CAPSULE_RIMS__*/null;
+const PRACTICE_DATA = /*__PRACTICE__*/null;
+const PRACTICE_ALGORITHMS = PRACTICE_DATA?.algorithms || [];
+const PRACTICE_BY_ID = new Map(PRACTICE_ALGORITHMS.map(a => [a.id, a]));
+const practiceConfs = Object.fromEntries(Object.entries(PRACTICE_DATA?.poses || {}).map(([id, data]) => [id, {
+  local: Object.fromEntries(A.SEG.map(s => [s.name, new THREE.Quaternion().fromArray(data.local[s.name]).normalize()])),
+  rootQ: new THREE.Quaternion().fromArray(data.root).normalize(),
+  rootP: new THREE.Vector3().fromArray(data.rootP),
+}]));
 const EXTRAS = POSE_DATA.extras || {};
 const POSES = A.POSES;
 const POSE = Object.fromEntries(POSES.map(p => [p.id, p]));
@@ -281,6 +289,11 @@ function cycForceSet(i) {
 }
 function updateForces() {
   if (!forceSets) return;
+  if (state.mode === 'practice') {
+    forceSets.pose.visible = forceSets.stand.visible = false;
+    if (cycForce) cycForce.visible = false;
+    return;
+  }
   if (state.mode === 'cycle' && CYC) {
     forceSets.pose.visible = forceSets.stand.visible = false;
     const on = state.forces && !cycMorph;
@@ -627,15 +640,15 @@ for (const s of ligs) (ligStrands[s.inst.unit] ||= []).push(s);
 for (const s of caps) (capStrands[s.inst.unit + '_' + s.inst.side] ||= []).push(s);
 
 // ---------- state ----------
-const state = { t: 1, poseId: 'dog', bones: true, joints: true, ligs: true, musclesOuter: true, musclesDeep: true, light: true, forces: false, lightMode: 'length', sel: null, playing: null, mode: 'pose', cycT: 0, fascia: false, flines: false };
+const state = { t: 1, poseId: 'dog', bones: true, joints: true, ligs: true, musclesOuter: true, musclesDeep: true, light: true, forces: false, lightMode: 'length', sel: null, playing: null, mode: 'pose', cycT: 0, fascia: false, flines: false, algorithmId: 'struna', practiceStep: 0 };
 let muscleSurfaces = null, connectiveSurfaces = null, jointSurfaces = null;
 // physics: muscle effort from the static solution, at the full pose and in plain standing
 const ACTIVE_MIN = 0.08;
 const activeOf = id => new Set(Object.entries(PHYS[id].muscles).filter(([, m]) => m.a >= ACTIVE_MIN).map(([u]) => u));
 let activeSet = activeOf('dog');
 const lerpN = (a, b, t) => a + (b - a) * t;
-function effortOf(unit, id) { const p = PHYS[id || state.poseId].muscles[unit], s0 = PHYS.stand.muscles[unit]; return lerpN(s0 ? s0.a : 0, p ? p.a : 0, state.t); }
-function jointPhys(id, pose) { return PHYS[pose || state.poseId].joints[id.replace(/_R$/, '_L')] || null; }
+function effortOf(unit, id) { if (state.mode === 'practice') return 0; const p = PHYS[id || state.poseId].muscles[unit], s0 = PHYS.stand.muscles[unit]; return lerpN(s0 ? s0.a : 0, p ? p.a : 0, state.t); }
+function jointPhys(id, pose) { if (state.mode === 'practice') return null; return PHYS[pose || state.poseId].joints[id.replace(/_R$/, '_L')] || null; }
 function jointEffortOf(id) {
   // loads under 1 N·m are ignored: a small moment against a weak muscle group would light the joint for nothing
   const big = c => (Math.abs(c.need) >= 1 ? c.eff : 0);
@@ -699,7 +712,9 @@ const FIT_PTS = [['f3c_L', [0.21, 0.63, -0.02]], ['f3c_R', [-0.21, 0.63, -0.02]]
 let overrideConf = null;
 function applyPose(t) {
   let conf;
-  if (state.mode === 'cycle' && CYC) {
+  if (state.mode === 'practice') {
+    conf = practiceConfs[practiceCurrent().step.id];
+  } else if (state.mode === 'cycle' && CYC) {
     conf = fillCycConf(state.cycT, cycConf, cycNow);
     if (cycMorph) conf = blendFull(cycMorph.from, conf, cycMorph.u);
   } else {
@@ -739,7 +754,7 @@ function applyPose(t) {
   if (muscleSurfaces) muscleSurfaces.update(P.W, pathCache);
   if (connectiveSurfaces) connectiveSurfaces.update(P.W, pathCache);
   if (jointSurfaces) jointSurfaces.update(P.W);
-  for (const id in jointById) { const jj = jointById[id]; jj.res = A.analyzeJoint(jj.def, P.local, P.W, state.mode !== 'cycle' && STATS[state.poseId] ? STATS[state.poseId].joint[id].mode : undefined); jj.k = Math.max(0, Math.min(1, Math.abs(jj.res.primary || 0) / (jj.res.comps[0] ? jj.res.comps[0].rom : 90))); }
+  for (const id in jointById) { const jj = jointById[id]; jj.res = A.analyzeJoint(jj.def, P.local, P.W, state.mode === 'pose' && STATS[state.poseId] ? STATS[state.poseId].joint[id].mode : undefined); jj.k = Math.max(0, Math.min(1, Math.abs(jj.res.primary || 0) / (jj.res.comps[0] ? jj.res.comps[0].rom : 90))); }
   regions = A.analyzeRegions(P.local);
   const box = new THREE.Box3();
   for (const f of FIT_PTS) box.expandByPoint(A.pt(P.W, f.s, f.p));
@@ -751,6 +766,7 @@ function applyPose(t) {
 }
 // fascia follows the body; while the round plays it is refreshed about 15 times a second (≈ 18 ms per update)
 function fasciaPhys() {
+  if (state.mode === 'practice') return null;
   if (state.mode === 'cycle' && CYC) {
     if (!CYC.NU) return null;
     const a = {}, Fmax = {};
@@ -966,7 +982,7 @@ function pick(cx, cy) {
   if (first) {
     const d = first.object.userData;
     if (d.kind === 'fascia') return select({ kind: 'fascia', id: d.id, side: d.side });
-    if (d.kind === 'line' || d.kind === 'station') return select({ kind: 'fline', id: d.id || d.line });
+    if (d.kind === 'line' || d.kind === 'station') return select({ kind: 'fline', id: d.id || d.line, side: d.side });
     if (d.kind === 'muscle' || d.kind === 'lig' || d.kind === 'joint') return select(d);
     if (d.kind === 'cap') return select({ kind: 'joint', id: d.unit + '_' + d.side });
     if (d.kind === 'cart' && d.joint) return select({ kind: 'joint', id: d.joint });
@@ -1108,6 +1124,7 @@ function supportHTML(P, S) {
   return html;
 }
 function renderCues() {
+  if (state.mode === 'practice') return renderPracticeCues();
   const P = POSE[state.poseId], S = STATS[state.poseId];
   cuesEl.innerHTML = `
     <p class="card-eyebrow">${nb('Подсказки к позе ' + P.num)}</p>
@@ -1167,6 +1184,10 @@ function updateResearchQuality() {
   const node = document.getElementById('model-quality');
   if (!node) return;
   const lines = [];
+  if (state.mode === 'practice') {
+    node.textContent = nb('3D-реконструкция по фото. Нагрузка для этих поз пока не рассчитана.');
+    return;
+  }
   const small = (n, unit) => Math.abs(n) < 0.01 ? 'менее 0,01 ' + unit : researchNumber(Math.abs(n), 2) + ' ' + unit;
   if (state.mode === 'cycle') {
     const q = CYC && CYC.modelQuality;
@@ -1357,12 +1378,13 @@ function renderBone(d) {
 }
 function renderInfo() {
   renderInfoBase();
-  appendLinesOf();
+  if (state.mode !== 'practice') appendLinesOf();
   lastResearchKey = researchPoseKey();
   updateResearchQuality();
 }
 function renderInfoBase() {
   const s = state.sel;
+  if (state.mode === 'practice') return renderPracticeInfo();
   if (s && s.kind === 'fline') return renderLine(s.id);
   if (s && s.kind === 'fascia') return renderFasciaEl(s.id);
   if (s && s.kind === 'flines') return renderLinesOverview();
@@ -1402,14 +1424,27 @@ function focusSelection() {
   }
   if ((s.kind === 'fline' || s.kind === 'fascia') && fasciaM) {
     let pts = [];
-    if (s.kind === 'fline') { const lm = fasciaM.lines[s.id + '_L']; pts = lm && lm.path ? lm.path : FASC.linePath(poseW, s.id, 'L'); }
-    else { const e = FASC.EL[s.id]; for (const a of (e.strands || [])) if (a.pts) pts.push(...a.pts.map(q => A.pt(poseW, q.seg || q[0], new THREE.Vector3(...(q.p || q.slice(1)))))); if (!pts.length) for (const m of FR.pickables) if (m.userData.kind === 'fascia' && m.userData.id === s.id) { m.geometry.computeBoundingSphere(); pts.push(m.geometry.boundingSphere.center.clone()); } }
+    const side = s.side === 'R' ? 'R' : 'L';
+    if (s.kind === 'fline') {
+      const lm = fasciaM.lines[s.id + '_' + side];
+      pts = lm?.path || FASC.linePath(poseW, s.id, side);
+    } else {
+      const e = FASC.EL[s.id], elementSide = e.central ? 'L' : side;
+      // Use the resolved anatomical instances, including their reflected points
+      // and wraps. Raw source strands describe only the left reference side.
+      for (const inst of e.inst[elementSide] || []) pts.push(...A.strandPath(poseW, inst));
+      if (!pts.length) for (const m of FR.pickables) {
+        if (m.userData.kind !== 'fascia' || m.userData.id !== s.id || m.userData.side !== elementSide) continue;
+        m.geometry.computeBoundingSphere();
+        pts.push(m.localToWorld(m.geometry.boundingSphere.center.clone()));
+      }
+    }
     if (pts.length) { const c = new THREE.Vector3(); for (const q of pts) c.add(q); c.divideScalar(pts.length); let rad = 0; for (const q of pts) rad = Math.max(rad, q.distanceTo(c)); return focusOn(c, Math.max(0.45, rad * 2.4)); }
     return;
   }
   let list = null, dist = 0.5;
-  if (s.kind === 'muscle') list = unitStrands[s.unit].filter(x => x.inst.side === 'L');
-  if (s.kind === 'lig') { list = ligStrands[s.unit].filter(x => x.inst.side === 'L'); dist = 0.3; }
+  if (s.kind === 'muscle') list = unitStrands[s.unit].filter(x => x.inst.side === (s.side || 'L'));
+  if (s.kind === 'lig') { list = ligStrands[s.unit].filter(x => x.inst.side === (s.side || 'L')); dist = 0.3; }
   if (list) {
     const c = new THREE.Vector3();
     let n = 0;
@@ -1422,6 +1457,7 @@ function focusSelection() {
 }
 
 function setLayer(name, on) {
+  if (state.mode === 'practice' && name === 'forces') on = false;
   state[name] = on;
   const btn = document.querySelector(`[data-layer="${name}"]`);
   if (btn) btn.setAttribute('aria-pressed', on ? 'true' : 'false');
@@ -1438,6 +1474,7 @@ function setLayer(name, on) {
 }
 document.querySelectorAll('[data-layer]').forEach(b => b.addEventListener('click', () => setLayer(b.dataset.layer, b.getAttribute('aria-pressed') !== 'true')));
 function setLightMode(mode) {
+  if (state.mode === 'practice' && mode !== 'length') return;
   state.lightMode = mode;
   document.querySelectorAll('[data-lightmode]').forEach(b => b.setAttribute('aria-pressed', b.dataset.lightmode === mode ? 'true' : 'false'));
   document.body.classList.toggle('mode-effort', mode === 'effort');
@@ -1451,6 +1488,7 @@ document.querySelectorAll('[data-lightmode]').forEach(b => b.addEventListener('c
 const slider = $('pose'), poseOut = $('pose-out'), playBtn = $('play');
 let poseDirty = true, morphDone = false;
 function setT(t, fromSlider) {
+  if (state.mode === 'practice') t = 1;
   state.t = Math.max(0, Math.min(1, t));
   if (!fromSlider) slider.value = Math.round(state.t * 100);
   poseOut.textContent = Math.round(state.t * 100) + '%';
@@ -1460,6 +1498,7 @@ function setT(t, fromSlider) {
 slider.addEventListener('input', () => { state.playing = null; setPlayLabel(); setT(slider.value / 100, true); });
 function setPlayLabel() { playBtn.setAttribute('aria-pressed', state.playing ? 'true' : 'false'); playBtn.querySelector('span').textContent = state.playing ? 'Стоп' : 'Переход'; }
 playBtn.addEventListener('click', () => {
+  if (state.mode === 'practice') return;
   if (state.playing) { state.playing = null; setPlayLabel(); return; }
   if (reduceMotion) { setT(state.t > 0.5 ? 0 : 1); return; }
   const from = state.t >= 0.999 ? 0 : state.t;
@@ -1471,8 +1510,168 @@ $('reset').addEventListener('click', () => { state.userMoved = false; resetView(
 const hint = $('hint');
 function hideHint() { if (hint && !hint.hidden) { hint.classList.add('gone'); setTimeout(() => { hint.hidden = true; }, 400); } }
 
+// ---------- FYSM practice: static reconstructions, without borrowed physics ----------
+let practiceReturn = null;
+const practiceText = value => nb(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function practiceCurrent() {
+  const algorithm = PRACTICE_BY_ID.get(state.algorithmId);
+  const step = Array.isArray(algorithm?.steps) ? algorithm.steps[state.practiceStep] : null;
+  return algorithm && step ? { algorithm, step, geometry: PRACTICE_DATA.poses[step.id] } : null;
+}
+function setPageHash(hash, replace = false) {
+  const target = '#' + hash;
+  if (location.hash !== target) history[replace ? 'replaceState' : 'pushState'](null, '', target);
+}
+function syncPracticeControls() {
+  const on = state.mode === 'practice';
+  document.body.classList.toggle('practice-mode', on);
+  $('main-mode').setAttribute('aria-pressed', on ? 'false' : 'true');
+  $('practice-mode').setAttribute('aria-pressed', on ? 'true' : 'false');
+  $('base-poses').hidden = on;
+  $('practice-navigation').hidden = !on;
+  posePlayer.hidden = on || state.mode === 'cycle';
+  cyclePlayer.hidden = on || state.mode !== 'cycle';
+  for (const b of document.querySelectorAll('[data-lightmode]')) b.setAttribute('aria-pressed', b.dataset.lightmode === state.lightMode ? 'true' : 'false');
+  document.body.classList.toggle('mode-effort', state.lightMode === 'effort');
+  const forceButton = document.querySelector('[data-layer="forces"]');
+  forceButton.disabled = on;
+  forceButton.setAttribute('aria-pressed', state.forces ? 'true' : 'false');
+  document.querySelector('[data-lightmode="effort"]').disabled = on;
+  $('legend-lig-length').textContent = nb(on
+    ? 'Тёплый свет на связке или капсуле — её путь длиннее, чем в стойке'
+    : 'Связки и капсулы светятся тёплым там, где берут натяжение');
+}
+function updatePracticeHeader() {
+  const { algorithm, step } = practiceCurrent();
+  $('pose-sanskrit').textContent = nb(step.sanskrit);
+  $('pose-name').textContent = nb(step.name);
+  $('practice-progress').textContent = nb('Поза ' + step.number + ' из ' + algorithm.steps.length);
+  $('practice-prev').disabled = state.practiceStep === 0;
+  $('practice-next').disabled = state.practiceStep === algorithm.steps.length - 1;
+  document.querySelectorAll('[data-algorithm]').forEach(b => b.setAttribute('aria-pressed', b.dataset.algorithm === algorithm.id ? 'true' : 'false'));
+  $('practice-steps').innerHTML = algorithm.steps.map((s, i) => `<button class="btn practice-step" data-practice-step="${i}" aria-label="${practiceText('Поза ' + s.number + '. ' + s.name)}" aria-pressed="${state.practiceStep === i}"${state.practiceStep === i ? ' aria-current="step"' : ''}>${s.number}</button>`).join('');
+  $('practice-steps').querySelectorAll('[data-practice-step]').forEach(b => b.addEventListener('click', () => enterPractice(algorithm.id, Number(b.dataset.practiceStep))));
+  document.querySelectorAll('[data-pose]').forEach(b => b.setAttribute('aria-pressed', 'false'));
+  cycleTab.setAttribute('aria-pressed', 'false');
+  canvas.setAttribute('aria-label', nb('3D-реконструкция позы «' + step.name + '». Вращай, приближай и выбирай мышцы, связки и суставы.'));
+}
+function enterPractice(id = state.algorithmId, index = state.practiceStep, writeHash = true) {
+  const algorithm = PRACTICE_BY_ID.get(id);
+  if (!Array.isArray(algorithm?.steps) || !Number.isInteger(index) || index < 0 || index >= algorithm.steps.length || !Object.hasOwn(practiceConfs, algorithm.steps[index].id)) return false;
+  if (state.mode !== 'practice') {
+    practiceReturn = { mode: state.mode, poseId: state.poseId, t: state.t, cycT: state.cycT, lightMode: state.lightMode, forces: state.forces };
+    if (state.mode === 'cycle') exitCycle();
+  }
+  state.mode = 'practice'; state.algorithmId = id; state.practiceStep = index;
+  state.playing = null; setPlayLabel(); cycPause();
+  morph = null; cycMorph = null; overrideConf = null;
+  state.camAnim = null; state.sel = null; state.t = 1;
+  state.lightMode = 'length'; state.forces = false;
+  if (FR) FR.focus(null);
+  fasciaM = null;
+  VIEW_DIR = new THREE.Vector3(...(PRACTICE_DATA.poses[algorithm.steps[index].id].view || [-1, .3, .6])).normalize();
+  state.userMoved = false;
+  syncPracticeControls();
+  applyPose(1); poseDirty = false;
+  updateHeader(); renderCues(); renderInfo(); updateMaterials(performance.now()); updateForces();
+  resetView(false);
+  if (writeHash) setPageHash('practice/' + id + '/' + (index + 1));
+  return true;
+}
+function exitPractice(restore = true, writeHash = true) {
+  if (state.mode !== 'practice') return;
+  const previous = practiceReturn || { mode: 'pose', poseId: state.poseId, t: 1, lightMode: 'length', forces: false };
+  state.mode = 'pose'; state.playing = null; state.sel = null;
+  morph = null; cycMorph = null; overrideConf = null; state.camAnim = null;
+  state.poseId = previous.poseId; state.lightMode = previous.lightMode; state.forces = previous.forces;
+  activeSet = activeOf(state.poseId); fasciaM = null;
+  canvas.setAttribute('aria-label', nb('3D-модель выбранной позы. Вращай, приближай и нажимай на мышцы, связки и суставы.'));
+  syncPracticeControls();
+  if (!restore) return;
+  VIEW_DIR = new THREE.Vector3(...POSE[state.poseId].view).normalize();
+  buildForces(state.poseId); setT(previous.t); setPlayLabel();
+  if (previous.mode === 'cycle' && CYC) {
+    enterCycle(previous.cycT, false); cycPause(); cycMorph = null;
+  }
+  state.userMoved = false;
+  applyPose(state.t); poseDirty = false; resetView(false);
+  updateHeader();
+  if (state.mode === 'cycle') renderCycleStats(); else renderCues();
+  renderInfo(); updateForces();
+  if (writeHash) setPageHash(state.mode === 'cycle' ? 'cycle' : state.poseId);
+}
+function practiceLengths(left, right, central = false) {
+  const row = (label, value) => `<div><dt>${practiceText(label)}</dt><dd class="${value >= 0 ? 'warm' : 'cool'}-t">${Number.isFinite(value) ? fmtPct(value) : '—'}</dd></div>`;
+  return `<dl class="practice-lengths">${row(central ? 'По средней линии' : 'Слева', left)}${central ? '' : row('Справа', right)}</dl>`;
+}
+function practiceStrain(unit, side, kind = 'muscle') {
+  const parts = (kind === 'muscle' ? unitStrands[unit] : ligStrands[unit])?.filter(s => s.inst.side === side) || [];
+  return parts.length ? avg(parts) : null;
+}
+function renderPracticeCues() {
+  const { algorithm, step, geometry } = practiceCurrent();
+  const notes = (geometry.notes || []).filter(n => typeof n === 'string');
+  const image = algorithm.referenceImage;
+  cuesEl.innerHTML = `<p class="card-eyebrow">${practiceText(algorithm.name + ' · поза ' + step.number + ' из ' + algorithm.steps.length)}</p>
+    <h2 class="card-title">${practiceText('О положении')}</h2>
+    <p class="role">${practiceText('3D-реконструкция по фото. Нагрузка для этих поз пока не рассчитана.')}</p>
+    ${notes.length ? `<ul class="plain">${notes.map(n => `<li>${practiceText(n)}</li>`).join('')}</ul>` : ''}
+    <p class="meter-foot">${practiceText('Источник: «' + PRACTICE_DATA.source.title + '», раздел «' + PRACTICE_DATA.section + '», страница PDF ' + algorithm.page + '. Названия и порядок поз сохранены.')}</p>
+    <p class="meter-foot">${practiceText('Показано статическое положение. Переходы между позами не реконструированы.')}</p>
+    ${image ? `<details class="practice-reference"><summary>${practiceText('Фото из методички')}</summary><img src="${image}" alt="${practiceText(algorithm.referenceAlt || 'Восемь поз алгоритма «' + algorithm.name + '» из методички FYSM')}" loading="lazy"><p class="meter-foot">${practiceText('«' + PRACTICE_DATA.source.title + '», страница PDF ' + algorithm.page + '.')}</p></details>` : ''}`;
+}
+function bindPracticeSides() {
+  info.querySelectorAll('[data-practice-side]').forEach(b => b.addEventListener('click', () => select({ ...state.sel, side: b.dataset.practiceSide })));
+}
+function renderPracticeInfo() {
+  const s = state.sel;
+  const noLoad = `<p class="meter-foot">${practiceText('Изменение длины пути — геометрическая оценка относительно стойки. Оно не показывает усилие мышцы, нагрузку или растяжение ткани.')}</p>`;
+  if (s?.kind === 'bone' || s?.kind === 'cart') return renderBone(s);
+  if (s?.kind === 'muscle' || s?.kind === 'lig') {
+    const muscle = s.kind === 'muscle', definition = muscle ? A.UNITS[s.unit] : A.LIGS[s.unit], side = s.side || 'L';
+    const parts = (muscle ? unitStrands[s.unit] : ligStrands[s.unit]).filter(p => p.inst.side === side);
+    const left = practiceStrain(s.unit, 'L', s.kind), right = practiceStrain(s.unit, 'R', s.kind);
+    info.innerHTML = `${closeBtn()}<p class="card-eyebrow">${practiceText(muscle ? 'Мышца · длина пути' : 'Связка · длина пути')}</p>
+      <h2 class="card-title">${practiceText(definition.name)}</h2><p class="latin">${practiceText(definition.latin || '')}</p>
+      <h3 class="card-sub">${practiceText('Изменение относительно стойки')}</h3>${practiceLengths(left, right)}${noLoad}
+      <div class="practice-side">${['L', 'R'].map(sd => `<button class="btn" data-practice-side="${sd}" aria-pressed="${side === sd}">${practiceText(sd === 'L' ? 'Слева' : 'Справа')}</button>`).join('')}</div>
+      <h3 class="card-sub">${practiceText('Пучки ' + (side === 'L' ? 'слева' : 'справа'))}</h3>
+      <ul class="parts">${parts.map((p, i) => `<li><span>${practiceText(p.inst.label || 'Пучок ' + (i + 1))}</span><span class="num ${p.strain >= 0 ? 'warm' : 'cool'}-t">${fmtPct(p.strain)}</span>${barHTML(p.strain)}</li>`).join('')}</ul>
+      ${muscle ? muscleSourceHTML(s.unit) + `<h3 class="card-sub">${practiceText('Что делает мышца')}</h3><p class="role">${practiceText(definition.fn || '')}</p>` : ''}${focusBtn()}`;
+    bindCardButtons(); bindPracticeSides(); return;
+  }
+  if (s?.kind === 'joint') {
+    const j = jointById[s.id], r = j.res;
+    info.innerHTML = `${closeBtn()}<p class="card-eyebrow">${practiceText('Сустав · ' + sideWord(s.id))}</p><h2 class="card-title">${practiceText(j.def.name)}</h2>
+      <h3 class="card-sub">${practiceText('Углы показанного положения')}</h3><ul class="parts comps">${r.comps.map(c => `<li><span>${practiceText(c.label)}</span><span class="num gold-t">${fmtDeg(c.value)}</span>${romBar(c.value, c.rom)}<span class="part-note">${practiceText('Диапазон модели до ' + c.rom + '°. ' + (c.note || ''))}</span></li>`).join('')}</ul>
+      <p class="meter-foot">${practiceText('Углы — геометрическая оценка реконструкции по фото. Силы и контакт в суставе для этой позы не рассчитаны.')}</p>${jointSourceHTML(s.id)}${focusBtn()}`;
+    bindCardButtons(); return;
+  }
+  if (FASC && s && /^(fline|fascia|flines)$/.test(s.kind)) {
+    const m = ensureFasciaM();
+    if (s.kind === 'flines') {
+      info.innerHTML = `${closeBtn()}<p class="card-eyebrow">${practiceText('Геометрия линий Майерса')}</p><h2 class="card-title">${practiceText('Изменение длины к стойке')}</h2>${noLoad}<ul class="rank">${Object.keys(FASC.LINE).map(id => `<li><button class="rank-row" data-fline="${id}"><span class="rank-name">${lineDot(id)} ${practiceText(FASC.LINE[id].ru)}</span><span class="practice-pair">${practiceText('Слева ' + fmtPct(m.lines[id + '_L']?.strain || 0) + ' · справа ' + fmtPct(m.lines[id + '_R']?.strain || 0))}</span></button></li>`).join('')}</ul>`;
+    } else {
+      const line = s.kind === 'fline', def = line ? FASC.lineInfo(s.id) : FASC.EL[s.id];
+      const values = line ? m.lines : m.el, left = values[s.id + '_L'] || values[s.id + '_C'] || values[s.id], right = values[s.id + '_R'];
+      const central = !values[s.id + '_L'] && !right;
+      info.innerHTML = `${closeBtn()}<p class="card-eyebrow">${practiceText(line ? 'Линия Майерса · геометрия' : 'Фасция · геометрия')}</p><h2 class="card-title">${practiceText(def.ru)}</h2>
+        <h3 class="card-sub">${practiceText('Изменение длины к стойке')}</h3>${practiceLengths(left?.strain ?? null, right?.strain ?? null, central)}${noLoad}
+        <h3 class="card-sub">${practiceText('Описание структуры')}</h3><p class="role">${practiceText(line ? def.fn || '' : def.role || '')}</p>${focusBtn()}`;
+    }
+    bindCardButtons(); bindFasciaButtons(); return;
+  }
+  const changes = UNIT_IDS.map(unit => ({ unit, L: practiceStrain(unit, 'L'), R: practiceStrain(unit, 'R') }))
+    .filter(p => Number.isFinite(p.L) && Number.isFinite(p.R)).sort((a, b) => Math.max(Math.abs(b.L), Math.abs(b.R)) - Math.max(Math.abs(a.L), Math.abs(a.R))).slice(0, 6);
+  info.innerHTML = `<p class="card-eyebrow">${practiceText('Геометрия позы')}</p><h2 class="card-title">${practiceText('Длина мышечных путей')}</h2>${noLoad}
+    <ul class="rank">${changes.map(p => `<li><button class="rank-row" data-unit="${p.unit}"><span class="rank-name">${practiceText(A.UNITS[p.unit].name)}</span><span class="practice-pair">${practiceText('Слева ' + fmtPct(p.L) + ' · справа ' + fmtPct(p.R))}</span></button></li>`).join('')}</ul>
+    <p class="card-hint">${practiceText('Нажми на мышцу, связку или сустав. Карточка покажет геометрию выбранной стороны.')}</p>`;
+  bindCardButtons();
+}
+
 // ---------- pose switching ----------
 function updateHeader() {
+  if (state.mode === 'practice') return updatePracticeHeader();
   const cycMode = state.mode === 'cycle';
   document.querySelectorAll('[data-pose]').forEach(b => b.setAttribute('aria-pressed', !cycMode && b.dataset.pose === state.poseId ? 'true' : 'false'));
   if (cycleTab) cycleTab.setAttribute('aria-pressed', cycMode ? 'true' : 'false');
@@ -1486,9 +1685,11 @@ function updateHeader() {
 }
 function switchPose(id) {
   const wasCycle = state.mode === 'cycle';
-  if (!POSE[id] || (id === state.poseId && !wasCycle)) return;
+  const wasPractice = state.mode === 'practice';
+  if (!Object.hasOwn(POSE, id) || (id === state.poseId && !wasCycle && !wasPractice)) return;
   // the frame of the round is a reused object: the morph starts from a copy (with its place on the mat)
-  const from = displayConf ? cloneConf(displayConf) : null;
+  const from = !wasPractice && displayConf ? cloneConf(displayConf) : null;
+  if (wasPractice) exitPractice(false, false);
   if (wasCycle) exitCycle();
   state.poseId = id;
   activeSet = activeOf(id);
@@ -1502,6 +1703,7 @@ function switchPose(id) {
   updateHeader();
   renderCues();
   renderInfo();
+  setPageHash(id);
 }
 document.querySelectorAll('[data-pose]').forEach(b => b.addEventListener('click', () => switchPose(b.dataset.pose)));
 
@@ -1592,9 +1794,11 @@ function cycStep(now) {
   if (h) { setCycT(h.T); cyc.pauseUntil = now + (h.T >= CYC.T - 1e-6 ? 1500 : 1000); return; }
   setCycT(Math.min(CYC.T, t1));
 }
-function enterCycle(startT) {
+function enterCycle(startT, writeHash = true) {
   if (!CYC || state.mode === 'cycle') return;
-  const from = displayConf ? cloneConf(displayConf) : null;
+  const wasPractice = state.mode === 'practice';
+  if (wasPractice) exitPractice(false, false);
+  const from = !wasPractice && displayConf ? cloneConf(displayConf) : null;
   if (from && !from.rootP) from.rootP = placedRootP(from.local, from.rootQ);
   state.mode = 'cycle';
   state.playing = null; setPlayLabel(); morph = null;
@@ -1611,6 +1815,7 @@ function enterCycle(startT) {
   renderCycleStats();
   renderInfo();
   if (!reduceMotion) { cycPlay(); cyc.pauseUntil = performance.now() + 1500; }
+  if (writeHash) setPageHash('cycle');
 }
 function exitCycle() {
   if (state.mode !== 'cycle') return;
@@ -2053,10 +2258,33 @@ function appendLinesOf() {
 }
 
 // ---------- boot ----------
+if (PRACTICE_ALGORITHMS.length) {
+  $('practice-mode').hidden = false;
+  $('practice-algorithms').innerHTML = PRACTICE_ALGORITHMS.map(a => `<button class="btn" data-algorithm="${a.id}" aria-pressed="false">${practiceText(a.name)}</button>`).join('');
+  $('practice-algorithms').querySelectorAll('[data-algorithm]').forEach(b => b.addEventListener('click', () => enterPractice(b.dataset.algorithm, 0)));
+  $('practice-mode').addEventListener('click', () => enterPractice());
+  $('main-mode').addEventListener('click', () => exitPractice());
+  $('practice-prev').addEventListener('click', () => enterPractice(state.algorithmId, state.practiceStep - 1));
+  $('practice-next').addEventListener('click', () => enterPractice(state.algorithmId, state.practiceStep + 1));
+}
+function applyPracticeHash() {
+  const hash = location.hash.slice(1);
+  if (hash === 'practice' || hash.startsWith('practice/')) {
+    const match = /^practice\/([a-z]+)\/([1-8])$/.exec(hash);
+    if (match && enterPractice(match[1], Number(match[2]) - 1, false)) return;
+    const first = PRACTICE_ALGORITHMS[0];
+    if (first && enterPractice(first.id, 0, false)) setPageHash('practice/' + first.id + '/1', true);
+    return;
+  }
+  if (state.mode === 'practice') exitPractice(true, false);
+  if (Object.hasOwn(POSE, hash)) switchPose(hash);
+  else if (hash === 'cycle' || hash === 'krug') { enterCycle(0, false); cycPause(); cycMorph = null; }
+}
+window.addEventListener('hashchange', applyPracticeHash);
 for (const P of POSES) STATS[P.id] = computeStats(P.id);
 {
   const h = (location.hash || '').replace('#', '');
-  if (POSE[h]) { state.poseId = h; activeSet = activeOf(h); VIEW_DIR = new THREE.Vector3(...POSE[h].view).normalize(); }
+  if (Object.hasOwn(POSE, h)) { state.poseId = h; activeSet = activeOf(h); VIEW_DIR = new THREE.Vector3(...POSE[h].view).normalize(); }
 }
 buildForces(state.poseId);
 if (typeof createConnectiveSurfaces === 'function') {
@@ -2132,8 +2360,9 @@ if (CYC) {
   // reduced motion: the round is not played by itself, only scrubbed
   if (reduceMotion) { cycPlayBtn.hidden = true; document.querySelector('.cyc .seg-inline').hidden = true; }
   const h0 = (location.hash || '').replace('#', '');
-  if (h0 === 'cycle' || h0 === 'krug') enterCycle(0);
+  if (h0 === 'cycle' || h0 === 'krug') enterCycle(0, false);
 }
+if (location.hash === '#practice' || location.hash.startsWith('#practice/')) applyPracticeHash();
 
 let lastInfoT = -1;
 const cycFollow = new THREE.Vector3(), _fd = new THREE.Vector3();

@@ -8,6 +8,8 @@
 
 ## Как собрать и проверить
 
+- В «Алгоритмах FYSM» дополнительно показаны 24 статические 3D-реконструкции первых трёх алгоритмов PDF («Струна», «Детали», «Центрирование»). Они хранятся отдельно в `practice/`, без сил и переходов. После изменения их геометрии: `node practice_build.mjs`, `node practice_geometry_test.mjs`, затем обычная Python-сборка. `build.py` проверяет хеши входов и отчётов по костным пересечениям противоположных рук и каждой руки с обеими стопами. Браузер: `python3 ui_practice_test.py --out /tmp/fysm-practice-ui --browser /usr/bin/chromium --fetch-assets`. Подробности и источник — `practice/README.md`.
+
 - `python3 build.py` → `dist/index.html` (страница) и `dist/test.html` (то же с отладкой `window.__dbg`). Нужен только Python 3. Все команды запускай из корня репозитория.
 - Перед каждым pull request: `python3 build.py && test "$(grep -c __dbg dist/index.html)" = 0`. Отладка не должна попадать в `index.html`. Эту же проверку делает автопубликация.
 - Node нужен, только если меняются позы или физика: `npm ci` (three 0.160), затем `node poses_build.mjs` → `poses.json`, `node physics_build.mjs` → `physics.json`. Круг: `./cycle_run.sh` (около 5 минут). Готовые данные поз и круга уже лежат в репозитории, для правки текстов и интерфейса Node не нужен.

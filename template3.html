@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Анатомия шести асан</title>
+<title>Анатомия поз FYSM</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -50,6 +50,29 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--gold); outl
 .eyebrow { margin: 0 0 2px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 h1 { margin: 0; font-size: 24px; line-height: 1.15; font-weight: 600; letter-spacing: -0.01em; text-wrap: balance; }
 .top-meta { margin: 0; font-size: 13px; color: var(--muted); }
+.mode-nav { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.mode-nav .btn { height: 36px; font-size: 13px; padding-inline: 12px; }
+.practice-algorithms { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.practice-algorithms .btn { font-size: 13px; height: 36px; padding-inline: 11px; }
+.practice-steps { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 5px; margin: 12px 0 10px; }
+.practice-step { min-width: 0; height: 36px; padding: 0; justify-content: center; font-family: var(--font-num); }
+.practice-navigation { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.practice-navigation .btn { height: 36px; font-size: 13px; }
+button:disabled { cursor: default; opacity: .4; }
+.practice-progress { color: var(--muted); font-size: 13px; white-space: nowrap; }
+.practice-caption { margin: 10px 0 0; color: var(--muted); font-size: 13px; }
+.practice-reference { margin-top: 14px; }
+.practice-reference summary { cursor: pointer; font-size: 14px; }
+.practice-reference img { display: block; width: 100%; height: auto; margin-top: 12px; border-radius: 8px; background: #fff; }
+.practice-lengths { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 12px 0; }
+.practice-lengths div { border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; }
+.practice-lengths dt { color: var(--muted); font-size: 12px; }
+.practice-lengths dd { margin: 4px 0 0; font-family: var(--font-num); font-size: 20px; }
+.practice-side { display: flex; gap: 6px; margin-top: 12px; }
+.practice-side .btn { height: 32px; font-size: 13px; }
+.practice-pair { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--muted); }
+body.practice-mode .rank-row { grid-template-columns: minmax(0, 1fr); row-gap: 4px; }
+body.practice-mode [data-static-physics], body.practice-mode [data-lightmode="effort"], body.practice-mode [data-layer="forces"], body.practice-mode #model-method { display: none; }
 
 .stage { grid-area: stage; position: relative; height: clamp(330px, 54svh, 760px); background: var(--ink); border-block: 1px solid var(--line); overflow: hidden; }
 #view { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
@@ -257,12 +280,16 @@ body.no-light .legend-wrap { opacity: 0.45; }
 
 <div class="app">
   <header class="top gutter">
+    <nav class="mode-nav" aria-label="Раздел приложения">
+      <button class="btn" id="main-mode" aria-pressed="true">Позы и круг</button>
+      <button class="btn" id="practice-mode" aria-pressed="false" hidden>Алгоритмы FYSM</button>
+    </nav>
     <div class="top-title">
       <p class="eyebrow" id="pose-sanskrit">Адхо мукха шванасана</p>
       <h1 id="pose-name">Горка</h1>
       <p class="top-meta">Кости, суставы, связки и мышцы в 3D</p>
     </div>
-    <nav class="poses" aria-label="Позы">
+    <nav class="poses" id="base-poses" aria-label="Позы">
       <button class="pose-tab" data-pose="dog" aria-pressed="true"><span class="num">1</span>Горка</button>
       <button class="pose-tab" data-pose="plank" aria-pressed="false"><span class="num">2</span>Планка на предплечьях</button>
       <button class="pose-tab" data-pose="half" aria-pressed="false"><span class="num">3</span>Полупрогиб</button>
@@ -271,6 +298,16 @@ body.no-light .legend-wrap { opacity: 0.45; }
       <button class="pose-tab" data-pose="handstand" aria-pressed="false"><span class="num">6</span>Стойка на руках</button>
       <button class="pose-tab pose-tab-cycle" id="cycle-tab" aria-pressed="false" hidden><span class="num"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v4.5h-4.5"/></svg></span>Круг: все переходы</button>
     </nav>
+    <div id="practice-navigation" hidden>
+      <nav class="practice-algorithms" id="practice-algorithms" aria-label="Алгоритмы FYSM"></nav>
+      <nav class="practice-steps" id="practice-steps" aria-label="Позы алгоритма"></nav>
+      <div class="practice-navigation">
+        <button class="btn" id="practice-prev">← Назад</button>
+        <output class="practice-progress" id="practice-progress" aria-live="polite"></output>
+        <button class="btn" id="practice-next">Далее →</button>
+      </div>
+      <p class="practice-caption" id="practice-caption">3D-реконструкция по фото. Нагрузка для этих поз пока не рассчитана.</p>
+    </div>
   </header>
 
   <div class="stage" id="stage">
@@ -349,9 +386,9 @@ body.no-light .legend-wrap { opacity: 0.45; }
         <div class="legend-ticks" aria-hidden="true"><span>−40%</span><span>−20</span><span>0</span><span>+20</span><span>+40%</span></div>
         <div class="legend-caps"><span class="cool-t">короче</span><span class="warm-t">длиннее</span></div>
         <ul class="legend-keys">
-          <li><i class="pulse" aria-hidden="true"></i>Зелёная и пульсирует — мышца работает</li>
+          <li data-static-physics><i class="pulse" aria-hidden="true"></i>Зелёная и пульсирует — мышца работает</li>
           <li><i class="dot dot-joint" aria-hidden="true"></i>Золото на хряще — насколько повернулся сустав</li>
-          <li><i class="dot dot-lig" aria-hidden="true"></i>Связки и капсулы светятся тёплым там, где берут натяжение</li>
+          <li><i class="dot dot-lig" aria-hidden="true"></i><span id="legend-lig-length">Связки и капсулы светятся тёплым там, где берут натяжение</span></li>
         </ul>
       </div>
       <div class="legend-effort">
@@ -386,7 +423,7 @@ body.no-light .legend-wrap { opacity: 0.45; }
     <p class="note" id="muscle-source-note" role="status">Загружаются объёмные формы мышц. Пока показана схема мышечных пучков.</p>
     <p class="note" id="joint-source-note" role="status">Загружаются уточнённые суставные поверхности. Пока показана схема хрящей.</p>
     <p class="note">Модель взрослого мужчины ростом около 176 см и весом 70 кг. Кости и доступные поверхности мышц взяты из анатомической базы <a href="https://dbarchive.biosciencedbc.jp/en/bodyparts3d/desc.html" target="_blank" rel="noopener noreferrer">BodyParts3D</a>, упрощены и подогнаны к одному скелету. Недостающие мышцы, связки, капсулы и фасции реконструированы по точкам крепления и направлениям волокон. Формы мышц плавно привязаны к сегментам скелета по расчётным прикреплениям и проводникам. Светлая окраска прикреплений и сухожильных перемычек условна. Изменение толщины и складки капсул — геометрические приближения, а не измеренная деформация ткани. При глубоком сгибании возможны уплощения и пересечения поверхностей. Удлинение пути связки или фасции относительно стойки не равно растяжению самой ткани.</p>
-    <p class="note">Усилия и нагрузки — оценки статической модели. Мышцы распределяют работу по условию равновесия с наименьшим суммарным усилием. Максимальные силы взяты из опубликованных моделей, рычаги посчитаны по изменению длины мышечных путей. Учтены опора, трение, хват, пассивные ткани и упоры суставов. Подсказки задают минимальный тонус отдельных мышц. В промежуточных положениях бегунка усилие интерполируется между стойкой и полной позой; кадры круга рассчитаны отдельно. Инерция, нервное управление и индивидуальная гибкость не учитываются; фасции пока не передают силу в решателе. Настоящая форма поверхности сама по себе не подтверждает точность оценки нагрузки.</p>
+    <p class="note" data-static-physics>Усилия и нагрузки — оценки статической модели. Мышцы распределяют работу по условию равновесия с наименьшим суммарным усилием. Максимальные силы взяты из опубликованных моделей, рычаги посчитаны по изменению длины мышечных путей. Учтены опора, трение, хват, пассивные ткани и упоры суставов. Подсказки задают минимальный тонус отдельных мышц. В промежуточных положениях бегунка усилие интерполируется между стойкой и полной позой; кадры круга рассчитаны отдельно. Инерция, нервное управление и индивидуальная гибкость не учитываются; фасции пока не передают силу в решателе. Настоящая форма поверхности сама по себе не подтверждает точность оценки нагрузки.</p>
     <p class="note">BodyParts3D, © The Database Center for Life Science, <a href="https://dbarchive.biosciencedbc.jp/en/bodyparts3d/lic.html" target="_blank" rel="noopener noreferrer">CC Attribution 4.0 International</a>. Зубы достроены по ширинам коронок взрослого.</p>
   </aside>
 </div>
