@@ -11,6 +11,7 @@ import { gzipSync, gunzipSync } from 'node:zlib';
 import * as THREE from 'three';
 import { createAnatomy } from './anatomy3.js';
 import { createMuscleSurfaces } from './muscle_surface_render.js';
+import { createTransitions } from './transition_runtime.mjs';
 
 const A = createAnatomy(THREE);
 const root = A.SEG.find(s => !s.parent);
@@ -147,6 +148,14 @@ async function runSuite(label, data, stride) {
       }
       assert.equal(vertex, mesh.geometry.attributes.position.count);
       for (const name of ['position', 'normal', 'skinWeight']) assert(mesh.geometry.attributes[name].array.every(Number.isFinite));
+      assert.equal(mesh.userData.skinningMethod, 'bend-aware-dual-quaternion');
+      const belly = mesh.geometry.attributes.muscleRadial;
+      assert(belly && belly.itemSize === 4 && belly.array.every(Number.isFinite));
+      for (let k = 0; k < belly.count; k++) {
+        assert(belly.getW(k) >= 0 && belly.getW(k) <= 1, 'belly correction must fade to a bounded nonnegative attachment mask');
+        assert(Math.hypot(belly.getX(k), belly.getY(k), belly.getZ(k)) <= .07500001,
+          'transverse display displacement must remain bounded');
+      }
       const weights = mesh.geometry.attributes.skinWeight, boneIds = mesh.geometry.attributes.skinIndex;
       for (let v = 0; v < vertex; v++) {
         let sum = 0;
@@ -202,7 +211,10 @@ async function runSuite(label, data, stride) {
         const bounds = surfaces.getBounds(mesh.userData.unit, mesh.userData.side);
         assert(bounds && !bounds.isEmpty());
         assert(Number.isFinite(mesh.boundingSphere.radius) && mesh.boundingSphere.radius > 0);
-        for (const bone of mesh.skeleton.bones) assert(bone.matrixWorld.elements.every(Number.isFinite));
+        for (const bone of mesh.skeleton.bones) {
+          assert(bone.matrixWorld.elements.every(Number.isFinite));
+          assert.deepEqual(bone.scale.toArray(), [1, 1, 1], 'belly correction must not scale anatomical support transforms');
+        }
         eachVertex(mesh, stride, k => {
           mesh.getVertexPosition(k, point); skinnedSamples++;
           assert(Number.isFinite(point.x) && Number.isFinite(point.y) && Number.isFinite(point.z), `${name}/${mesh.userData.unit}: nonfinite deformed vertex`);
@@ -236,6 +248,16 @@ async function runSuite(label, data, stride) {
       checkState(`cycle/${index}`, A.computeWorld(local, new THREE.Quaternion(...frame.root), new THREE.Vector3(...frame.rootP)));
     }
     assert(asymmetricFrames > 0, 'cycle samples must exercise asymmetric motion');
+    let practicePoses = 0;
+    const practiceFile = new URL('./practice/poses.json', import.meta.url);
+    if (existsSync(practiceFile)) {
+      for (const [id, pose] of Object.entries(JSON.parse(readFileSync(practiceFile, 'utf8')).poses)) {
+        const local = Object.fromEntries(Object.entries(pose.local).map(([name, q]) => [name, new THREE.Quaternion(...q).normalize()]));
+        checkState('practice/' + id, A.computeWorld(local, new THREE.Quaternion(...pose.root).normalize(), new THREE.Vector3(...pose.rootP)));
+        practicePoses++;
+      }
+      assert.equal(practicePoses, 24, 'the complete practice reconstruction must be exercised');
+    }
     surfaces.setVisibility(unit => !A.UNITS[unit].deep);
     for (const mesh of surfaces.pickables) assert.equal(mesh.visible, !A.UNITS[mesh.userData.unit].deep);
     surfaces.setVisibility(() => false); assert(surfaces.pickables.every(mesh => !mesh.visible));
@@ -251,13 +273,23 @@ async function runSuite(label, data, stride) {
       for (let k = 1; k < colors.length; k += 3) if (colors[k] > offColors[m][k]) greenChanged = true;
     }
     assert(greenChanged, 'working muscle bellies must turn green');
+    let transitionStates = 0;
+    if (args.has('--transitions')) {
+      const runtime = createTransitions(THREE, A, JSON.parse(readFileSync('transitions/data.json', 'utf8')));
+      assert(runtime.valid, 'a verified transition packet is required');
+      for (const track of runtime.tracks) for (const fraction of [.125, .375, .625, .875]) {
+        const conf = runtime.sampleTrack(track.id, track.duration * fraction);
+        checkState(`transition/${track.id}/${fraction}`, A.computeWorld(conf.local, conf.rootQ, conf.rootP));
+        transitionStates++;
+      }
+    }
     surfaces.setAppearance(() => ({ active: false, opacity: 1 }));
     for (let m = 0; m < surfaces.pickables.length; m++) {
       const mesh = surfaces.pickables[m];
       assert.deepEqual(mesh.geometry.attributes.color.array, offColors[m]);
       assert.equal(mesh.material.transparent, false); assert.equal(mesh.material.depthWrite, true);
     }
-    summaries.push({ suite: label, units: manifest.real + manifest.reconstructed, bodyPartsUnits: manifest.real, reconstructedUnits: manifest.reconstructed, meshes: surfaces.pickables.length, triangles: data.parts.reduce((sum, p) => sum + p.m, 0), poseSliderStates: A.POSES.length * 3, cycleFrames: cycleIndices.length, asymmetricFrames, vertexStride: stride, skinnedSamples, maxRestError, maxRigidError, maxProximalAttachmentError, exactSourceSeams: sourceSeams.length, maxSourceSeamGap });
+    summaries.push({ suite: label, units: manifest.real + manifest.reconstructed, bodyPartsUnits: manifest.real, reconstructedUnits: manifest.reconstructed, meshes: surfaces.pickables.length, triangles: data.parts.reduce((sum, p) => sum + p.m, 0), poseSliderStates: A.POSES.length * 3, cycleFrames: cycleIndices.length, practicePoses, transitionStates, asymmetricFrames, vertexStride: stride, skinnedSamples, maxRestError, maxRigidError, maxProximalAttachmentError, exactSourceSeams: sourceSeams.length, maxSourceSeamGap });
   } finally { surfaces.dispose(); }
 }
 

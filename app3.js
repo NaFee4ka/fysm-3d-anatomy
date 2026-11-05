@@ -11,9 +11,11 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 /*__MUSCLE_SURFACES_LIB__*/
 /*__CONNECTIVE_SURFACES_LIB__*/
 /*__JOINT_SURFACES_LIB__*/
+/*__SPINE_SURFACES_LIB__*/
+/*__TRANSITIONS_LIB__*/
 
 // ---------- typography: keep short words and dashes off line ends ----------
-const SHORT = 'в|во|и|не|ни|до|на|с|со|к|ко|о|об|от|у|по|за|из|а|но|же|для|при|без|над|под|про|или|как|что|это|то|их|его|её|ее|чем|чём|уже';
+const SHORT = 'в|во|и|не|ни|до|на|с|со|к|ко|о|об|от|у|по|за|из|а|но|же|для|при|без|над|под|про|или|как|что|это|то|их|его|её|ее|чем|чём|уже|через|перед|после|между';
 const RE_SHORT = new RegExp('(^|[\\s(«„"])(' + SHORT + ')[\\t\\r\\n ]+', 'giu');
 function nb(s) {
   let result = String(s), previous;
@@ -44,6 +46,18 @@ const FASCIA_NOTES = /*__FASCIA_NOTES__*/null;
 const MUSCLE_SURFACE_DATA = /*__MUSCLE_SURFACES__*/null;
 const JOINT_SURFACE_DATA = /*__JOINT_SURFACES__*/null;
 const CAPSULE_RIM_DATA = /*__CAPSULE_RIMS__*/null;
+const SPINE_SURFACE_DATA = /*__SPINE_SURFACES__*/null;
+const PRACTICE_DATA = /*__PRACTICE__*/null;
+const PRACTICE_PHYSICS = /*__PRACTICE_PHYSICS__*/null;
+const TRANSITION_DATA = /*__TRANSITIONS__*/null;
+const TRANSITIONS = typeof createTransitions === 'function' ? createTransitions(THREE, A, TRANSITION_DATA) : null;
+const PRACTICE_ALGORITHMS = PRACTICE_DATA?.algorithms || [];
+const PRACTICE_BY_ID = new Map(PRACTICE_ALGORITHMS.map(a => [a.id, a]));
+const practiceConfs = Object.fromEntries(Object.entries(PRACTICE_DATA?.poses || {}).map(([id, data]) => [id, {
+  local: Object.fromEntries(A.SEG.map(s => [s.name, new THREE.Quaternion().fromArray(data.local[s.name]).normalize()])),
+  rootQ: new THREE.Quaternion().fromArray(data.root).normalize(),
+  rootP: new THREE.Vector3().fromArray(data.rootP),
+}]));
 const EXTRAS = POSE_DATA.extras || {};
 const POSES = A.POSES;
 const POSE = Object.fromEntries(POSES.map(p => [p.id, p]));
@@ -113,6 +127,7 @@ function fillCycConf(t, out, idx) {
 }
 // activation of a muscle (one side) at the current frame of the round
 function cycAct(unit, side, at) {
+  if (unidentifiedMuscle(unit)) return 0;
   const k = CYC.unitIdx[unit]; if (k === undefined) return 0;
   const { i, u } = at || cycNow, a = side === 'R' ? CYC.aRa : CYC.aLa, NU = CYC.NU;
   return (a[i * NU + k] * (1 - u) + a[(i + 1) * NU + k] * u) / 255;
@@ -226,7 +241,16 @@ function buildForceSet(ph) {
   const g = new THREE.Group();
   const v = a => new THREE.Vector3(a[0], a[1], a[2]);
   for (const f of ph.floor) { if (f.pct < 0.8) continue; const from = v(f.cop); from.y = 0.002; g.add(arrow(from, v(f.F), FORCE_SCALE, FORCE_COL)); }
-  for (const gr of ph.grips) if (gr.N > 5) g.add(arrow(v(gr.P), v(gr.F), FORCE_SCALE, GRIP_COL));
+  for (const gr of ph.grips || []) if (gr.N > 5) g.add(arrow(v(gr.P), v(gr.F), FORCE_SCALE, GRIP_COL));
+  // A body contact is internal: both equal-and-opposite forces act at the
+  // same point. Showing the pair avoids suggesting extra external support.
+  for (const contact of ph.internalContacts || []) {
+    const force = v(contact.F);
+    if (force.length() < 5) continue;
+    const point = v(contact.P);
+    g.add(arrow(point, force, FORCE_SCALE, GRIP_COL));
+    g.add(arrow(point, force.clone().negate(), FORCE_SCALE, GRIP_COL));
+  }
   // centre of mass, plumb line and its point on the floor
   const com = v(ph.com);
   const ball = new THREE.Mesh(new THREE.SphereGeometry(0.016, 20, 14), overlayMat(COM_COL, 1)); ball.position.copy(com); ball.renderOrder = 31; g.add(ball);
@@ -234,11 +258,12 @@ function buildForceSet(ph) {
   const line = new THREE.Line(lineGeo, new THREE.LineDashedMaterial({ color: COM_COL, dashSize: 0.02, gapSize: 0.014, depthTest: false, transparent: true, opacity: 0.9 }));
   line.computeLineDistances(); line.renderOrder = 31; g.add(line);
   const dot = new THREE.Mesh(new THREE.RingGeometry(0.012, 0.02, 28).rotateX(-Math.PI / 2), overlayMat(COM_COL, 0.95)); dot.position.set(com.x, 0.003, com.z); dot.renderOrder = 31; g.add(dot);
-  if (ph.support.poly.length >= 3) {
-    const pts = ph.support.poly.map(q => new THREE.Vector3(q[0], 0.003, q[1]));
+  const supportPolygon = ph.diag?.contacts?.unclusteredSupport?.poly || ph.support.poly;
+  if (supportPolygon.length >= 3) {
+    const pts = supportPolygon.map(q => new THREE.Vector3(q[0], 0.003, q[1]));
     const loop = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: FORCE_COL, transparent: true, opacity: 0.75, depthTest: false }));
     loop.renderOrder = 30; g.add(loop);
-    const shape = new THREE.Shape(ph.support.poly.map(q => new THREE.Vector2(q[0], -q[1])));
+    const shape = new THREE.Shape(supportPolygon.map(q => new THREE.Vector2(q[0], -q[1])));
     const fillM = new THREE.Mesh(new THREE.ShapeGeometry(shape).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: FORCE_COL, transparent: true, opacity: 0.08, depthWrite: false, side: THREE.DoubleSide }));
     fillM.position.y = 0.0025; g.add(fillM);
   }
@@ -254,6 +279,7 @@ function buildForces(id) {
 }
 // in the round: arrows of the nearest computed frame (floor forces come from physics; the centre of mass from geometry)
 let cycForce = null, cycForceI = -1;
+let practiceForce = null, practiceForceId = null;
 function cycForceSet(i) {
   const ph = { floor: [], grips: [], com: [0, 0, 0], support: { poly: [] } };
   const BW = PHYS.dog.bw;
@@ -281,6 +307,20 @@ function cycForceSet(i) {
 }
 function updateForces() {
   if (!forceSets) return;
+  if (state.mode === 'transition') return updateTransitionForces();
+  if (state.mode === 'practice') {
+    forceSets.pose.visible = forceSets.stand.visible = false;
+    if (cycForce) cycForce.visible = false;
+    const ph = practicePhysics(), id = practiceCurrent()?.step.id;
+    if (ph && state.forces && id !== practiceForceId) {
+      if (practiceForce) { forcesGroup.remove(practiceForce); disposeGroup(practiceForce); }
+      practiceForce = buildForceSet(ph); practiceForceId = id;
+      forcesGroup.add(practiceForce);
+    }
+    if (practiceForce) practiceForce.visible = !!(ph && state.forces);
+    return;
+  }
+  if (practiceForce) practiceForce.visible = false;
   if (state.mode === 'cycle' && CYC) {
     forceSets.pose.visible = forceSets.stand.visible = false;
     const on = state.forces && !cycMorph;
@@ -404,6 +444,12 @@ const vertToJoint = {};   // vertebra name -> spine joint id
   for (const n of order) vertToJoint[n] = map[n];
 }
 for (const bk of buckets.values()) {
+  // The atlas-axis articulation has no intervertebral disk. This one legacy
+  // primitive is anatomically incorrect regardless of atlas-loader support.
+  if (bk.mat === 'disc' && bk.seg === 'neckB' && bk.name === 'Межпозвонковый диск C2–C1') {
+    for (const geometry of bk.geos) geometry.dispose();
+    continue;
+  }
   const geo = mergeGeometries(bk.geos, false);
   let mesh;
   if (bk.mat === 'cart') { mesh = new THREE.Mesh(geo, cartMat()); mesh.renderOrder = 2; cartMeshes.push(mesh); }
@@ -627,20 +673,32 @@ for (const s of ligs) (ligStrands[s.inst.unit] ||= []).push(s);
 for (const s of caps) (capStrands[s.inst.unit + '_' + s.inst.side] ||= []).push(s);
 
 // ---------- state ----------
-const state = { t: 1, poseId: 'dog', bones: true, joints: true, ligs: true, musclesOuter: true, musclesDeep: true, light: true, forces: false, lightMode: 'length', sel: null, playing: null, mode: 'pose', cycT: 0, fascia: false, flines: false };
-let muscleSurfaces = null, connectiveSurfaces = null, jointSurfaces = null;
+const state = { t: 1, poseId: 'dog', bones: true, joints: true, ligs: true, musclesOuter: true, musclesDeep: true, light: true, forces: false, lightMode: 'length', sel: null, playing: null, mode: 'pose', cycT: 0, fascia: false, flines: false, algorithmId: 'struna', practiceStep: 0 };
+let muscleSurfaces = null, connectiveSurfaces = null, jointSurfaces = null, spineSurfaces = null;
 // physics: muscle effort from the static solution, at the full pose and in plain standing
 const ACTIVE_MIN = 0.08;
-const activeOf = id => new Set(Object.entries(PHYS[id].muscles).filter(([, m]) => m.a >= ACTIVE_MIN).map(([u]) => u));
+const activeOf = id => new Set(Object.entries(PHYS[id].muscles).filter(([, m]) => knownMuscleEstimate(m) && m.a >= ACTIVE_MIN).map(([u]) => u));
 let activeSet = activeOf('dog');
 const lerpN = (a, b, t) => a + (b - a) * t;
-function effortOf(unit, id) { const p = PHYS[id || state.poseId].muscles[unit], s0 = PHYS.stand.muscles[unit]; return lerpN(s0 ? s0.a : 0, p ? p.a : 0, state.t); }
-function jointPhys(id, pose) { return PHYS[pose || state.poseId].joints[id.replace(/_R$/, '_L')] || null; }
+function effortOf(unit, id, side = 'L') {
+  if (state.mode === 'transition') return 0;
+  if (state.mode === 'practice') {
+    const record = practiceMuscleRecord(unit, side);
+    return knownMuscleEstimate(record) ? record.a : 0;
+  }
+  const p = PHYS[id || state.poseId].muscles[unit], s0 = PHYS.stand.muscles[unit];
+  return lerpN(knownMuscleEstimate(s0) ? s0.a : 0, knownMuscleEstimate(p) ? p.a : 0, state.t);
+}
+function jointPhys(id, pose) {
+  if (state.mode === 'transition') return null;
+  if (state.mode === 'practice') return practicePhysics()?.joints?.[id] || null;
+  return PHYS[pose || state.poseId].joints[id.replace(/_R$/, '_L')] || null;
+}
 function jointEffortOf(id) {
   // loads under 1 N·m are ignored: a small moment against a weak muscle group would light the joint for nothing
   const big = c => (Math.abs(c.need) >= 1 ? c.eff : 0);
   const f = pose => { const J = jointPhys(id, pose); if (!J) return 0; let e = 0; if (J.comps) for (const c of J.comps) e = Math.max(e, big(c)); if (J.arm) e = Math.max(e, big(J.arm.elev), big(J.arm.rot)); return e; };
-  return lerpN(f('stand'), f(state.poseId), state.t);
+  return state.mode === 'practice' ? f() : lerpN(f('stand'), f(state.poseId), state.t);
 }
 let morph = null, displayConf = null;
 const isDeep = s => !!A.UNITS[s.inst.unit].deep;
@@ -656,6 +714,7 @@ function syncSurfaceVisibility() {
   if (muscleSurfaces) muscleSurfaces.setVisibility(unit => A.UNITS[unit].deep ? state.musclesDeep : state.musclesOuter);
   if (connectiveSurfaces) connectiveSurfaces.setVisibility(part => part.kind === 'lig' ? state.ligs : state.joints);
   if (jointSurfaces) jointSurfaces.setVisibility(state.joints);
+  if (spineSurfaces) spineSurfaces.setVisibility(state.joints);
 }
 function updateJointSourceNote(status) {
   const note = document.getElementById('joint-source-note');
@@ -699,7 +758,11 @@ const FIT_PTS = [['f3c_L', [0.21, 0.63, -0.02]], ['f3c_R', [-0.21, 0.63, -0.02]]
 let overrideConf = null;
 function applyPose(t) {
   let conf;
-  if (state.mode === 'cycle' && CYC) {
+  if (state.mode === 'transition' && transition.route) {
+    conf = TRANSITIONS.sample(transition.route, transition.time);
+  } else if (state.mode === 'practice') {
+    conf = practiceConfs[practiceCurrent().step.id];
+  } else if (state.mode === 'cycle' && CYC) {
     conf = fillCycConf(state.cycT, cycConf, cycNow);
     if (cycMorph) conf = blendFull(cycMorph.from, conf, cycMorph.u);
   } else {
@@ -739,7 +802,8 @@ function applyPose(t) {
   if (muscleSurfaces) muscleSurfaces.update(P.W, pathCache);
   if (connectiveSurfaces) connectiveSurfaces.update(P.W, pathCache);
   if (jointSurfaces) jointSurfaces.update(P.W);
-  for (const id in jointById) { const jj = jointById[id]; jj.res = A.analyzeJoint(jj.def, P.local, P.W, state.mode !== 'cycle' && STATS[state.poseId] ? STATS[state.poseId].joint[id].mode : undefined); jj.k = Math.max(0, Math.min(1, Math.abs(jj.res.primary || 0) / (jj.res.comps[0] ? jj.res.comps[0].rom : 90))); }
+  if (spineSurfaces) spineSurfaces.update(P.W);
+  for (const id in jointById) { const jj = jointById[id]; jj.res = A.analyzeJoint(jj.def, P.local, P.W, state.mode === 'pose' && STATS[state.poseId] ? STATS[state.poseId].joint[id].mode : undefined); jj.k = Math.max(0, Math.min(1, Math.abs(jj.res.primary || 0) / (jj.res.comps[0] ? jj.res.comps[0].rom : 90))); }
   regions = A.analyzeRegions(P.local);
   const box = new THREE.Box3();
   for (const f of FIT_PTS) box.expandByPoint(A.pt(P.W, f.s, f.p));
@@ -751,19 +815,44 @@ function applyPose(t) {
 }
 // fascia follows the body; while the round plays it is refreshed about 15 times a second (≈ 18 ms per update)
 function fasciaPhys() {
+  if (state.mode === 'transition') return null;
+  if (state.mode === 'practice') {
+    const ph = practicePhysics();
+    if (!ph) return null;
+    const a = {}, Fmax = {}, Fp = {};
+    for (const [unit, records] of Object.entries(ph.muscles || {})) {
+      a[unit] = {}; Fp[unit] = {};
+      Fmax[unit] = records.L?.status === 'unidentified' && records.R?.status === 'unidentified'
+        ? 0 : Math.max(records.L?.Fmax || 0, records.R?.Fmax || 0);
+      for (const side of ['L', 'R']) {
+        const record = records[side];
+        a[unit][side] = knownMuscleEstimate(record) ? record.a : 0;
+        Fp[unit][side] = Number.isFinite(record?.Fp) ? record.Fp : 0;
+      }
+    }
+    return { a, Fmax, Fp };
+  }
   if (state.mode === 'cycle' && CYC) {
     if (!CYC.NU) return null;
     const a = {}, Fmax = {};
-    for (const u of UNIT_IDS) { a[u] = { L: cycAct(u, 'L'), R: cycAct(u, 'R') }; const m = PHYS.stand.muscles[u]; Fmax[u] = m ? m.Fmax : 0; }
+    for (const u of UNIT_IDS) { a[u] = { L: cycAct(u, 'L'), R: cycAct(u, 'R') }; const m = PHYS.stand.muscles[u]; Fmax[u] = m && !unidentifiedMuscle(u) ? m.Fmax : 0; }
     return { a, Fmax, Fp: null };
   }
   const ph = PHYS[state.t > 0.5 ? state.poseId : 'stand'];
-  return ph ? FASC.physFromStatic(ph) : null;
+  if (!ph) return null;
+  const a = {}, Fmax = {}, Fp = {};
+  for (const [unit, record] of Object.entries(ph.muscles || {})) {
+    const known = knownMuscleEstimate(record);
+    a[unit] = { L: known ? record.a : 0, R: known ? record.a : 0 };
+    Fmax[unit] = record.status === 'unidentified' ? 0 : record.Fmax;
+    Fp[unit] = { L: record.Fp || 0, R: record.Fp || 0 };
+  }
+  return { a, Fmax, Fp };
 }
 function updateFascia(W, force) {
   if (!FR || !(state.fascia || state.flines)) return;
   const now = performance.now();
-  const moving = (state.mode === 'cycle' && cyc && cyc.playing) || morph || cycMorph || state.playing;
+  const moving = (state.mode === 'cycle' && cyc && cyc.playing) || (state.mode === 'transition' && transition.playing) || morph || cycMorph || state.playing;
   if (!force && moving && now - fasciaAt < 66) return;
   fasciaAt = now;
   fasciaM = FASC.withPhysics(FASC.measure(W || poseW, { paths: true }), fasciaPhys());
@@ -794,7 +883,7 @@ function updateMaterials(time) {
     // in the round each side has its own effort (stepping and reaching are not symmetric)
     const ac = cyc ? cycAct(s.inst.unit, s.inst.side) : 0;
     // a muscle works when its effort reaches the threshold: in the round by the frame, in a pose by the slider (full pose = the working set)
-    const aNow = cyc ? ac : effortOf(s.inst.unit);
+    const aNow = cyc ? ac : effortOf(s.inst.unit, undefined, s.inst.side);
     const active = aNow >= ACTIVE_MIN;
     s.setOn(active);
     if (state.light) {
@@ -807,7 +896,7 @@ function updateMaterials(time) {
     setOpacity(s.mat, faded ? (selUnit ? 0.14 : 0.25) : 1, 1);
   }
   if (muscleSurfaces) muscleSurfaces.setAppearance((unit, side) => {
-    const a = cyc ? cycAct(unit, side) : effortOf(unit);
+    const a = cyc ? cycAct(unit, side) : effortOf(unit, undefined, side);
     const active = a >= ACTIVE_MIN;
     const sameSide = unitSideStrands[unit + '_' + side];
     const strain = sameSide.reduce((sum, s) => sum + s.strain, 0) / sameSide.length;
@@ -846,12 +935,23 @@ function updateMaterials(time) {
       setOpacity(part.mat, sel && !own ? 0.35 : 1, own ? 0.75 : 0.5);
     }
   });
+  if (spineSurfaces) for (const part of spineSurfaces.parts) {
+    const own = sel?.kind === 'spinalDisc' && sel.id === part.id;
+    // A neutral selection highlight must not imply a force estimate at this
+    // individual disk level; gold is reserved for calculated joint reactions.
+    part.mesh.material.emissive.setHex(0x8797a8);
+    part.mesh.material.emissiveIntensity = state.light && own ? .45 : 0;
+    setOpacity(part.mesh.material, sel && !own ? .45 : 1, part.baseOpacity ?? .9);
+  }
   for (const id in jointById) {
     const jj = jointById[id];
     const meshes = glowByJoint[id] || [];
     const selected = selJoint === id;
     // in the round the joints glow by the force in the joint (full light at 3 body weights)
-    const kj = effMode ? (cyc ? Math.min(1, cycJointLoad(id) / 3) : Math.min(1, jointEffortOf(id) / 0.5)) : jj.k;
+    const practiceReaction = state.mode === 'practice' ? practicePhysics()?.joints?.[id]?.jr?.bw : null;
+    const kj = effMode ? (cyc ? Math.min(1, cycJointLoad(id) / 3)
+      : state.mode === 'practice' ? (Number.isFinite(practiceReaction) ? Math.min(1, practiceReaction / 3) : 0)
+      : Math.min(1, jointEffortOf(id) / 0.5)) : jj.k;
     for (const m of meshes) {
       m.material.emissiveIntensity = state.light ? 0.9 * Math.pow(kj, 0.85) : 0;
       const base = m.userData.baseOpacity ?? 0.9;
@@ -962,11 +1062,23 @@ function pick(cx, cy) {
   if (state.bones) objs.push(...boneMeshes);
   if (FR && (state.fascia || state.flines)) for (const m of FR.pickables) if (m.visible) objs.push(m);
   const hits = ray.intersectObjects(objs, false);
-  const first = hits[0];
+  let first = hits[0];
+  if (first && jointPick.includes(first.object)) {
+    // Coarse invisible touch targets can enclose an atlas disk. Prefer the
+    // nearest real visible surface only when that surface is the disk itself;
+    // do not reach through a closer bone, muscle or other cartilage.
+    const visibleHit = hits.find(hit => {
+      if (jointPick.includes(hit.object) || hit.object.material?.visible === false) return false;
+      for (let object = hit.object; object; object = object.parent) if (!object.visible) return false;
+      return true;
+    });
+    if (visibleHit?.object.userData.kind === 'spinalDisc') first = visibleHit;
+  }
   if (first) {
     const d = first.object.userData;
     if (d.kind === 'fascia') return select({ kind: 'fascia', id: d.id, side: d.side });
-    if (d.kind === 'line' || d.kind === 'station') return select({ kind: 'fline', id: d.id || d.line });
+    if (d.kind === 'line' || d.kind === 'station') return select({ kind: 'fline', id: d.id || d.line, side: d.side });
+    if (d.kind === 'spinalDisc') return select({ kind: 'spinalDisc', id: d.id });
     if (d.kind === 'muscle' || d.kind === 'lig' || d.kind === 'joint') return select(d);
     if (d.kind === 'cap') return select({ kind: 'joint', id: d.unit + '_' + d.side });
     if (d.kind === 'cart' && d.joint) return select({ kind: 'joint', id: d.joint });
@@ -1078,7 +1190,7 @@ function physicsLoadHTML(P, ph) {
   const tot = gs.reduce((a, o) => a + o.pct, 0) || 1;
   const segs = gs.map((o, i) => `<span class="fl-seg fl-${i % 4}" style="width:${(o.pct / tot * 100).toFixed(1)}%"></span>`).join('');
   const legend = gs.map((o, i) => `<li><i class="fl-dot fl-${i % 4}" aria-hidden="true"></i><span>${nb(o.name)}</span><b class="num">${Math.round(o.pct)}%</b><span class="num-soft">${kgf(o.pct / 100 * ph.bw)}\u00a0кг</span></li>`).join('');
-  let html = `<div class="load" role="img" aria-label="${nb(gs.map(o => o.name + ' ' + Math.round(o.pct) + ' процентов веса').join(', '))}"><div class="fl-bar">${segs}</div><ul class="fl-legend">${legend}</ul></div>`;
+  let html = `<div class="load" role="img" aria-label="${nb(gs.map(o => o.name + ' ' + Math.round(o.pct) + ' процентов веса').join(', '))}"><div class="fl-bar">${segs}</div><ul class="fl-legend">${legend}</ul></div><p class="meter-foot">${nb('Площадь вокруг кожных меток задана условно; это не измеренная площадь контакта.')}</p>`;
   // friction: supports pushing the mat in opposite directions
   const hz = gs.map(o => ({ o, h: Math.hypot(o.fx, o.fz) })).filter(x => x.h > 0.03 * ph.bw).sort((a, b) => b.h - a.h);
   if (hz.length >= 2) {
@@ -1086,14 +1198,14 @@ function physicsLoadHTML(P, ph) {
     const GEN = { 'Кисти': 'кистей', 'Стопы': 'стоп', 'Предплечья': 'предплечий', 'Пальцы стоп': 'пальцев стоп', 'Передний отдел стоп': 'переднего отдела стоп', 'Пятки': 'пяток', 'Тыл стоп': 'тыла стоп' };
     const lim = hz.find(x => GEN[x.o.name] && x.h >= 0.85 * x.o.pct / 100 * ph.bw);
     const ratio = Math.max(...hz.map(x => x.h / Math.max(1, x.o.pct / 100 * ph.bw)));
-    let t = hz[0].o.name + ' и ' + hz[1].o.name.toLowerCase() + ' упираются в коврик в разные стороны, сила трения около ' + kgf(hz[0].h) + '\u00a0кг.';
-    if (lim) t += ' У ' + GEN[lim.o.name] + ' трение почти равно давлению на коврик: это предел сцепления хорошего коврика, на скользком полу опоры разъехались бы.';
-    else if (ratio < 0.3) t += ' Это немного: такое усилие удержит и гладкий пол.';
-    else t += ' Без цепкого коврика они бы разъехались.';
+    let t = 'По оценке модели, ' + hz[0].o.name.toLowerCase() + ' и ' + hz[1].o.name.toLowerCase() + ' упираются в коврик в разные стороны, сила трения около ' + researchNumber(hz[0].h, 0) + '\u00a0Н.';
+    if (lim) t += ' У ' + GEN[lim.o.name] + ' сила трения близка к вертикальной реакции. Результат чувствителен к принятому сцеплению с опорой.';
+    else t += ' Нужное отношение силы трения к вертикальной реакции — до ' + researchNumber(ratio, 2) + '. Сцепление конкретного коврика не измерено.';
     html += `<p class="meter-foot">${nb(t)}</p>`;
   }
-  const mg = ph.support.margin;
-  html += `<p class="meter-foot">${nb(mg > 0 ? 'Центр масс над площадью опоры, до её края ' + fcmUI(mg) + '.' : 'Центр масс на краю опоры.')}</p>`;
+  const geometricSupport = ph.diag?.contacts?.unclusteredSupport || ph.support;
+  const mg = geometricSupport.margin;
+  html += `<p class="meter-foot">${nb(!Number.isFinite(mg) ? 'Площадь геометрической опоры для этой позы не определена.' : mg > .001 ? 'Проекция центра масс над площадью геометрической опоры, до её края ' + fcmUI(mg) + '.' : mg < -.001 ? 'Проекция центра масс за площадью геометрической опоры, до её края ' + fcmUI(mg) + '. Это ограничение показанного равновесия.' : 'Проекция центра масс на краю геометрической опоры.')}</p>`;
   return html;
 }
 const fcmUI = v => { const c = Math.abs(v) * 100; return (c < 10 ? c.toFixed(1).replace('.', ',') : String(Math.round(c))) + '\u00a0см'; };
@@ -1108,12 +1220,14 @@ function supportHTML(P, S) {
   return html;
 }
 function renderCues() {
+  if (state.mode === 'transition') return renderTransitionCues();
+  if (state.mode === 'practice') return renderPracticeCues();
   const P = POSE[state.poseId], S = STATS[state.poseId];
   cuesEl.innerHTML = `
     <p class="card-eyebrow">${nb('Подсказки к позе ' + P.num)}</p>
     ${P.steps ? `<h3 class="card-sub first">${nb(P.stepsTitle)}</h3>${cueList(P.steps, S.m, true)}` : ''}
     <h3 class="card-sub${P.steps ? '' : ' first'}">${nb(P.cuesTitle)}</h3>${cueList(P.cues, S.m, false)}
-    <h3 class="card-sub">${nb('Нагрузка')}</h3>${supportHTML(P, S)}`;
+    <h3 class="card-sub">${nb('Нагрузка')}</h3>${supportHTML(P, S)}${physicalLimitSummaryHTML(PHYS[P.id])}`;
 }
 
 // ---------- summary and detail cards ----------
@@ -1137,6 +1251,7 @@ function researchCase() {
 function researchComparisonHTML(kind, id, compact = false) {
   const current = researchCase();
   if (!current) return '';
+  if (kind === 'muscle' && !knownMuscleEstimate(PHYS[current.key]?.muscles[id])) return '';
   const record = kind === 'muscle' ? current.data.muscles[id] : current.data.joints[id.replace(/_R$/, '_L')];
   if (!record) return '';
   const percent = n => researchNumber(n * 100) + '%';
@@ -1167,6 +1282,14 @@ function updateResearchQuality() {
   const node = document.getElementById('model-quality');
   if (!node) return;
   const lines = [];
+  if (state.mode === 'transition') {
+    node.innerHTML = `<p class="meter-foot">${practiceText('Переход — геометрическая иллюстрация. Во время движения силы, мышечная активность и динамическое равновесие не рассчитываются. Собственные статические оценки доступны после нажатия «Открыть позу».')}</p>`;
+    return;
+  }
+  if (state.mode === 'practice') {
+    node.innerHTML = practiceQualityHTML(practicePhysics());
+    return;
+  }
   const small = (n, unit) => Math.abs(n) < 0.01 ? 'менее 0,01 ' + unit : researchNumber(Math.abs(n), 2) + ' ' + unit;
   if (state.mode === 'cycle') {
     const q = CYC && CYC.modelQuality;
@@ -1174,7 +1297,9 @@ function updateResearchQuality() {
     if (q && q.verified && Number.isFinite(q.frameCount)) lines.push('Численное равновесие проверено для ' + q.frameCount + ' расчётных кадров.');
     if (q && Number.isFinite(q.maxForceResidualN) && Number.isFinite(q.maxMomentResidualNm)) lines.push('Наибольший остаток баланса сил: ' + small(q.maxForceResidualN, 'Н') + '; моментов: ' + small(q.maxMomentResidualNm, 'Н·м') + '.');
     if (q && Number.isFinite(q.maxReserveTotalNm)) lines.push('Наибольшая сумма резервных моментов за кадр: ' + researchNumber(q.maxReserveTotalNm, 1) + ' Н·м. Резервы показывают, где одних рассчитанных мышц недостаточно для равновесия.');
-    if (q && q.forceLengthLimitedFrames > 0) lines.push('В части кадров мышцы выходят за диапазон упрощённой кривой «сила–длина»; это ограничивает оценку их усилия.');
+    if (q && q.forceLengthExtrapolatedFrames > 0) lines.push('В ' + q.forceLengthExtrapolatedFrames + ' кадрах расчётная длина части волокон выходит за обычный рабочий диапазон. Значения не обрезаются; их сила особенно зависит от допущения о сухожилии.');
+    if (q && Number.isFinite(q.maxPhysicalForceResidualN) && Number.isFinite(q.maxPhysicalMomentResidualNm)) lines.push('Проверка действующих сил на сегментах: наибольший остаток сил ' + small(q.maxPhysicalForceResidualN, 'Н') + '; моментов ' + small(q.maxPhysicalMomentResidualNm, 'Н·м') + '.');
+    if (q?.modelLimits) lines.push(...physicalModelNotes(q));
   } else {
     const key = researchPoseKey();
     if (!key) lines.push('В промежуточном положении усилия интерполированы. Отдельное равновесие и диапазон двух сценариев здесь не рассчитывались.');
@@ -1182,9 +1307,9 @@ function updateResearchQuality() {
       const ph = PHYS[key], diag = ph && ph.diag, q = diag && diag.quality;
       lines.push(q ? (q.status === 'solved' && q.converged && q.finite ? 'Численное равновесие прошло проверки решения.' : 'Численное решение не прошло все проверки; это ограничение показанных оценок.') : 'Диагностика численного решения для этой позы недоступна.');
       if (q && Number.isFinite(q.forceResidualN) && Number.isFinite(q.momentResidualNm)) lines.push('Остаток баланса сил: ' + small(q.forceResidualN, 'Н') + '; моментов: ' + small(q.momentResidualNm, 'Н·м') + '.');
+      if (diag?.physicalBalance && !diag.physicalBalance.verified) lines.push('Проверка баланса действующих сил не пройдена. Показанные силы требуют дополнительной проверки.');
       if (diag && Number.isFinite(diag.reserves)) lines.push('Сумма резервных моментов: ' + researchNumber(diag.reserves, 1) + ' Н·м. Резервы дополняют мышцы и отражают ограничение модели.');
-      const limits = ph && ph.modelLimits;
-      if (limits && limits.forceLengthClampedUnits && limits.forceLengthClampedUnits.length) lines.push('У части мышц длина выходит за диапазон упрощённой кривой «сила–длина». Это ограничение модели мышц, даже когда равновесие решено.');
+      lines.push(...physicalModelNotes(ph));
     }
   }
   node.innerHTML = lines.map(line => `<p class="meter-foot">${nb(line)}</p>`).join('');
@@ -1197,7 +1322,7 @@ function renderSummary() {
   })).filter(g => g.items.length);
   const ph = PHYS[P.id];
   // small muscles (under ~15 kg of force) reach high percentages with little force; they stay in their own cards
-  const working = Object.entries(ph.muscles).filter(([, m]) => m.a >= ACTIVE_MIN && m.Fmax >= 150).sort((a, b) => b[1].a - a[1].a).slice(0, 9);
+  const working = Object.entries(ph.muscles).filter(([, m]) => knownMuscleEstimate(m) && m.a >= ACTIVE_MIN && m.Fmax >= 150).sort((a, b) => b[1].a - a[1].a).slice(0, 9);
   const mainLoad = J => { if (J.arm) return J.arm.elev.eff >= J.arm.rot.eff ? J.arm.elev : J.arm.rot; return (J.comps || []).slice().sort((a, b) => b.eff - a.eff)[0]; };
   const jointLoad = [...KEY_JOINTS, 'ls', 'tl', 't89', 'ct'].map(id => ({ id, e: jointEffortOf(id), J: jointPhys(id) })).filter(o => o.J && o.e >= 0.05 && mainLoad(o.J) && Math.abs(mainLoad(o.J).need) >= 1).sort((a, b) => b.e - a.e).slice(0, 6);
   const spine = ph.joints.ls && ph.joints.ls.jr, spine0 = PHYS.stand.joints.ls.jr;
@@ -1214,25 +1339,26 @@ function renderSummary() {
     ${researchComparisonHTML('joint', 'ls', true)}
     ${ligTop.length ? `<h3 class="card-sub">${nb('Связки под натяжением')}</h3><ul class="rank">${ligTop.map(o => `<li><button class="rank-row" data-lig="${o.u}"><span class="rank-name">${nb(A.LIGS[o.u].name)}</span><span class="word warm-t">${nb(tensionWord(o.s))}</span></button></li>`).join('')}</ul>` : ''}
     <h3 class="card-sub">${nb('Суставы')}</h3>
-    <ul class="joints">${KEY_JOINTS.map(id => { const j = jointById[id], c = mainComp(S.joint[id]); return `<li><button class="rank-row" data-joint="${id}"><span class="rank-name">${nb(j.def.name)}</span><span class="num gold-t">${fmtDeg(c.value)}</span><span class="rank-sub">${nb(c.label.toLowerCase() + ', норма до ' + c.rom + '°')}</span></button></li>`; }).join('')}</ul>
+    <ul class="joints">${KEY_JOINTS.map(id => { const j = jointById[id], c = mainComp(S.joint[id]); return `<li><button class="rank-row" data-joint="${id}"><span class="rank-name">${nb(j.def.name)}</span><span class="num gold-t">${fmtDeg(c.value)}</span><span class="rank-sub">${nb(c.label.toLowerCase() + ', диапазон модели до ' + c.rom + '°')}</span></button></li>`; }).join('')}</ul>
     <h3 class="card-sub">${nb('Позвоночник, сумма по отделам')}</h3>
-    <ul class="joints">${Object.keys(S.regions).map(k => { const r = S.regions[k]; return `<li><button class="rank-row" data-joint="${A.REGION[k].ids[0]}"><span class="rank-name">${nb(r.name)}</span><span class="num gold-t">${fmtDeg(r.signed)}</span><span class="rank-sub">${nb((r.signed < -0.2 ? 'разгибание' : r.signed > 0.2 ? 'сгибание' : 'нейтраль') + ', норма до ' + r.rom + '°')}</span></button></li>`; }).join('')}</ul>
+    <ul class="joints">${Object.keys(S.regions).map(k => { const r = S.regions[k]; return `<li><button class="rank-row" data-joint="${A.REGION[k].ids[0]}"><span class="rank-name">${nb(r.name)}</span><span class="num gold-t">${fmtDeg(r.signed)}</span><span class="rank-sub">${nb((r.signed < -0.2 ? 'разгибание' : r.signed > 0.2 ? 'сгибание' : 'нейтраль') + ', диапазон модели до ' + r.rom + '°')}</span></button></li>`; }).join('')}</ul>
     <p class="card-hint">${nb('Нажми на мышцу, связку, хрящ или капсулу на модели, чтобы открыть карточку.')}</p>`;
   bindCardButtons();
 }
 function bindCardButtons() {
-  info.querySelectorAll('[data-unit]').forEach(b => b.addEventListener('click', () => select({ kind: 'muscle', unit: b.dataset.unit, side: 'L' })));
+  info.querySelectorAll('[data-unit]').forEach(b => b.addEventListener('click', () => select({ kind: 'muscle', unit: b.dataset.unit, side: b.dataset.side || 'L' })));
   info.querySelectorAll('[data-lig]').forEach(b => b.addEventListener('click', () => select({ kind: 'lig', unit: b.dataset.lig, side: 'L' })));
   info.querySelectorAll('[data-joint]').forEach(b => b.addEventListener('click', () => select({ kind: 'joint', id: b.dataset.joint })));
   const c = info.querySelector('.card-close'); if (c) c.addEventListener('click', () => select(null));
   const f = info.querySelector('.card-focus'); if (f) f.addEventListener('click', () => focusSelection());
 }
 function closeBtn() { return `<button class="card-close" aria-label="Закрыть карточку"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>`; }
-function focusBtn() { return `<button class="btn btn-sm card-focus"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg><span>Показать на модели</span></button>`; }
+function focusBtn() { return `<button class="btn btn-sm card-focus"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg><span>${nb('Показать на модели')}</span></button>`; }
 function poseNote(text) { const P = POSE[state.poseId]; return text ? `<h3 class="card-sub">${nb('В позе «' + P.name + '»')}</h3><p class="role">${nb(text)}</p>` : ''; }
 function effortBlock(unit) {
   const m = PHYS[state.poseId].muscles[unit];
   if (!m) return '';
+  if (!knownMuscleEstimate(m)) return muscleEstimateUnavailable(m);
   const a = effortOf(unit);
   let foot;
   if (m.a >= 0.01) {
@@ -1241,9 +1367,9 @@ function effortBlock(unit) {
   } else foot = m.Fp >= 20 ? 'Сама почти не работает, но растянутые волокна тянут пассивно примерно на ' + kgf(m.Fp) + '\u00a0кг.' : 'В полной позе по расчёту почти не работает.';
   if (m.tone > 0) foot += ' Для мышцы задан минимальный тонус по подсказке; итоговая сила определяется совместным расчётом.';
   return `<h3 class="card-sub">${nb('Доля максимальной силы по расчёту')}</h3>
-    <div class="meter"><span class="meter-label">${nb('Сейчас')}</span><span class="num work-t big">${pctTxt(a)}</span></div>
+    <div class="meter"><span class="meter-label">${nb(legacyPhysicsInterpolated() ? 'Интерполяция оценок' : 'По расчёту')}</span><span class="num work-t big">${pctTxt(a)}</span></div>
     ${effBar(a, 'work')}
-    <p class="meter-foot">${nb(foot)}</p>`;
+    <p class="meter-foot">${nb(foot)}</p>${muscleLimitHTML(m)}`;
 }
 function renderMuscle(unit) {
   const U = A.UNITS[unit], P = POSE[state.poseId];
@@ -1328,9 +1454,9 @@ function jointLoadBlock(id, j) {
 }
 function renderJoint(id) {
   const jj = jointById[id], j = jj.def, r = jj.res, rf = STATS[state.poseId].joint[id], P = POSE[state.poseId];
-  const comps = r.comps.map((c, i) => `<li><span>${nb(c.label)}</span><span class="num gold-t">${fmtDeg(c.value)}</span>${romBar(c.value, c.rom)}<span class="part-note">${nb('в полной позе ' + fmtDeg(rf.comps[i].value) + (rf.comps[i].label !== c.label ? ' (' + rf.comps[i].label.toLowerCase() + ')' : '') + ', норма до ' + c.rom + '°' + (c.note ? '. ' + c.note.charAt(0).toUpperCase() + c.note.slice(1) : ''))}</span></li>`).join('');
+  const comps = r.comps.map((c, i) => `<li><span>${nb(c.label)}</span><span class="num gold-t">${fmtDeg(c.value)}</span>${romBar(c.value, c.rom)}<span class="part-note">${nb('в полной позе ' + fmtDeg(rf.comps[i].value) + (rf.comps[i].label !== c.label ? ' (' + rf.comps[i].label.toLowerCase() + ')' : '') + ', диапазон модели до ' + c.rom + '°' + (c.note ? '. ' + c.note.charAt(0).toUpperCase() + c.note.slice(1) : ''))}</span></li>`).join('');
   const reg = j.region ? regions[j.region] : null;
-  const regRow = reg ? `<p class="meter-foot">${nb(reg.name + ' целиком: ' + fmtDeg(reg.signed) + ' ' + (reg.signed < -0.2 ? 'разгибания' : reg.signed > 0.2 ? 'сгибания' : '') + ', норма до ' + reg.rom + '°')}</p>` : '';
+  const regRow = reg ? `<p class="meter-foot">${nb(reg.name + ' целиком: ' + fmtDeg(reg.signed) + ' ' + (reg.signed < -0.2 ? 'разгибания' : reg.signed > 0.2 ? 'сгибания' : '') + ', диапазон модели до ' + reg.rom + '°')}</p>` : '';
   const ligList = Object.keys(A.LIGS).filter(u => A.LIGS[u].joint === j.base || (j.type === 'spine' && A.LIGS[u].joint === 'spine'));
   const ligRows = ligList.length ? `<h3 class="card-sub">${nb('Связки этого сустава')}</h3><ul class="rank">${ligList.map(u => { const s = avg(ligStrands[u].filter(x => x.inst.side === (j.side || 'L'))); return `<li><button class="rank-row" data-lig="${u}"><span class="rank-name">${nb(A.LIGS[u].name)}</span><span class="word ${s > 0.02 ? 'warm' : 'muted'}-t">${nb(tensionWord(s))}</span></button></li>`; }).join('')}</ul>` : '';
   const capW = capStrands[id] ? tensionWord(Math.max(...capStrands[id].map(x => x.strain))) : null;
@@ -1355,14 +1481,40 @@ function renderBone(d) {
     <p class="role">${nb('Форма кости не меняется. Меняется её положение: смотри соседние суставы, их хрящи подсвечены по углу.')}</p>`;
   bindCardButtons();
 }
+function renderSpinalDisc(id) {
+  const part = spineSurfaces?.parts.find(p => p.id === id);
+  if (!part) { state.sel = null; return renderInfoBase(); }
+  const ratio = part.registration?.volumeRatio, fitGap = part.registration?.maxInterBoneFitDifferenceM;
+  const limits = [Number.isFinite(ratio) ? 'После подгонки объём этой сетки составляет ' + researchNumber(ratio, 2) + ' исходного объёма атласа.' : '',
+    Number.isFinite(fitGap) ? 'Максимальное различие преобразований соседних костей при подгонке — ' + researchNumber(fitGap * 1000, 1) + ' мм.' : ''].filter(Boolean);
+  info.innerHTML = `${closeBtn()}<p class="card-eyebrow">${practiceText('Межпозвонковый диск · форма из атласа')}</p>
+    <h2 class="card-title">${practiceText(part.name)}</h2><p class="latin">${practiceText(part.latin || '')}</p>
+    <p class="role">${practiceText('Форма диска взята из BodyParts3D 4.0. Регистрация между соседними костями и движение при изгибе — геометрические приближения.')}</p>
+    ${limits.length ? `<p class="meter-foot" data-spine-fit-limits>${practiceText(limits.join(' ') + ' Это ограничения геометрической подгонки, не измеренное сжатие ткани и не суставный зазор.')}</p>` : ''}
+    ${part.levelAssignment === 'inferred' ? `<p class="meter-foot">${practiceText('Уровень диска определён по его положению в анатомическом наборе; в исходной подписи этот уровень не указан.')}</p>` : ''}
+    <p class="meter-foot">${practiceText('Это отдельный анатомический уровень. Реакции укрупнённых суставов позвоночника не являются измеренной нагрузкой именно на этот диск. Давление, сжатие и внутреннее строение ткани не рассчитываются.')}</p>
+    <p class="meter-foot">${practiceText('Источник: BodyParts3D, DBCLS, CC BY 4.0' + (part.sourceIds?.length ? '; элементы ' + part.sourceIds.join(', ') : '') + '.')}</p>${focusBtn()}`;
+  bindCardButtons();
+}
+function updateSpineSourceNote(status) {
+  const note = $('spine-source-note');
+  if (!note) return;
+  note.textContent = nb(status === 'ready'
+    ? 'Межпозвонковые диски: 23 формы из BodyParts3D. Подгонка к общему скелету меняет исходную форму; её ограничения указаны в карточке диска. Движение — геометрическое приближение; давление и сжатие ткани не рассчитываются.'
+    : 'Межпозвонковые диски показаны условной схемой: формы из атласа в этом браузере недоступны.');
+}
+
 function renderInfo() {
   renderInfoBase();
-  appendLinesOf();
+  if (state.mode !== 'practice') appendLinesOf();
   lastResearchKey = researchPoseKey();
   updateResearchQuality();
 }
 function renderInfoBase() {
   const s = state.sel;
+  if (s?.kind === 'spinalDisc') return renderSpinalDisc(s.id);
+  if (state.mode === 'transition') return renderTransitionInfo();
+  if (state.mode === 'practice') return renderPracticeInfo();
   if (s && s.kind === 'fline') return renderLine(s.id);
   if (s && s.kind === 'fascia') return renderFasciaEl(s.id);
   if (s && s.kind === 'flines') return renderLinesOverview();
@@ -1389,11 +1541,16 @@ function select(d) {
   }
   if (d && d.kind === 'muscle') { const deep = !!A.UNITS[d.unit].deep; if (deep && !state.musclesDeep) setLayer('musclesDeep', true); if (!deep && !state.musclesOuter) setLayer('musclesOuter', true); }
   if (d && d.kind === 'lig' && !state.ligs) setLayer('ligs', true);
-  if (d && d.kind === 'joint' && !state.joints) setLayer('joints', true);
+  if (d && (d.kind === 'joint' || d.kind === 'spinalDisc') && !state.joints) setLayer('joints', true);
   renderInfo();
 }
 function focusSelection() {
   const s = state.sel; if (!s) return;
+  if (s.kind === 'spinalDisc' && spineSurfaces) {
+    const bounds = spineSurfaces.getBounds(s.id);
+    if (bounds) { const sphere = bounds.getBoundingSphere(new THREE.Sphere()); return focusOn(sphere.center, Math.max(.23, sphere.radius * 3)); }
+    return;
+  }
   const surfaceBounds = s.kind === 'muscle' && muscleSurfaces ? muscleSurfaces.getBounds(s.unit, s.side || 'L')
     : s.kind === 'lig' && connectiveSurfaces ? connectiveSurfaces.getBounds('lig', s.unit, s.side || 'L') : null;
   if (surfaceBounds) {
@@ -1402,14 +1559,27 @@ function focusSelection() {
   }
   if ((s.kind === 'fline' || s.kind === 'fascia') && fasciaM) {
     let pts = [];
-    if (s.kind === 'fline') { const lm = fasciaM.lines[s.id + '_L']; pts = lm && lm.path ? lm.path : FASC.linePath(poseW, s.id, 'L'); }
-    else { const e = FASC.EL[s.id]; for (const a of (e.strands || [])) if (a.pts) pts.push(...a.pts.map(q => A.pt(poseW, q.seg || q[0], new THREE.Vector3(...(q.p || q.slice(1)))))); if (!pts.length) for (const m of FR.pickables) if (m.userData.kind === 'fascia' && m.userData.id === s.id) { m.geometry.computeBoundingSphere(); pts.push(m.geometry.boundingSphere.center.clone()); } }
+    const side = s.side === 'R' ? 'R' : 'L';
+    if (s.kind === 'fline') {
+      const lm = fasciaM.lines[s.id + '_' + side];
+      pts = lm?.path || FASC.linePath(poseW, s.id, side);
+    } else {
+      const e = FASC.EL[s.id], elementSide = e.central ? 'L' : side;
+      // Use the resolved anatomical instances, including their reflected points
+      // and wraps. Raw source strands describe only the left reference side.
+      for (const inst of e.inst[elementSide] || []) pts.push(...A.strandPath(poseW, inst));
+      if (!pts.length) for (const m of FR.pickables) {
+        if (m.userData.kind !== 'fascia' || m.userData.id !== s.id || m.userData.side !== elementSide) continue;
+        m.geometry.computeBoundingSphere();
+        pts.push(m.localToWorld(m.geometry.boundingSphere.center.clone()));
+      }
+    }
     if (pts.length) { const c = new THREE.Vector3(); for (const q of pts) c.add(q); c.divideScalar(pts.length); let rad = 0; for (const q of pts) rad = Math.max(rad, q.distanceTo(c)); return focusOn(c, Math.max(0.45, rad * 2.4)); }
     return;
   }
   let list = null, dist = 0.5;
-  if (s.kind === 'muscle') list = unitStrands[s.unit].filter(x => x.inst.side === 'L');
-  if (s.kind === 'lig') { list = ligStrands[s.unit].filter(x => x.inst.side === 'L'); dist = 0.3; }
+  if (s.kind === 'muscle') list = unitStrands[s.unit].filter(x => x.inst.side === (s.side || 'L'));
+  if (s.kind === 'lig') { list = ligStrands[s.unit].filter(x => x.inst.side === (s.side || 'L')); dist = 0.3; }
   if (list) {
     const c = new THREE.Vector3();
     let n = 0;
@@ -1422,6 +1592,8 @@ function focusSelection() {
 }
 
 function setLayer(name, on) {
+  if (state.mode === 'transition' && name === 'forces') on = false;
+  if (state.mode === 'practice' && name === 'forces' && !practicePhysics()) on = false;
   state[name] = on;
   const btn = document.querySelector(`[data-layer="${name}"]`);
   if (btn) btn.setAttribute('aria-pressed', on ? 'true' : 'false');
@@ -1434,10 +1606,12 @@ function setLayer(name, on) {
   if (FR && name === 'flines') { FR.setLayer('lines', on); updateFascia(null, true); if (on && !state.sel) select({ kind: 'flines' }); }
   if (FR && name === 'light') updateFascia(null, true);
   if (state.sel && ((state.sel.kind === 'fline' || state.sel.kind === 'flines') && !state.flines || state.sel.kind === 'fascia' && !state.fascia)) select(null);
-  if (state.sel && ((state.sel.kind === 'muscle' && !muscleVisible(unitStrands[state.sel.unit][0])) || (state.sel.kind === 'lig' && !state.ligs) || (state.sel.kind === 'joint' && !state.joints) || (state.sel.kind === 'bone' && !state.bones))) select(null);
+  if (state.sel && ((state.sel.kind === 'muscle' && !muscleVisible(unitStrands[state.sel.unit][0])) || (state.sel.kind === 'lig' && !state.ligs) || ((state.sel.kind === 'joint' || state.sel.kind === 'spinalDisc') && !state.joints) || (state.sel.kind === 'bone' && !state.bones))) select(null);
 }
 document.querySelectorAll('[data-layer]').forEach(b => b.addEventListener('click', () => setLayer(b.dataset.layer, b.getAttribute('aria-pressed') !== 'true')));
 function setLightMode(mode) {
+  if (state.mode === 'transition' && mode !== 'length') return;
+  if (state.mode === 'practice' && mode !== 'length' && !practicePhysics()) return;
   state.lightMode = mode;
   document.querySelectorAll('[data-lightmode]').forEach(b => b.setAttribute('aria-pressed', b.dataset.lightmode === mode ? 'true' : 'false'));
   document.body.classList.toggle('mode-effort', mode === 'effort');
@@ -1450,16 +1624,20 @@ document.querySelectorAll('[data-lightmode]').forEach(b => b.addEventListener('c
 
 const slider = $('pose'), poseOut = $('pose-out'), playBtn = $('play');
 let poseDirty = true, morphDone = false;
+function legacyPhysicsInterpolated() { return state.mode === 'pose' && state.t > .015 && state.t < .985; }
 function setT(t, fromSlider) {
+  if (state.mode === 'practice' || state.mode === 'transition') t = 1;
   state.t = Math.max(0, Math.min(1, t));
   if (!fromSlider) slider.value = Math.round(state.t * 100);
   poseOut.textContent = Math.round(state.t * 100) + '%';
   slider.style.setProperty('--fill', state.t * 100 + '%');
+  $('interpolated-physics-note').hidden = !legacyPhysicsInterpolated();
   poseDirty = true;
 }
 slider.addEventListener('input', () => { state.playing = null; setPlayLabel(); setT(slider.value / 100, true); });
 function setPlayLabel() { playBtn.setAttribute('aria-pressed', state.playing ? 'true' : 'false'); playBtn.querySelector('span').textContent = state.playing ? 'Стоп' : 'Переход'; }
 playBtn.addEventListener('click', () => {
+  if (state.mode === 'practice' || state.mode === 'transition') return;
   if (state.playing) { state.playing = null; setPlayLabel(); return; }
   if (reduceMotion) { setT(state.t > 0.5 ? 0 : 1); return; }
   const from = state.t >= 0.999 ? 0 : state.t;
@@ -1471,8 +1649,573 @@ $('reset').addEventListener('click', () => { state.userMoved = false; resetView(
 const hint = $('hint');
 function hideHint() { if (hint && !hint.hidden) { hint.classList.add('gone'); setTimeout(() => { hint.hidden = true; }, 400); } }
 
+// ---------- FYSM practice: static reconstructions and their own L/R physics ----------
+let practiceReturn = null;
+const practiceText = value => nb(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function practiceCurrent() {
+  const algorithm = PRACTICE_BY_ID.get(state.algorithmId);
+  const step = Array.isArray(algorithm?.steps) ? algorithm.steps[state.practiceStep] : null;
+  return algorithm && step ? { algorithm, step, geometry: PRACTICE_DATA.poses[step.id] } : null;
+}
+function practicePhysics() {
+  if (state.mode !== 'practice' || overrideConf || !PRACTICE_PHYSICS || PRACTICE_PHYSICS.schemaVersion !== 1
+    || PRACTICE_PHYSICS.verified !== true || PRACTICE_PHYSICS.method !== 'quasistatic-static-optimization') return null;
+  // The build validates every source hash. Retain a geometry identity check in
+  // the page as well: geometry from another pack must never inherit its forces.
+  if (!PRACTICE_DATA.posesSha256 || PRACTICE_PHYSICS.posesSha256 !== PRACTICE_DATA.posesSha256) return null;
+  const ph = PRACTICE_PHYSICS.poses?.[practiceCurrent()?.step.id], quality = ph?.diag?.quality;
+  const physical = quality?.physicalBalanceVerified === true && ph?.diag?.physicalBalance?.verified === true;
+  return quality?.status === 'solved' && quality.converged === true && quality.finite === true
+    && physical && ph.diag.contactGeometryVerified === true ? ph : null;
+}
+function knownMuscleEstimate(record) {
+  return !!record && Number.isFinite(record.a) && (!record.status || record.status === 'estimated');
+}
+function unidentifiedMuscle(unit) {
+  return PHYS.stand.muscles[unit]?.status === 'unidentified'
+    || !!CYC?.modelQuality?.modelLimits?.unidentifiedUnits?.includes(unit)
+    || !!CYC?.modelQuality?.unidentifiedUnits?.includes(unit);
+}
+function muscleEstimateUnavailable(record) {
+  const text = record?.status === 'transition-uncomputed'
+    ? 'В переходе оценки сил не рассчитаны. Доступны форма мышцы и геометрическая длина её пути. Собственная статическая оценка открывается кнопкой «Открыть позу».'
+    : record?.status === 'unidentified'
+    ? 'Отдельная сила этой группы пальцев не определена: модель не разрешает суставы пальцев и силу их хвата. Нулевое значение здесь не означало бы, что мышца не работает.'
+    : record?.status === 'quarantined'
+      ? 'Оценка силы исключена: пути этой мышцы в показанном положении анатомически несогласованы. Форма и длина пути доступны; достоверного процента усилия для этой мышцы нет.'
+      : 'Для показанного положения нет подтверждённой оценки силы этой мышцы.';
+  return `<section class="practice-physics" data-muscle-estimate="unavailable"><h3 class="card-sub">${nb('Ограничение оценки силы')}</h3><p class="meter-foot">${nb(text)}</p></section>`;
+}
+function muscleLimitHTML(record) {
+  const notes = [];
+  if (record?.quarantinedStrands > 0) notes.push('Из оценки исключены несогласованные пути: ' + record.quarantinedStrands + (record.strands ? ' из ' + record.strands : '') + '. Показанная сила относится к оставшейся модели мышцы.');
+  if (record?.slackFiberStrands > 0) notes.push('Часть волокон в принятом приближении сухожилия не передаёт активную силу.');
+  if (Number.isFinite(record?.minNormalizedFiberLength) && record.minNormalizedFiberLength <= 0) notes.push('Для части волокон расчётная длина не положительна. Это недостаток приближения, в котором сухожилие считается жёстким; сила этих волокон не используется.');
+  return notes.map(note => `<p class="meter-foot">${nb(note)}</p>`).join('');
+}
+function practiceMuscleRecord(unit, side = 'L') { return practicePhysics()?.muscles?.[unit]?.[side] || null; }
+function inferredSupportNotes(ph) {
+  const pads = ph?.diag?.contacts?.inferredPads;
+  if (!Array.isArray(pads) || !pads.some(pad => pad?.estimated === true)) return [];
+  const notes = ['Опора включает расчётные площадки мягких тканей. Их форма и площадь заданы геометрическим приближением, без измерений кожи и давления.'];
+  if (pads.some(pad => pad?.estimated === true && pad.kind === 'distal-phalanx-skin-proxy')) notes.push('Подушечки пальцев оценены по костям с условной толщиной мягкой ткани 2 мм.');
+  const sensitivity = ph?.modelLimits?.softTissueContactSensitivity, hypotheses = sensitivity?.hypotheses;
+  if (pads.some(pad => pad?.estimated === true && pad.kind === 'gluteal-geometric-soft-pad')
+    && sensitivity?.kind === 'two-deterministic-geometric-area-hypotheses' && sensitivity.verified === true
+    && sensitivity.isConfidenceInterval === false && Array.isArray(hypotheses) && hypotheses.length === 2
+    && hypotheses.some(h => h.areaScale === 1) && hypotheses.some(h => h.areaScale === .5)
+    && hypotheses.every(h => h.contactGeometryVerified === true && h.quality?.status === 'solved'
+      && h.quality.converged === true && h.quality.finite === true && h.physicalBalance?.verified === true))
+    notes.push('Для ягодичной опоры отдельно рассчитаны исходная и вдвое меньшая площади. Это сравнение двух геометрических допущений, не доверительный интервал и не измеренная точность.');
+  return notes;
+}
+function physicalModelNotes(ph) {
+  if (!ph) return [];
+  const limits = ph.modelLimits || {}, diag = ph.diag || {}, notes = [];
+  const paths = limits.pathQuality || ph.pathQuality || {}, constitutive = limits.constitutive || ph.constitutive || {};
+  const contacts = limits.contactQuality || ph.contactQuality || {};
+  const count = value => Array.isArray(value) ? value.length : Number.isFinite(value) ? value : 0;
+  const invalid = count(paths.invalidPaths ?? paths.quarantinedStrands ?? limits.invalidPaths ?? limits.quarantinedStrands ?? diag.invalidPaths);
+  if (invalid) notes.push((state.mode === 'cycle' ? 'За круг из расчёта силы исключались анатомически несогласованные пути: ' : 'Из расчёта силы исключены анатомически несогласованные пути: ') + invalid + '. Для них модель не располагает надёжным плечом рычага.');
+  const slack = count(constitutive.slackFiberStrands ?? limits.slackFiberStrands ?? limits.slackStrands ?? diag.slackFiberStrands);
+  if (slack) notes.push((state.mode === 'cycle' ? 'В отдельных кадрах у ' : 'У ') + slack + ' мышечных путей расчётная длина не обеспечивает натяжение в принятом приближении сухожилия. Их активная сила равна нулю в этой модели.');
+  const outside = count(limits.forceLengthOutsideTypicalStrands ?? limits.forceLengthOutsideUnits ?? limits.forceLengthClampedUnits);
+  if (outside) notes.push('У части мышц расчётная длина выходит за обычный рабочий диапазон. Это ограничивает оценку их силы.');
+  if (count(limits.unidentifiedUnits) || state.mode === 'practice') notes.push('Для мелких мышц пальцев отдельная сила хвата не определена: суставы пальцев и их нервное управление не разрешены в расчёте.');
+  const mismatch = paths.maxDerivativeMismatchM ?? diag.geometricDerivativeMismatchM ?? limits.geometricDerivativeMismatchM;
+  if (Number.isFinite(mismatch) && mismatch > 1e-5) notes.push('Путь огибания — геометрическое приближение. Плечо действующей силы и производная длины пути могут различаться; баланс рассчитывается по действующим силам.');
+  if (count(contacts.missingStrengthLimitIds)) notes.push('Предельная сила части внутренних контактов не определена для конкретного человека. Общая сила контакта ограничена допущениями модели.');
+  if (count(contacts.numericalForceGuardActiveIds)) notes.push('Внутренний контакт достиг численного защитного предела. Оценка этой позы требует дополнительной проверки контакта.');
+  notes.push(...inferredSupportNotes(ph));
+  return notes;
+}
+function physicalLimitSummaryHTML(ph) {
+  const paths = ph?.modelLimits?.pathQuality || ph?.pathQuality || {};
+  const invalid = Array.isArray(paths.invalidPaths) ? paths.invalidPaths.length : paths.quarantinedStrands || 0;
+  const reserves = ph?.diag?.reserves ?? ph?.maxReserveTotalNm;
+  const notes = [];
+  if (invalid > 0) notes.push((state.mode === 'cycle' ? 'За круг из оценки силы исключались несогласованные мышечные пути: ' : 'Из оценки силы исключены несогласованные мышечные пути: ') + invalid + '.');
+  if (Number.isFinite(reserves) && reserves > 5) notes.push((state.mode === 'cycle' ? 'Наибольшая сумма резервных моментов за кадр: ' : 'Для равновесия нужны резервные моменты: ') + researchNumber(reserves, 1) + ' Н·м. Они отражают неполноту модели.');
+  return notes.length ? `<p class="callout model-limit-summary">${nb(notes.join(' ') + ' Подробности — в разделе «Расчёт и источники».')}</p>` : '';
+}
+function practiceQualityHTML(ph, compact = false) {
+  if (!ph) return `<p class="meter-foot">${practiceText('Расчёт нагрузки для показанной геометрии недоступен. Доступны форма, суставные углы и изменение длины путей.')}</p>`;
+  const diag = ph.diag || {}, quality = diag.quality || {};
+  const small = (value, unit) => Math.abs(value) < .01 ? 'менее 0,01 ' + unit : researchNumber(Math.abs(value), 2) + ' ' + unit;
+  const force = diag.physicalBalance?.forceResidualN ?? diag.forceResidualN ?? quality.forceResidualN, moment = diag.physicalBalance?.momentResidualNm ?? diag.momentResidualNm ?? quality.momentResidualNm;
+  const lines = ['Численный расчёт равновесия прошёл проверки. Усилия и реакции суставов остаются оценками общей статической модели.'];
+  if (Number.isFinite(force) && Number.isFinite(moment)) lines.push('Остаток баланса сил: ' + small(force, 'Н') + '; моментов: ' + small(moment, 'Н·м') + '.');
+  if (Number.isFinite(diag.reserves)) lines.push('Сумма резервных моментов: ' + researchNumber(diag.reserves, 1) + ' Н·м. Они дополняют моделируемые мышцы и ограничивают достоверность оценки.');
+  const notes = physicalModelNotes(ph);
+  if (compact) {
+    if (notes.length) lines.push('Есть ограничения мышечных путей или хвата; подробности — в разделе «Расчёт и источники».');
+  } else lines.push(...notes);
+  return `<section class="practice-quality" data-practice-quality="verified">${lines.map(line => `<p class="meter-foot">${practiceText(line)}</p>`).join('')}</section>`;
+}
+function practiceMuscleLoadHTML(unit, side) {
+  if (state.mode === 'transition') return muscleEstimateUnavailable({ status: 'transition-uncomputed' });
+  const ph = practicePhysics(), record = ph?.muscles?.[unit]?.[side];
+  if (!ph) return '';
+  if (!knownMuscleEstimate(record)) return muscleEstimateUnavailable(record);
+  const number = (value, digits = 1) => researchNumber(value, digits);
+  const rows = [
+    ['Активная сила', record.F, 'Н'], ['Пассивное натяжение', record.Fp, 'Н'],
+    ['Доступная активная сила при этой длине', record.Fe, 'Н'],
+  ].filter(([, value]) => Number.isFinite(value));
+  return `<section class="practice-physics" data-practice-muscle="${unit}" data-physics-side="${side}" data-force-fraction="${record.a}">
+    <h3 class="card-sub">${practiceText('Оценка силы · ' + (side === 'R' ? 'справа' : 'слева'))}</h3>
+    <div class="meter"><span class="meter-label">${practiceText('Доля номинальной максимальной силы')}</span><span class="num work-t big">${pctTxt(record.a)}</span></div>${effBar(record.a, 'work')}
+    <dl class="force-metrics">${rows.map(([label, value, unitName]) => `<div><dt>${practiceText(label)}</dt><dd class="num">${practiceText(number(value) + ' ' + unitName)}</dd></div>`).join('')}</dl>
+    ${Number.isFinite(record.activation) ? `<details class="muscle-recruitment"><summary>${practiceText('Внутренняя активация модели')}</summary><p class="meter-foot">${practiceText('Переменная решателя: ' + pctTxt(record.activation) + '. Она учитывает доступную силу при этой длине и отличается от доли максимальной силы. Это не измеренная ЭМГ.')}</p></details>` : ''}
+    ${muscleLimitHTML(record)}
+  </section>`;
+}
+function practiceJointLoadHTML(id) {
+  const ph = practicePhysics(), joint = ph?.joints?.[id];
+  if (!joint) return '';
+  const reaction = joint.jr;
+  const labels = {
+    gh: { x: 'Сгибание и разгибание плеча', y: 'Вращение плеча', z: 'Отведение и приведение плеча' },
+    el: { x: 'Сгибание и разгибание локтя', p: 'Пронация и супинация' },
+    wr: { x: 'Отведение кисти', z: 'Сгибание и разгибание кисти' },
+    hip: { x: 'Сгибание и разгибание бедра', y: 'Вращение бедра', z: 'Отведение и приведение бедра' },
+    kn: { x: 'Сгибание и разгибание колена' }, an: { x: 'Сгибание и разгибание стопы', z: 'Подворачивание стопы' },
+    spine: { x: 'Сгибание и разгибание', y: 'Вращение', z: 'Боковой наклон' },
+  };
+  const base = id.replace(/_[LR]$/, ''), family = jointById[id]?.def.type === 'spine' ? 'spine' : base;
+  const rows = (joint.comps || []).filter(component => labels[family]?.[component.c] && Number.isFinite(component.need));
+  const reserve = (joint.comps || []).reduce((sum, component) => sum + Math.abs(component.res || 0), 0);
+  return `<section class="practice-physics" data-practice-joint="${id}">
+    <h3 class="card-sub">${practiceText('Оценка реакции и мышечных моментов')}</h3>
+    ${reaction && Number.isFinite(reaction.bw) ? `<div class="meter"><span class="meter-label">${practiceText('Результирующая сила в суставе')}</span><span class="num gold-t big">${fBW(reaction.bw)}×</span></div><p class="meter-foot">${practiceText('веса тела' + (Number.isFinite(reaction.F) ? ', ' + researchNumber(reaction.F, 1) + ' Н.' : '.'))}</p>` : ''}
+    ${Number.isFinite(reaction?.comp) ? `<p class="meter-foot">${practiceText('Продольная составляющая: ' + researchNumber(reaction.comp, 1) + ' Н' + (Number.isFinite(reaction.shear) ? '; сдвиг: ' + researchNumber(reaction.shear, 1) + ' Н.' : '.'))}</p>` : ''}
+    ${rows.length ? `<ul class="parts">${rows.map(component => `<li><span>${practiceText(labels[family][component.c])}</span><span class="num">${practiceText(researchNumber(Math.abs(component.need), 1) + ' Н·м')}</span></li>`).join('')}</ul>` : ''}
+    ${reserve >= .1 ? `<p class="meter-foot">${practiceText('Резервный момент в этом суставе: ' + researchNumber(reserve, 1) + ' Н·м. Он дополняет моделируемые мышцы.')}</p>` : ''}
+  </section>`;
+}
+function practiceContactsHTML(ph) {
+  const names = { hand: 'Кисть', fore: 'Предплечье', ulna: 'Предплечье', hum: 'Плечо', foot: 'Стопа', toes: 'Пальцы стопы', thigh: 'Бедро', shank: 'Голень', head: 'Голова', pelvis: 'Таз' };
+  const partName = segment => {
+    const base = String(segment || '').replace(/_[LR]$/, '');
+    return (names[base] || 'Туловище') + (/_L$/.test(segment) ? ' слева' : /_R$/.test(segment) ? ' справа' : '');
+  };
+  const contacts = (ph?.internalContacts || []).filter(contact => Array.isArray(contact.F) && contact.F.length === 3 && Math.hypot(...contact.F) >= 1);
+  return contacts.length ? `<h3 class="card-sub">${practiceText('Оценки внутренних контактов')}</h3><ul class="contact-list">${contacts.map(contact => {
+    const type = contact.kind === 'unilateral' ? 'прижим' : contact.kind === 'pull' ? 'хват с тягой' : 'замок';
+    return `<li>${practiceText(partName(contact.segA) + ' ↔ ' + partName(contact.segB).toLowerCase() + ': ' + type + ', ' + researchNumber(Math.hypot(...contact.F), 1) + ' Н.')}</li>`;
+  }).join('')}</ul><p class="meter-foot">${practiceText('Внутренние силы действуют парой внутри тела. Они не добавляют внешнюю опору; давление тканей и индивидуальная сила хвата не измерены.')}</p>` : '';
+}
+function setPageHash(hash, replace = false) {
+  const target = '#' + hash;
+  if (location.hash !== target) history[replace ? 'replaceState' : 'pushState'](null, '', target);
+}
+function syncPracticeControls() {
+  const inTransition = state.mode === 'transition';
+  const on = state.mode === 'practice';
+  const hasPhysics = !!practicePhysics();
+  document.body.classList.toggle('practice-mode', on);
+  document.body.classList.toggle('practice-uncomputed', on && !hasPhysics);
+  $('main-mode').setAttribute('aria-pressed', on || inTransition ? 'false' : 'true');
+  $('transitions-mode').setAttribute('aria-pressed', inTransition ? 'true' : 'false');
+  $('transition-navigation').hidden = !inTransition;
+  $('transition-player').hidden = !inTransition;
+  document.body.classList.toggle('transition-mode', inTransition);
+  $('practice-mode').setAttribute('aria-pressed', on ? 'true' : 'false');
+  $('base-poses').hidden = on || inTransition;
+  $('practice-navigation').hidden = !on;
+  posePlayer.hidden = on || inTransition || state.mode === 'cycle';
+  cyclePlayer.hidden = on || state.mode !== 'cycle';
+  for (const b of document.querySelectorAll('[data-lightmode]')) b.setAttribute('aria-pressed', b.dataset.lightmode === state.lightMode ? 'true' : 'false');
+  document.body.classList.toggle('mode-effort', state.lightMode === 'effort');
+  const forceButton = document.querySelector('[data-layer="forces"]');
+  forceButton.disabled = on && !hasPhysics;
+  forceButton.setAttribute('aria-pressed', state.forces ? 'true' : 'false');
+  document.querySelector('[data-lightmode="effort"]').disabled = on && !hasPhysics;
+  $('legend-joint-effort').textContent = nb(on
+    ? 'Золото на хряще — оценка реакции сустава, яркость максимальна от трёх весов тела'
+    : 'Золото на хряще — нагрузка на сустав, доля силы мышц вокруг него');
+  $('method-context').textContent = nb(on
+    ? 'Показано статическое равновесие реконструкции по фотографии. Левые и правые мышцы рассчитаны отдельно, без заданного по фотографии тонуса. Личные сила и гибкость не измерены.'
+    : 'Усилия и нагрузки — оценки общей квазистатической модели. Минимальный тонус по подсказкам влияет на распределение работы. Сравнение с расчётом без этих минимумов показывает чувствительность к этому допущению; это не доверительный интервал и не персональная точность.');
+  if (inTransition) syncTransitionPhysicsControls();
+  $('legend-lig-length').textContent = nb(on || inTransition
+    ? 'Тёплый свет на связке или капсуле — её путь длиннее, чем в стойке'
+    : 'Связки и капсулы светятся тёплым там, где берут натяжение');
+}
+function updatePracticeHeader() {
+  const { algorithm, step } = practiceCurrent();
+  $('pose-sanskrit').textContent = nb(step.sanskrit);
+  $('pose-name').textContent = nb(step.name);
+  $('practice-progress').textContent = nb('Поза ' + step.number + ' из ' + algorithm.steps.length);
+  $('practice-caption').textContent = nb(practicePhysics()
+    ? '3D-реконструкция по фото. Усилия и нагрузки — оценки статической модели.'
+    : '3D-реконструкция по фото. Оценка нагрузки для этой геометрии недоступна.');
+  $('practice-prev').disabled = state.practiceStep === 0;
+  $('practice-next').disabled = state.practiceStep === algorithm.steps.length - 1;
+  $('practice-transition-next').disabled = state.practiceStep === algorithm.steps.length - 1 || !TRANSITIONS?.valid;
+  $('practice-flow').disabled = state.practiceStep === algorithm.steps.length - 1 || !TRANSITIONS?.valid;
+  $('practice-flow').textContent = nb(state.practiceStep === 0 ? 'Проиграть алгоритм' : 'Продолжить алгоритм');
+  document.querySelectorAll('[data-algorithm]').forEach(b => b.setAttribute('aria-pressed', b.dataset.algorithm === algorithm.id ? 'true' : 'false'));
+  $('practice-steps').innerHTML = algorithm.steps.map((s, i) => `<button class="btn practice-step" data-practice-step="${i}" aria-label="${practiceText('Поза ' + s.number + '. ' + s.name)}" aria-pressed="${state.practiceStep === i}"${state.practiceStep === i ? ' aria-current="step"' : ''}>${s.number}</button>`).join('');
+  $('practice-steps').querySelectorAll('[data-practice-step]').forEach(b => b.addEventListener('click', () => enterPractice(algorithm.id, Number(b.dataset.practiceStep))));
+  document.querySelectorAll('[data-pose]').forEach(b => b.setAttribute('aria-pressed', 'false'));
+  cycleTab.setAttribute('aria-pressed', 'false');
+  canvas.setAttribute('aria-label', nb('3D-реконструкция позы «' + step.name + '». Вращай, приближай и выбирай мышцы, связки и суставы.'));
+}
+function enterPractice(id = state.algorithmId, index = state.practiceStep, writeHash = true) {
+  const algorithm = PRACTICE_BY_ID.get(id);
+  if (!Array.isArray(algorithm?.steps) || !Number.isInteger(index) || index < 0 || index >= algorithm.steps.length || !Object.hasOwn(practiceConfs, algorithm.steps[index].id)) return false;
+  if (state.mode === 'transition') stopTransition();
+  const previousLightMode = state.lightMode, previousForces = state.forces;
+  if (state.mode !== 'practice') {
+    practiceReturn = { mode: state.mode, poseId: state.poseId, t: state.t, cycT: state.cycT, lightMode: state.lightMode, forces: state.forces };
+    if (state.mode === 'cycle') exitCycle();
+  }
+  state.mode = 'practice'; state.algorithmId = id; state.practiceStep = index;
+  state.playing = null; setPlayLabel(); cycPause();
+  morph = null; cycMorph = null; overrideConf = null;
+  state.camAnim = null; state.sel = null; state.t = 1;
+  const ph = practicePhysics();
+  state.lightMode = ph ? previousLightMode : 'length'; state.forces = !!(ph && previousForces);
+  if (FR) FR.focus(null);
+  fasciaM = null;
+  VIEW_DIR = new THREE.Vector3(...(PRACTICE_DATA.poses[algorithm.steps[index].id].view || [-1, .3, .6])).normalize();
+  state.userMoved = false;
+  syncPracticeControls();
+  applyPose(1); poseDirty = false;
+  updateHeader(); renderCues(); renderInfo(); updateMaterials(performance.now()); updateForces();
+  resetView(false);
+  if (writeHash) setPageHash('practice/' + id + '/' + (index + 1));
+  return true;
+}
+function exitPractice(restore = true, writeHash = true) {
+  if (state.mode !== 'practice') return;
+  const previous = practiceReturn || { mode: 'pose', poseId: state.poseId, t: 1, lightMode: 'length', forces: false };
+  state.mode = 'pose'; state.playing = null; state.sel = null;
+  morph = null; cycMorph = null; overrideConf = null; state.camAnim = null;
+  state.poseId = previous.poseId; state.lightMode = previous.lightMode; state.forces = previous.forces;
+  activeSet = activeOf(state.poseId); fasciaM = null;
+  canvas.setAttribute('aria-label', nb('3D-модель выбранной позы. Вращай, приближай и нажимай на мышцы, связки и суставы.'));
+  syncPracticeControls();
+  if (!restore) return;
+  VIEW_DIR = new THREE.Vector3(...POSE[state.poseId].view).normalize();
+  buildForces(state.poseId); setT(previous.t); setPlayLabel();
+  if (previous.mode === 'cycle' && CYC) {
+    enterCycle(previous.cycT, false); cycPause(); cycMorph = null;
+  }
+  state.userMoved = false;
+  applyPose(state.t); poseDirty = false; resetView(false);
+  updateHeader();
+  if (state.mode === 'cycle') renderCycleStats(); else renderCues();
+  renderInfo(); updateForces();
+  if (writeHash) setPageHash(state.mode === 'cycle' ? 'cycle' : state.poseId);
+}
+function practiceLengths(left, right, central = false) {
+  const row = (label, value) => `<div><dt>${practiceText(label)}</dt><dd class="${value >= 0 ? 'warm' : 'cool'}-t">${Number.isFinite(value) ? fmtPct(value) : '—'}</dd></div>`;
+  return `<dl class="practice-lengths">${row(central ? 'По средней линии' : 'Слева', left)}${central ? '' : row('Справа', right)}</dl>`;
+}
+function practiceStrain(unit, side, kind = 'muscle') {
+  const parts = (kind === 'muscle' ? unitStrands[unit] : ligStrands[unit])?.filter(s => s.inst.side === side) || [];
+  return parts.length ? avg(parts) : null;
+}
+function renderPracticeCues() {
+  const { algorithm, step, geometry } = practiceCurrent();
+  const ph = practicePhysics();
+  const notes = (geometry.notes || []).filter(n => typeof n === 'string');
+  const image = algorithm.referenceImage;
+  cuesEl.innerHTML = `<p class="card-eyebrow">${practiceText(algorithm.name + ' · поза ' + step.number + ' из ' + algorithm.steps.length)}</p>
+    <h2 class="card-title">${practiceText('О положении')}</h2>
+    <p class="role">${practiceText('Положение восстановлено по фотографии. Точные углы и индивидуальная гибкость не измерены.')}</p>
+    ${notes.length ? `<ul class="plain">${notes.map(n => `<li>${practiceText(n)}</li>`).join('')}</ul>` : ''}
+    <p class="meter-foot">${practiceText('Источник: «' + PRACTICE_DATA.source.title + '», раздел «' + PRACTICE_DATA.section + '», страница PDF ' + algorithm.page + '. Названия и порядок поз сохранены.')}</p>
+    <p class="meter-foot">${practiceText('Показано статическое положение. Раздел «Переходы» иллюстрирует движение модели между позами; эти траектории не заданы в методичке.')}</p>
+    ${ph ? `<h3 class="card-sub">${practiceText('Опора по оценке модели')}</h3>${physicsLoadHTML(null, ph)}${inferredSupportNotes(ph).map(note => `<p class="meter-foot">${practiceText(note)}</p>`).join('')}${practiceContactsHTML(ph)}` : ''}
+    ${physicalLimitSummaryHTML(ph)}${practiceQualityHTML(ph, true)}
+    ${image ? `<details class="practice-reference"><summary>${practiceText('Фото из методички')}</summary><img src="${image}" alt="${practiceText(algorithm.referenceAlt || 'Восемь поз алгоритма «' + algorithm.name + '» из методички FYSM')}" loading="lazy"><p class="meter-foot">${practiceText('«' + PRACTICE_DATA.source.title + '», страница PDF ' + algorithm.page + '.')}</p></details>` : ''}`;
+}
+function bindPracticeSides() {
+  info.querySelectorAll('[data-practice-side]').forEach(b => b.addEventListener('click', () => select({ ...state.sel, side: b.dataset.practiceSide })));
+}
+function renderPracticeInfo() {
+  const s = state.sel;
+  const ph = practicePhysics();
+  const noLoad = `<p class="meter-foot">${practiceText('Изменение длины пути — геометрическая оценка относительно стойки. Оно не показывает усилие мышцы, нагрузку или растяжение ткани.')}</p>`;
+  if (s?.kind === 'bone' || s?.kind === 'cart') return renderBone(s);
+  if (s?.kind === 'muscle' || s?.kind === 'lig') {
+    const muscle = s.kind === 'muscle', definition = muscle ? A.UNITS[s.unit] : A.LIGS[s.unit], side = s.side || 'L';
+    const parts = (muscle ? unitStrands[s.unit] : ligStrands[s.unit]).filter(p => p.inst.side === side);
+    const left = practiceStrain(s.unit, 'L', s.kind), right = practiceStrain(s.unit, 'R', s.kind);
+    info.innerHTML = `${closeBtn()}<p class="card-eyebrow">${practiceText(muscle ? 'Мышца · длина пути' : 'Связка · длина пути')}</p>
+      <h2 class="card-title">${practiceText(definition.name)}</h2><p class="latin">${practiceText(definition.latin || '')}</p>
+      <div class="practice-side">${['L', 'R'].map(sd => `<button class="btn" data-practice-side="${sd}" aria-pressed="${side === sd}">${practiceText(sd === 'L' ? 'Слева' : 'Справа')}</button>`).join('')}</div>
+      ${muscle ? practiceMuscleLoadHTML(s.unit, side) : ''}
+      <h3 class="card-sub">${practiceText('Изменение относительно стойки')}</h3>${practiceLengths(left, right)}${noLoad}
+      <h3 class="card-sub">${practiceText('Пучки ' + (side === 'L' ? 'слева' : 'справа'))}</h3>
+      <ul class="parts">${parts.map((p, i) => `<li><span>${practiceText(p.inst.label || 'Пучок ' + (i + 1))}</span><span class="num ${p.strain >= 0 ? 'warm' : 'cool'}-t">${fmtPct(p.strain)}</span>${barHTML(p.strain)}</li>`).join('')}</ul>
+      ${muscle ? muscleSourceHTML(s.unit) + `<h3 class="card-sub">${practiceText('Что делает мышца')}</h3><p class="role">${practiceText(definition.fn || '')}</p>` : ''}${focusBtn()}`;
+    bindCardButtons(); bindPracticeSides(); return;
+  }
+  if (s?.kind === 'joint') {
+    const j = jointById[s.id], r = j.res;
+    info.innerHTML = `${closeBtn()}<p class="card-eyebrow">${practiceText('Сустав · ' + sideWord(s.id))}</p><h2 class="card-title">${practiceText(j.def.name)}</h2>
+      <h3 class="card-sub">${practiceText('Углы показанного положения')}</h3><ul class="parts comps">${r.comps.map(c => `<li><span>${practiceText(c.label)}</span><span class="num gold-t">${fmtDeg(c.value)}</span>${romBar(c.value, c.rom)}<span class="part-note">${practiceText('Диапазон модели до ' + c.rom + '°. ' + (c.note || ''))}</span></li>`).join('')}</ul>
+      <p class="meter-foot">${practiceText(state.mode === 'transition' ? 'Углы — геометрическая оценка текущего положения модели.' : 'Углы — геометрическая оценка реконструкции по фото.')}</p>${practiceJointLoadHTML(s.id)}${jointSourceHTML(s.id)}${focusBtn()}`;
+    bindCardButtons(); return;
+  }
+  if (FASC && s && /^(fline|fascia|flines)$/.test(s.kind)) {
+    const m = ensureFasciaM();
+    if (s.kind === 'flines') {
+      info.innerHTML = `${closeBtn()}<p class="card-eyebrow">${practiceText('Геометрия линий Майерса')}</p><h2 class="card-title">${practiceText('Изменение длины к стойке')}</h2>${noLoad}<ul class="rank">${Object.keys(FASC.LINE).map(id => `<li><button class="rank-row" data-fline="${id}"><span class="rank-name">${lineDot(id)} ${practiceText(FASC.LINE[id].ru)}</span><span class="practice-pair">${practiceText('Слева ' + fmtPct(m.lines[id + '_L']?.strain || 0) + ' · справа ' + fmtPct(m.lines[id + '_R']?.strain || 0))}</span></button></li>`).join('')}</ul>`;
+    } else {
+      const line = s.kind === 'fline', def = line ? FASC.lineInfo(s.id) : FASC.EL[s.id];
+      const values = line ? m.lines : m.el, left = values[s.id + '_L'] || values[s.id + '_C'] || values[s.id], right = values[s.id + '_R'];
+      const central = !values[s.id + '_L'] && !right;
+      info.innerHTML = `${closeBtn()}<p class="card-eyebrow">${practiceText(line ? 'Линия Майерса · геометрия' : 'Фасция · геометрия')}</p><h2 class="card-title">${practiceText(def.ru)}</h2>
+        <h3 class="card-sub">${practiceText('Изменение длины к стойке')}</h3>${practiceLengths(left?.strain ?? null, right?.strain ?? null, central)}${noLoad}
+        ${line && ph && Number.isFinite(left?.engage) ? `<h3 class="card-sub">${practiceText('Модельная доля сил мышц линии')}</h3><p class="meter-foot">${practiceText('Слева ' + pctTxt(left.engage) + (Number.isFinite(right?.engage) ? ' · справа ' + pctTxt(right.engage) : '') + '. Это сумма вкладов моделируемых мышц; передача силы фасцией и неизвестные силы пальцев не рассчитываются.')}</p>` : ''}
+        <h3 class="card-sub">${practiceText('Описание структуры')}</h3><p class="role">${practiceText(line ? def.fn || '' : def.role || '')}</p>${focusBtn()}`;
+    }
+    bindCardButtons(); bindFasciaButtons(); return;
+  }
+  const changes = UNIT_IDS.map(unit => ({ unit, L: practiceStrain(unit, 'L'), R: practiceStrain(unit, 'R') }))
+    .filter(p => Number.isFinite(p.L) && Number.isFinite(p.R)).sort((a, b) => Math.max(Math.abs(b.L), Math.abs(b.R)) - Math.max(Math.abs(a.L), Math.abs(a.R))).slice(0, 6);
+  const effortText = record => knownMuscleEstimate(record) ? pctTxt(record.a) : 'нет оценки';
+  const working = ph ? Object.entries(ph.muscles || {}).map(([unit, records]) => ({ unit, records,
+    side: (knownMuscleEstimate(records.R) ? records.R.a : 0) > (knownMuscleEstimate(records.L) ? records.L.a : 0) ? 'R' : 'L',
+    a: Math.max(knownMuscleEstimate(records.L) ? records.L.a : 0, knownMuscleEstimate(records.R) ? records.R.a : 0),
+    Fmax: Math.max(records.L?.Fmax || 0, records.R?.Fmax || 0),
+  })).filter(record => record.Fmax >= 150 && record.a >= ACTIVE_MIN).sort((a, b) => b.a - a.a).slice(0, 8) : [];
+  const reactions = ph ? Object.entries(ph.joints || {}).filter(([id, record]) => jointById[id] && Number.isFinite(record.jr?.bw))
+    .sort((a, b) => b[1].jr.bw - a[1].jr.bw).slice(0, 6) : [];
+  info.innerHTML = `<p class="card-eyebrow">${practiceText(ph ? 'Усилия по оценке модели' : 'Геометрия позы')}</p>
+    ${ph ? `<h2 class="card-title">${practiceText('Работа мышц в этой позе')}</h2>
+      ${working.length ? `<ul class="rank">${working.map(record => `<li><button class="rank-row" data-unit="${record.unit}" data-side="${record.side}"><span class="rank-name">${practiceText(A.UNITS[record.unit].name)}</span><span class="practice-pair work-t">${practiceText('Слева ' + effortText(record.records.L) + ' · справа ' + effortText(record.records.R))}</span>${effBar(record.a, 'work')}</button></li>`).join('')}</ul>`
+        : `<p class="meter-foot">${practiceText('В доступной оценке ни одна крупная мышца не превышает 8% номинальной силы.')}</p>`}
+      ${reactions.length ? `<h3 class="card-sub">${practiceText('Оценки реакции суставов')}</h3><ul class="rank">${reactions.map(([id, record]) => `<li><button class="rank-row" data-joint="${id}"><span class="rank-name">${practiceText(jointById[id].def.name + ' ' + sideWord(id))}</span><span class="num gold-t">${fBW(record.jr.bw)}×</span><span class="rank-sub">${practiceText('веса тела')}</span></button></li>`).join('')}</ul>` : ''}` : ''}
+    ${ph ? '<h3 class="card-sub">' : '<h2 class="card-title">'}${practiceText('Длина мышечных путей')}${ph ? '</h3>' : '</h2>'}${noLoad}
+    <ul class="rank">${changes.map(p => `<li><button class="rank-row" data-unit="${p.unit}"><span class="rank-name">${practiceText(A.UNITS[p.unit].name)}</span><span class="practice-pair">${practiceText('Слева ' + fmtPct(p.L) + ' · справа ' + fmtPct(p.R))}</span></button></li>`).join('')}</ul>
+    <p class="card-hint">${practiceText('Нажми на мышцу, связку или сустав. Карточка покажет геометрию выбранной стороны.')}</p>`;
+  bindCardButtons();
+}
+
+// ---------- transitions: prepared geometric routes, independent of force estimates ----------
+const transition = { route: null, from: '', to: '', time: 0, playing: false, speed: 1, last: 0,
+  cardAt: 0, qualityKey: '', preferredLight: 'length', sequence: null, holdUntil: 0 };
+const transitionPose = id => TRANSITIONS?.poses?.find(p => p.id === id) || null;
+const transitionLabel = p => p?.kind === 'practice'
+  ? (PRACTICE_BY_ID.get(p.algorithmId)?.name || p.algorithmId) + ' · ' + (p.stepIndex + 1) + '. ' + p.name : p?.name || '';
+function transitionEndpoint() {
+  if (state.mode !== 'transition' || !transition.route) return null;
+  if (transition.time <= 1e-8) return transitionPose(transition.from);
+  if (transition.time >= transition.route.duration - 1e-8) return transitionPose(transition.to);
+  return null;
+}
+function updateTransitionForces() {
+  // Prepared routes have adjusted floor placement and no matching force solve,
+  // including at their endpoints. Never attach an original static force set.
+  forceSets.pose.visible = forceSets.stand.visible = false;
+  if (cycForce) cycForce.visible = false;
+  if (practiceForce) practiceForce.visible = false;
+}
+
+function currentTransitionPoseId() {
+  if (state.mode === 'transition') return transition.time >= transition.route.duration / 2 ? transition.to : transition.from;
+  if (state.mode === 'practice') return practiceCurrent()?.step.id;
+  return state.poseId;
+}
+function transitionNextId(id) {
+  const p = transitionPose(id);
+  if (p?.kind === 'practice') {
+    const a = PRACTICE_BY_ID.get(p.algorithmId);
+    if (a?.steps[p.stepIndex + 1]) return a.steps[p.stepIndex + 1].id;
+  }
+  const catalog = TRANSITIONS?.poses || [], i = catalog.findIndex(p => p.id === id);
+  return catalog[(i + 1) % catalog.length]?.id;
+}
+function syncTransitionPhysicsControls() {
+  if (state.mode !== 'transition') return;
+  if (state.lightMode !== 'length') { state.lightMode = 'length'; fasciaM = null; }
+  document.body.classList.add('transition-moving');
+  document.body.classList.add('practice-mode');
+  document.body.classList.toggle('mode-effort', state.lightMode === 'effort');
+  for (const b of document.querySelectorAll('[data-lightmode]')) b.setAttribute('aria-pressed', b.dataset.lightmode === state.lightMode ? 'true' : 'false');
+  document.querySelector('[data-layer="forces"]').disabled = true;
+  document.querySelector('[data-layer="forces"]').setAttribute('aria-pressed', 'false');
+  document.querySelector('[data-lightmode="effort"]').disabled = true;
+  $('method-context').textContent = nb('Переход — геометрическая иллюстрация движения общей модели. Длительность выбрана для просмотра. Траектории и темп не заданы фотографиями методички. Положения тела и отдельных суставов скорректированы для анимации. Это иллюстрация; силы на всём переходе не рассчитаны. Статические оценки доступны в исходной позе через «Открыть позу».');
+}
+function transitionAdjustmentNotes(id) {
+  const result = [], visit = adjustment => {
+    if (!adjustment || typeof adjustment !== 'object') return;
+    if (typeof adjustment.note === 'string' && adjustment.note.trim()) result.push(adjustment.note.trim());
+    if (Array.isArray(adjustment.adjustments)) adjustment.adjustments.forEach(visit);
+  };
+  visit(TRANSITION_DATA?.endpoints?.[id]?.kinematicAdjustment);
+  return [...new Set(result)];
+}
+function transitionPhase() {
+  return transition.route?.phases?.find(p => transition.time >= p.t0 - 1e-8 && transition.time < p.t1 - 1e-8)
+    || transition.route?.phases?.at(-1) || null;
+}
+function updateTransitionHeader() {
+  const from = transitionPose(transition.from), to = transitionPose(transition.to);
+  if (!from || !to || !transition.route) return;
+  const end = transitionEndpoint();
+  $('pose-sanskrit').textContent = nb(end ? (end.id === transition.from ? 'Переходы · исходная поза' : 'Переходы · конечная поза') : 'Переходы · движение модели');
+  $('pose-name').textContent = nb(end ? transitionLabel(end) : transitionLabel(from) + ' → ' + transitionLabel(to));
+  const phase = transitionPhase();
+  $('transition-phase').textContent = nb(end ? 'Поза «' + end.name + '»' : phase?.label || 'Движение между позами');
+  $('transition-out').textContent = nb(fmtSec(transition.time).replace(/с$/, 'сек.') + ' / ' + fmtSec(transition.route.duration).replace(/с$/, 'сек.'));
+  const percent = Math.max(0, Math.min(1, transition.time / transition.route.duration));
+  $('transition-time').value = Math.round(percent * 1000);
+  $('transition-time').style.setProperty('--fill', percent * 100 + '%');
+  $('transition-time').setAttribute('aria-valuetext', nb(fmtSec(transition.time) + ': ' + (end?.name || phase?.label || 'переход')));
+  $('transition-play').setAttribute('aria-pressed', transition.playing ? 'true' : 'false');
+  $('transition-play').textContent = nb(transition.playing ? 'Пауза' : transition.time >= transition.route.duration - 1e-8 ? 'Повторить' : 'Пуск');
+  $('transition-open-pose').textContent = nb(end ? 'Открыть позу' : 'К конечной позе');
+  const adjustments = end ? transitionAdjustmentNotes(end.id) : [];
+  $('transition-adjustments').hidden = !adjustments.length;
+  $('transition-adjustments').textContent = nb(adjustments.join(' '));
+  canvas.setAttribute('aria-label', nb('3D-переход: «' + from.name + '» → «' + to.name + '». Вращай, приближай и выбирай части тела.'));
+  document.querySelectorAll('[data-pose]').forEach(b => b.setAttribute('aria-pressed', 'false'));
+  cycleTab.setAttribute('aria-pressed', 'false');
+}
+function setTransitionTime(time) {
+  if (state.mode !== 'transition' || !transition.route || !Number.isFinite(time)) return;
+  transition.time = Math.max(0, Math.min(transition.route.duration, time));
+  const end = transitionEndpoint();
+  if (end?.kind === 'pose') state.poseId = end.id;
+  else if (end?.kind === 'practice') { state.algorithmId = end.algorithmId; state.practiceStep = end.stepIndex; }
+  const key = end?.id || 'moving';
+  if (key !== transition.qualityKey) { transition.qualityKey = key; syncTransitionPhysicsControls(); renderCues(); }
+  updateTransitionHeader(); poseDirty = true;
+}
+function transitionPause() {
+  transition.playing = false; transition.holdUntil = 0;
+  if (state.mode === 'transition') updateTransitionHeader();
+}
+function stopTransition() {
+  transitionPause(); transition.sequence = null;
+  if (state.mode === 'transition') state.mode = 'pose';
+  document.body.classList.remove('transition-mode', 'transition-moving');
+  state.lightMode = transition.preferredLight;
+  syncPracticeControls();
+}
+function enterTransition(fromId, toId, options = {}) {
+  const from = transitionPose(fromId), to = transitionPose(toId);
+  if (!TRANSITIONS?.valid || !from || !to || fromId === toId) return false;
+  let route;
+  try { route = TRANSITIONS.route(fromId, toId); } catch { return false; }
+  if (!route || !Number.isFinite(route.duration) || route.duration <= 0) return false;
+  const sequence = options.sequence || null;
+  const automaticNext = state.mode === 'transition' && options.writeHash === false && sequence
+    && transition.sequence === sequence && transition.to === fromId;
+  const preferredLight = state.mode === 'transition' ? transition.preferredLight : state.lightMode;
+  if (state.mode === 'practice') exitPractice(false, false);
+  if (state.mode === 'cycle') exitCycle();
+  transitionPause();
+  state.mode = 'transition'; state.t = 1; state.playing = null;
+  if (!automaticNext) { state.sel = null; state.camAnim = null; }
+  morph = null; cycMorph = null; overrideConf = null; setPlayLabel(); cycPause();
+  transition.route = route; transition.from = fromId; transition.to = toId;
+  transition.sequence = sequence; transition.preferredLight = preferredLight; transition.qualityKey = '';
+  transition.cardAt = 0; transition.holdUntil = 0;
+  if (FR && !automaticNext) FR.focus(null);
+  fasciaM = null;
+  if (!automaticNext) { VIEW_DIR = CYCLE_VIEW.clone(); state.userMoved = false; }
+  $('transition-from').value = fromId; $('transition-to').value = toId;
+  $('transition-error').hidden = true;
+  syncPracticeControls(); setTransitionTime(0); applyPose(1); poseDirty = false;
+  renderCues(); renderInfo(); updateMaterials(performance.now()); updateForces();
+  if (!automaticNext) resetView(false);
+  if (options.writeHash !== false || automaticNext) setPageHash('transition/' + fromId + '/' + toId, !!automaticNext);
+  if (options.play && !reduceMotion) { transition.playing = true; transition.last = performance.now(); updateTransitionHeader(); }
+  return true;
+}
+function playTransition() {
+  if (state.mode !== 'transition' || !transition.route) return;
+  if (transition.time >= transition.route.duration - 1e-8) setTransitionTime(0);
+  transition.playing = true; transition.last = performance.now(); transition.holdUntil = 0; updateTransitionHeader();
+}
+function transitionStep(now) {
+  if (!transition.playing || !transition.route) return;
+  const delta = Math.max(0, Math.min(.15, (now - transition.last) / 1000)); transition.last = now;
+  if (transition.holdUntil) {
+    if (now < transition.holdUntil) return;
+    transition.holdUntil = 0;
+    const a = PRACTICE_BY_ID.get(transition.sequence), p = transitionPose(transition.to), next = a?.steps[p?.stepIndex + 1];
+    if (next && enterTransition(transition.to, next.id, { play: true, sequence: a.id, writeHash: false })) return;
+    transitionPause(); return;
+  }
+  setTransitionTime(transition.time + delta * transition.speed);
+  if (transition.time >= transition.route.duration - 1e-8) {
+    const a = PRACTICE_BY_ID.get(transition.sequence), p = transitionPose(transition.to);
+    if (a?.steps[p?.stepIndex + 1]) transition.holdUntil = now + 1000;
+    else transitionPause();
+  }
+}
+function renderTransitionCues() {
+  const from = transitionPose(transition.from), to = transitionPose(transition.to);
+  cuesEl.innerHTML = `<p class="card-eyebrow">${practiceText('Переход между асанами')}</p><h2 class="card-title">${practiceText(transitionLabel(from) + ' → ' + transitionLabel(to))}</h2>
+    <p class="role">${practiceText('Движение модели показывает изменение формы и суставных углов. Маршрут и длительность — иллюстрация, а не техника или темп выполнения из методички.')}</p>
+    ${transition.route.phases?.length ? `<ol class="plain">${transition.route.phases.map(p => `<li>${practiceText(p.label)}</li>`).join('')}</ol>` : ''}
+    <p class="meter-foot">${practiceText('Положения тела и отдельных суставов скорректированы для анимации. Это геометрическая иллюстрация. На всём переходе, включая начальную и конечную позы, силы и активность мышц не рассчитаны. Исходная поза со своей статической оценкой открывается кнопкой «Открыть позу».')}</p>
+    <p class="meter-foot">${practiceText('Слои тканей, длины их путей и суставные углы доступны на паузе и во время просмотра.')}</p>
+    <p class="meter-foot">${practiceText('Проверки траектории относятся к геометрии модели. Полная динамика, контакт всех мягких тканей и персональная возможность выполнить движение не подтверждены. В исходной анатомической подгонке остаются локальные пересечения костей; проверка не доказывает отсутствие всех пересечений тела.')}</p>`;
+}
+function renderTransitionInfo() { return renderPracticeInfo(); }
+
+function openTransitionEndpoint() {
+  const endpoint = transitionEndpoint() || transitionPose(transition.to);
+  if (!endpoint) return;
+  stopTransition();
+  if (endpoint.kind === 'practice') enterPractice(endpoint.algorithmId, endpoint.stepIndex);
+  else { state.poseId = endpoint.id; activeSet = activeOf(endpoint.id); VIEW_DIR = new THREE.Vector3(...POSE[endpoint.id].view).normalize(); buildForces(endpoint.id); setT(1); applyPose(1); poseDirty = false; updateHeader(); renderCues(); renderInfo(); updateForces(); resetView(false); setPageHash(endpoint.id); }
+}
+function initTransitions() {
+  if (!TRANSITIONS?.valid || TRANSITIONS.poses?.length !== 30) return;
+  $('transitions-mode').hidden = false;
+  const groups = [['pose', 'Основные позы'], ...PRACTICE_ALGORITHMS.map(a => [a.id, a.name])];
+  const html = groups.map(([group, label]) => `<optgroup label="${practiceText(label)}">${TRANSITIONS.poses.filter(p => group === 'pose' ? p.kind === 'pose' : p.algorithmId === group).map(p => `<option value="${practiceText(p.id)}">${practiceText(transitionLabel(p))}</option>`).join('')}</optgroup>`).join('');
+  $('transition-from').innerHTML = $('transition-to').innerHTML = html;
+  $('transitions-mode').addEventListener('click', () => {
+    if (state.mode === 'transition') return;
+    const from = currentTransitionPoseId(); enterTransition(from, transitionNextId(from));
+  });
+  $('transition-build').addEventListener('click', () => {
+    const ok = enterTransition($('transition-from').value, $('transition-to').value);
+    $('transition-error').hidden = ok;
+  });
+  $('transition-swap').addEventListener('click', () => enterTransition(transition.to, transition.from));
+  $('transition-play').addEventListener('click', () => transition.playing ? transitionPause() : playTransition());
+  $('transition-time').addEventListener('input', event => { transitionPause(); transition.sequence = null; setTransitionTime(Number(event.target.value) / 1000 * transition.route.duration); });
+  $('transition-restart').addEventListener('click', () => { transitionPause(); setTransitionTime(0); });
+  $('transition-open-pose').addEventListener('click', openTransitionEndpoint);
+  document.querySelectorAll('[data-transition-speed]').forEach(button => button.addEventListener('click', () => {
+    transition.speed = Number(button.dataset.transitionSpeed);
+    document.querySelectorAll('[data-transition-speed]').forEach(b => b.setAttribute('aria-pressed', b === button ? 'true' : 'false'));
+  }));
+  $('practice-transition-next').addEventListener('click', () => {
+    const a = PRACTICE_BY_ID.get(state.algorithmId), from = a?.steps[state.practiceStep], to = a?.steps[state.practiceStep + 1];
+    if (from && to) enterTransition(from.id, to.id);
+  });
+  $('practice-flow').addEventListener('click', () => {
+    const a = PRACTICE_BY_ID.get(state.algorithmId), from = a?.steps[state.practiceStep], to = a?.steps[state.practiceStep + 1];
+    if (from && to) enterTransition(from.id, to.id, { play: true, sequence: a.id });
+  });
+  document.addEventListener('keydown', event => {
+    if (state.mode !== 'transition' || event.altKey || event.ctrlKey || event.metaKey || /INPUT|SELECT|TEXTAREA|BUTTON|SUMMARY/.test(event.target.tagName) || event.target.isContentEditable) return;
+    if (event.code === 'Space') { event.preventDefault(); transition.playing ? transitionPause() : playTransition(); }
+    else if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); transitionPause(); transition.sequence = null; setTransitionTime(transition.time + (event.key === 'ArrowLeft' ? -1 : 1) * .5); }
+    else if (event.key === 'Home' || event.key === 'End') { event.preventDefault(); transitionPause(); setTransitionTime(event.key === 'Home' ? 0 : transition.route.duration); }
+  });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) transitionPause(); });
+}
+
 // ---------- pose switching ----------
 function updateHeader() {
+  if (state.mode === 'transition') return updateTransitionHeader();
+  if (state.mode === 'practice') return updatePracticeHeader();
   const cycMode = state.mode === 'cycle';
   document.querySelectorAll('[data-pose]').forEach(b => b.setAttribute('aria-pressed', !cycMode && b.dataset.pose === state.poseId ? 'true' : 'false'));
   if (cycleTab) cycleTab.setAttribute('aria-pressed', cycMode ? 'true' : 'false');
@@ -1485,10 +2228,15 @@ function updateHeader() {
   document.querySelectorAll('[data-pose]').forEach(b => b.setAttribute('aria-pressed', b.dataset.pose === state.poseId ? 'true' : 'false'));
 }
 function switchPose(id) {
+  if (!Object.hasOwn(POSE, id)) return;
+  const wasTransition = state.mode === 'transition';
+  if (wasTransition) stopTransition();
   const wasCycle = state.mode === 'cycle';
-  if (!POSE[id] || (id === state.poseId && !wasCycle)) return;
-  // the frame of the round is a reused object: the morph starts from a copy (with its place on the mat)
-  const from = displayConf ? cloneConf(displayConf) : null;
+  const wasPractice = state.mode === 'practice';
+  if (!Object.hasOwn(POSE, id) || (id === state.poseId && !wasCycle && !wasPractice && !wasTransition)) return;
+  // Navigation selects a saved pose immediately. Motion belongs to the
+  // prepared Transition player, not an unchecked cross-pose quaternion blend.
+  if (wasPractice) exitPractice(false, false);
   if (wasCycle) exitCycle();
   state.poseId = id;
   activeSet = activeOf(id);
@@ -1496,12 +2244,16 @@ function switchPose(id) {
   buildForces(id);
   state.playing = null; setPlayLabel();
   setT(1);
-  morph = reduceMotion || !from ? null : { from, t0: performance.now(), dur: 1200, u: 0 };
+  morph = null;
+  // Static navigation is immediate: update the measured geometry before a
+  // retained tissue card reads joint angles or strand lengths.
+  applyPose(1); poseDirty = false;
   state.userMoved = false;
   if (state.sel && state.sel.kind === 'bone') state.sel = null;
   updateHeader();
   renderCues();
   renderInfo();
+  setPageHash(id);
 }
 document.querySelectorAll('[data-pose]').forEach(b => b.addEventListener('click', () => switchPose(b.dataset.pose)));
 
@@ -1592,14 +2344,18 @@ function cycStep(now) {
   if (h) { setCycT(h.T); cyc.pauseUntil = now + (h.T >= CYC.T - 1e-6 ? 1500 : 1000); return; }
   setCycT(Math.min(CYC.T, t1));
 }
-function enterCycle(startT) {
+function enterCycle(startT, writeHash = true) {
+  const wasTransition = state.mode === 'transition';
+  if (wasTransition) stopTransition();
   if (!CYC || state.mode === 'cycle') return;
-  const from = displayConf ? cloneConf(displayConf) : null;
-  if (from && !from.rootP) from.rootP = placedRootP(from.local, from.rootQ);
+  const wasPractice = state.mode === 'practice';
+  if (wasPractice) exitPractice(false, false);
+  // Enter the checked circle at its saved frame without a separate, unchecked
+  // morph from the previously selected pose.
   state.mode = 'cycle';
   state.playing = null; setPlayLabel(); morph = null;
   const h = CYC.holds.find(x => x.pose === state.poseId);
-  cycMorph = reduceMotion || !from ? null : { from, t0: performance.now(), dur: 900, u: 0 };
+  cycMorph = null;
   VIEW_DIR = CYCLE_VIEW.clone();
   state.userMoved = false;
   if (state.sel && (state.sel.kind === 'bone' || state.sel.kind === 'cart')) state.sel = null;
@@ -1611,6 +2367,7 @@ function enterCycle(startT) {
   renderCycleStats();
   renderInfo();
   if (!reduceMotion) { cycPlay(); cyc.pauseUntil = performance.now() + 1500; }
+  if (writeHash) setPageHash('cycle');
 }
 function exitCycle() {
   if (state.mode !== 'cycle') return;
@@ -1670,11 +2427,12 @@ const ZONE_CHIPS = [['all', 'Все'], ['shoulder', 'Плечи и руки'], [
 const inZone = u => cyc.zone === 'all' || (cyc.zone === 'shoulder' ? ['shoulder', 'arm'].includes(A.UNITS[u].zone) : A.UNITS[u].zone === cyc.zone);
 function renderCycleStats() {
   const R = roundStats(cyc.hold), th = R.th, ph = actPlaceholder();
-  const nMus = R.mus.length;
-  const on = R.mus.filter(m => m.peak >= th.act[0]).length, strong = R.mus.filter(m => m.peak >= th.act[2]).length;
+  const known = R.mus.filter(m => !unidentifiedMuscle(m.u));
+  const nMus = known.length;
+  const on = known.filter(m => m.peak >= th.act[0]).length, strong = known.filter(m => m.peak >= th.act[2]).length;
   const ligOnly = R.ligs.filter(l => !l.cap), capOnly = R.ligs.filter(l => l.cap);
   const taut = ligOnly.filter(l => l.peak >= th.lig[0]).length, capT = capOnly.filter(l => l.peak >= th.lig[0]).length;
-  const mus = R.mus.filter(m => inZone(m.u)).sort((a, b) => b.mean - a.mean || b.peak - a.peak);
+  const mus = known.filter(m => inZone(m.u)).sort((a, b) => b.mean - a.mean || b.peak - a.peak);
   const musShown = cyc.allMus ? mus : mus.slice(0, 12);
   const ligs = ligOnly.slice().sort((a, b) => b.peak - a.peak), caps = capOnly.slice().sort((a, b) => b.peak - a.peak);
   const ligShown = cyc.allLig ? ligs : ligs.slice(0, 8);
@@ -1700,6 +2458,8 @@ function renderCycleStats() {
     </div>
     ${ph ? `<p class="callout">${nb('Усилия мышц по кадрам ещё считаются. Пока видны удлинение связок и длина мышц: их даёт сама геометрия движения.')}</p>` : ''}
     ${CYC.provisional ? `<p class="callout">${nb('Черновые переходы: тело местами проходит сквозь пол, цифры предварительные.')}</p>` : ''}
+    ${physicalLimitSummaryHTML(CYC.modelQuality)}
+    ${nMus < R.mus.length ? `<p class="meter-foot">${nb('В таблицу усилий входят группы с доступной оценкой силы. Отдельная сила мелких мышц пальцев этой моделью не определяется.')}</p>` : ''}
     <div class="filter-chips" role="group" aria-label="${nb('Часть тела')}" style="margin-top:14px">${ZONE_CHIPS.map(([z, l]) => `<button class="chip-sm" data-zone="${z}" aria-pressed="${z === cyc.zone}">${nb(l)}</button>`).join('')}</div>
     ${ph ? '' : `<h3 class="card-sub">${nb('Мышцы: среднее усилие за круг и пик')}</h3>
     <ul class="rank">${musShown.map(musRow).join('')}</ul>
@@ -1784,6 +2544,16 @@ function renderMuscleCycle(unit) {
   const R = roundStats(cyc.hold), m = R.mus.find(x => x.u === unit);
   const s = unitAvg(unit), cls = s >= 0 ? 'warm' : 'cool';
   const aL = cycAct(unit, 'L'), aR = cycAct(unit, 'R'), a = Math.max(aL, aR);
+  if (unidentifiedMuscle(unit)) {
+    info.innerHTML = `${closeBtn()}<p class="card-eyebrow">${nb('Мышца · круг')}</p>
+      <h2 class="card-title">${nb(U.name)}</h2><p class="latin">${U.latin}</p>${muscleSourceHTML(unit)}
+      ${muscleEstimateUnavailable({ status: 'unidentified' })}
+      <div class="meter"><span class="meter-label">${nb('Длина пути сейчас')}</span><span class="num ${cls}-t big" id="cyc-live-len">${fmtPct(s)}</span></div>
+      <div id="cyc-live-lenbar">${barHTML(s)}</div>
+      <p class="meter-foot">${nb('Изменение длины относительно стойки доступно по геометрии движения.')}</p>
+      <h3 class="card-sub">${nb('Что делает мышца')}</h3><p class="role">${nb(U.fn)}</p>${focusBtn()}`;
+    bindCardButtons(); return;
+  }
   info.innerHTML = `${closeBtn()}
     <p class="card-eyebrow">${nb('Мышца · круг')}</p>
     <h2 class="card-title">${nb(U.name)}</h2>
@@ -1797,6 +2567,7 @@ function renderMuscleCycle(unit) {
     <h3 class="card-sub">${nb('Усилие по ходу круга, доля максимальной силы')}</h3>
     ${curveSVG([seriesOf('act', unit, 'L'), seriesOf('act', unit, 'R')], { kind: 'act', label: 'Усилие мышцы ' + U.name + ' по ходу круга' })}
     ${roundLine(m, R)}`}
+    ${CYC.modelQuality?.modelLimits?.pathQuality?.quarantinedUnits?.includes(unit) ? `<p class="callout">${nb('В части кадров из расчёта силы этой мышцы исключены анатомически несогласованные пути. Показаны усилия оставшихся путей; это ограничение модели мышцы.')}</p>` : ''}
     <div class="meter"><span class="meter-label">${nb('Длина сейчас')}</span><span class="num ${cls}-t big" id="cyc-live-len">${fmtPct(s)}</span></div>
     <div id="cyc-live-lenbar">${barHTML(s)}</div>
     <p class="meter-foot">${nb('К длине в стойке. Самая большая за круг: ' + fmtPct(m.stretch) + '.')}</p>
@@ -1830,9 +2601,9 @@ function renderLigCycle(unit) {
 }
 function renderJointCycle(id) {
   const jj = jointById[id], j = jj.def, r = jj.res;
-  const comps = r.comps.map(c => `<li><span>${nb(c.label)}</span><span class="num gold-t">${fmtDeg(c.value)}</span>${romBar(c.value, c.rom)}<span class="part-note">${nb('норма до ' + c.rom + '°' + (c.note ? '. ' + c.note.charAt(0).toUpperCase() + c.note.slice(1) : ''))}</span></li>`).join('');
+  const comps = r.comps.map(c => `<li><span>${nb(c.label)}</span><span class="num gold-t">${fmtDeg(c.value)}</span>${romBar(c.value, c.rom)}<span class="part-note">${nb('диапазон модели до ' + c.rom + '°' + (c.note ? '. ' + c.note.charAt(0).toUpperCase() + c.note.slice(1) : ''))}</span></li>`).join('');
   const reg = j.region ? regions[j.region] : null;
-  const regRow = reg ? `<p class="meter-foot">${nb(reg.name + ' целиком: ' + fmtDeg(reg.signed) + ' ' + (reg.signed < -0.2 ? 'разгибания' : reg.signed > 0.2 ? 'сгибания' : '') + ', норма до ' + reg.rom + '°')}</p>` : '';
+  const regRow = reg ? `<p class="meter-foot">${nb(reg.name + ' целиком: ' + fmtDeg(reg.signed) + ' ' + (reg.signed < -0.2 ? 'разгибания' : reg.signed > 0.2 ? 'сгибания' : '') + ', диапазон модели до ' + reg.rom + '°')}</p>` : '';
   const capId = A.CAP_NAMES[j.base] ? 'cap:' + j.base : null, side = j.side || 'L';
   const R = roundStats(cyc.hold);
   const capO = capId ? R.ligs.find(x => x.id === capId) : null;
@@ -1938,8 +2709,9 @@ function memberBtn(mb) {
   if (FASC.EL[mb.unit]) return `<button class="link-btn" data-fel="${mb.unit}">${nm}</button>`;
   return `<span>${nm}</span>`;
 }
-function whereNow() { return state.mode === 'cycle' && CYC ? 'сейчас' : (state.t > 0.5 ? 'в позе «' + POSE[state.poseId].name + '»' : 'в стойке'); }
+function whereNow() { if (state.mode === 'transition') return 'в показанном положении перехода'; return state.mode === 'cycle' && CYC ? 'сейчас' : (state.t > 0.5 ? 'в позе «' + POSE[state.poseId].name + '»' : 'в стойке'); }
 function bookNote(id) {
+  if (state.mode === 'transition' || state.mode === 'practice') return '';
   if (!FASCIA_NOTES || !FASCIA_NOTES[id]) return '';
   if (state.mode === 'cycle' && CYC) {
     const seg = CYC.segs[cycSegAt(state.cycT)];
@@ -2053,10 +2825,42 @@ function appendLinesOf() {
 }
 
 // ---------- boot ----------
+if (PRACTICE_ALGORITHMS.length) {
+  $('practice-mode').hidden = false;
+  $('practice-algorithms').innerHTML = PRACTICE_ALGORITHMS.map(a => `<button class="btn" data-algorithm="${a.id}" aria-pressed="false">${practiceText(a.name)}</button>`).join('');
+  $('practice-algorithms').querySelectorAll('[data-algorithm]').forEach(b => b.addEventListener('click', () => enterPractice(b.dataset.algorithm, 0)));
+  $('practice-mode').addEventListener('click', () => enterPractice());
+  $('main-mode').addEventListener('click', () => {
+    if (state.mode === 'transition') { switchPose(state.poseId); syncPracticeControls(); applyPose(state.t); poseDirty = false; renderCues(); renderInfo(); updateForces(); resetView(false); }
+    else exitPractice();
+  });
+  $('practice-prev').addEventListener('click', () => enterPractice(state.algorithmId, state.practiceStep - 1));
+  $('practice-next').addEventListener('click', () => enterPractice(state.algorithmId, state.practiceStep + 1));
+}
+function applyPracticeHash() {
+  const hash = location.hash.slice(1);
+  if (hash.startsWith('transition/')) {
+    const match = /^transition\/([a-z0-9-]+)\/([a-z0-9-]+)$/.exec(hash);
+    if (match && enterTransition(match[1], match[2], { writeHash: false })) return;
+    setPageHash(state.poseId, true);
+  }
+  if (hash === 'practice' || hash.startsWith('practice/')) {
+    const match = /^practice\/([a-z]+)\/([1-8])$/.exec(hash);
+    if (match && enterPractice(match[1], Number(match[2]) - 1, false)) return;
+    const first = PRACTICE_ALGORITHMS[0];
+    if (first && enterPractice(first.id, 0, false)) setPageHash('practice/' + first.id + '/1', true);
+    return;
+  }
+  if (state.mode === 'practice') exitPractice(true, false);
+  if (Object.hasOwn(POSE, hash)) switchPose(hash);
+  else if (hash === 'cycle' || hash === 'krug') { enterCycle(0, false); cycPause(); cycMorph = null; }
+  else if (state.mode === 'transition') { switchPose(state.poseId); syncPracticeControls(); }
+}
+window.addEventListener('hashchange', applyPracticeHash);
 for (const P of POSES) STATS[P.id] = computeStats(P.id);
 {
   const h = (location.hash || '').replace('#', '');
-  if (POSE[h]) { state.poseId = h; activeSet = activeOf(h); VIEW_DIR = new THREE.Vector3(...POSE[h].view).normalize(); }
+  if (Object.hasOwn(POSE, h)) { state.poseId = h; activeSet = activeOf(h); VIEW_DIR = new THREE.Vector3(...POSE[h].view).normalize(); }
 }
 buildForces(state.poseId);
 if (typeof createConnectiveSurfaces === 'function') {
@@ -2076,9 +2880,10 @@ renderInfo();
 $('stage').classList.add('ready');
 stage.dataset.muscleSurfaces = 'loading';
 stage.dataset.jointSurfaces = 'loading';
+stage.dataset.spineSurfaces = 'loading';
 // Replace only the exact schematic structures covered by a decoded package.
-// Minor joints and spine retain their existing surfaces; failure retains all
-// schematic joint surfaces and reports that state in the source note.
+// Minor joints retain their existing surfaces; atlas spine disks load separately.
+// Failure retains schematic joint surfaces and reports that state in the note.
 setTimeout(async () => {
   try {
     const surfaces = typeof createJointSurfaces === 'function'
@@ -2106,6 +2911,33 @@ setTimeout(async () => {
     console.warn('Joint surface reconstructions could not load; schematic surfaces remain visible.', error);
   }
 }, 0);
+// Atlas disks remain independent of the coarse spine force model. Replace only
+// their exact legacy counterparts after all 23 parts have loaded successfully.
+setTimeout(async () => {
+  try {
+    const surfaces = typeof createSpineSurfaces === 'function'
+      ? await createSpineSurfaces(THREE, A, SPINE_SURFACE_DATA) : null;
+    if (!surfaces || surfaces.parts.length !== 23) {
+      if (surfaces) surfaces.dispose();
+      stage.dataset.spineSurfaces = 'fallback'; updateSpineSourceNote('fallback'); return;
+    }
+    surfaces.update(poseW); spineSurfaces = surfaces;
+    for (const mesh of discMeshes.slice()) {
+      const key = mesh.userData.seg + '|' + mesh.userData.name;
+      if (surfaces.covered.has(key)) removeModelMesh(mesh);
+    }
+    model.add(surfaces.group);
+    for (const part of surfaces.parts) {
+      part.mesh.userData.baseOpacity = part.baseOpacity ?? part.mesh.material.opacity;
+      discMeshes.push(part.mesh);
+    }
+    syncSurfaceVisibility(); poseDirty = true;
+    stage.dataset.spineSurfaces = 'ready'; updateSpineSourceNote('ready');
+  } catch (error) {
+    stage.dataset.spineSurfaces = 'fallback'; updateSpineSourceNote('fallback');
+    console.warn('Spinal atlas disks could not load; schematic disks remain visible.', error);
+  }
+}, 0);
 // Keep the procedural muscles visible while the anatomical meshes decode and
 // acquire their visual skin weights. A failed import retains that complete view.
 setTimeout(async () => {
@@ -2130,16 +2962,19 @@ if (CYC) {
   cycleTab.hidden = false;
   buildCycMarks();
   // reduced motion: the round is not played by itself, only scrubbed
-  if (reduceMotion) { cycPlayBtn.hidden = true; document.querySelector('.cyc .seg-inline').hidden = true; }
+  if (reduceMotion) { cycPlayBtn.hidden = true; cyclePlayer.querySelector('.seg-inline').hidden = true; }
   const h0 = (location.hash || '').replace('#', '');
-  if (h0 === 'cycle' || h0 === 'krug') enterCycle(0);
+  if (h0 === 'cycle' || h0 === 'krug') enterCycle(0, false);
 }
+initTransitions();
+if (location.hash === '#practice' || location.hash.startsWith('#practice/') || location.hash.startsWith('#transition/')) applyPracticeHash();
 
 let lastInfoT = -1;
 const cycFollow = new THREE.Vector3(), _fd = new THREE.Vector3();
 function frame(now) {
   requestAnimationFrame(frame);
-  if (state.mode === 'cycle') cycStep(now);
+  if (state.mode === 'transition') transitionStep(now);
+  else if (state.mode === 'cycle') cycStep(now);
   else if (state.playing) {
     const p = state.playing, u = Math.min(1, (now - p.t0) / p.dur);
     const e = u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
@@ -2160,7 +2995,9 @@ function frame(now) {
   }
   if (poseDirty) {
     applyPose(state.t); poseDirty = false;
-    if (state.mode === 'cycle') cyc.cardDirty = true;
+    if (state.mode === 'transition') {
+      if (!transition.playing || (now - transition.cardAt >= 200 && now - cyc.infoBusy >= 900)) { renderInfo(); transition.cardAt = now; }
+    } else if (state.mode === 'cycle') cyc.cardDirty = true;
     // the open card follows the slider, and is redrawn once the switch to another pose has finished
     else if (researchPoseKey() !== lastResearchKey || (state.sel && (morphDone || Math.abs(state.t - lastInfoT) > 0.004))) { renderInfo(); lastInfoT = state.t; }
     morphDone = false;
@@ -2173,7 +3010,7 @@ function frame(now) {
     controls.target.lerp(centerTarget, state.mode === 'cycle' ? 0.08 : 0.1);
     const want = controls.target.clone().addScaledVector(VIEW_DIR, fitDistance());
     camera.position.lerp(want, 0.1);
-  } else if (state.mode === 'cycle') { controls.target.add(_fd); camera.position.add(_fd); }
+  } else if (state.mode === 'cycle' || state.mode === 'transition') { controls.target.add(_fd); camera.position.add(_fd); }
   updateMaterials(now);
   updateForces();
   controls.update();

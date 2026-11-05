@@ -2,6 +2,41 @@
 // These are geometric reconstructions, not segmented BodyParts3D tissue meshes or
 // a constitutive tissue simulation. They never change attachments, path lengths,
 // moments, or forces in createAnatomy / the static solver.
+export function resampleRoutedPath(points, out) {
+  // Uniform arc-length samples can omit an original corner, joining two
+  // neighbouring route segments by a chord through a wrapping obstacle.
+  // Reserve one interval per original segment, then apportion the spare
+  // intervals by length. Every routed corner and both attachments survive.
+  if (!Array.isArray(points) || !points.length || !Array.isArray(out) || out.length < 2
+      || !points.every(p => p && [p.x, p.y, p.z].every(Number.isFinite)))
+    throw new Error('Invalid routed connective path');
+  const unique = [points[0]];
+  for (let i = 1; i < points.length; i++)
+    if (points[i].distanceToSquared(unique.at(-1)) > 0) unique.push(points[i]);
+  if (unique.length === 1) { for (const p of out) p.copy(unique[0]); return 0; }
+  const lengths = unique.slice(1).map((p, i) => p.distanceTo(unique[i]));
+  const total = lengths.reduce((sum, length) => sum + length, 0);
+  const budget = out.length - 1, count = lengths.length;
+  if (count > budget) throw new Error('Connective path has more routed segments than display intervals');
+  const spare = budget - count;
+  const quotas = lengths.map(length => spare * length / total);
+  const intervals = quotas.map(quota => 1 + Math.floor(quota));
+  const remainder = budget - intervals.reduce((sum, value) => sum + value, 0);
+  const order = quotas.map((quota, i) => ({ i, fraction: quota - Math.floor(quota) }))
+    .sort((a, b) => b.fraction - a.fraction || a.i - b.i);
+  for (let i = 0; i < remainder; i++) intervals[order[i].i]++;
+  let index = 0;
+  out[index++].copy(unique[0]);
+  for (let segment = 0; segment < count; segment++) {
+    const n = intervals[segment];
+    for (let step = 1; step <= n; step++, index++) {
+      if (step === n) out[index].copy(unique[segment + 1]);
+      else out[index].copy(unique[segment]).lerp(unique[segment + 1], step / n);
+    }
+  }
+  return total;
+}
+
 export function createConnectiveSurfaces(A, THREE, opts = {}) {
   const group = new THREE.Group(); group.name = 'connective-surfaces';
   const parts = [], pickables = [], covered = new Set();
@@ -47,20 +82,7 @@ export function createConnectiveSurfaces(A, THREE, opts = {}) {
   })();
 
   function resample(pts, out) {
-    // Linear arc-length sampling keeps the rendered sheet on the same routed
-    // paths. Spline overshoot could cut through a wrapping obstacle.
-    const lengths = [0];
-    for (let i = 1; i < pts.length; i++) lengths.push(lengths[i - 1] + pts[i].distanceTo(pts[i - 1]));
-    const total = lengths[lengths.length - 1];
-    let j = 1;
-    for (let i = 0; i <= N; i++) {
-      const d = total * i / N;
-      while (j < lengths.length - 1 && lengths[j] < d) j++;
-      const a = Math.max(0, j - 1), b = Math.min(j, pts.length - 1);
-      const t = lengths[b] > lengths[a] ? (d - lengths[a]) / (lengths[b] - lengths[a]) : 0;
-      out[i].copy(pts[a]).lerp(pts[b], t);
-    }
-    return total;
+    return resampleRoutedPath(pts, out);
   }
 
   function geometry(count, uv, index) {

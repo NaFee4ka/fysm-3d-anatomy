@@ -1,0 +1,181 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "title": "FYSM 1. Практика",
+    "fileName": "FYSM 1. Практика.pdf",
+    "sha256": "a23ca63b746b87eca51e813ada626840fcd0fbfbaec1731b0fa6c37a19dee041",
+    "pages": [
+      4,
+      5,
+      6
+    ]
+  },
+  "section": "Центр",
+  "algorithms": [
+    {
+      "id": "struna",
+      "name": "Струна",
+      "page": 4,
+      "steps": [
+        {
+          "id": "struna-01",
+          "number": 1,
+          "name": "Вытяжение с пальцевым замком вверх",
+          "sanskrit": "Урдхва Баддхангулиасана"
+        },
+        {
+          "id": "struna-02",
+          "number": 2,
+          "name": "Вытяжение с пальцевым замком назад",
+          "sanskrit": "Баддха Хастасана"
+        },
+        {
+          "id": "struna-03",
+          "number": 3,
+          "name": "Стул с запястным замком",
+          "sanskrit": "Баддха Хаста Уткатасана"
+        },
+        {
+          "id": "struna-04",
+          "number": 4,
+          "name": "Стул самолётик",
+          "sanskrit": "Ардха Уткатасана 3"
+        },
+        {
+          "id": "struna-05",
+          "number": 5,
+          "name": "Паук",
+          "sanskrit": "Бхуджапидасана"
+        },
+        {
+          "id": "struna-06",
+          "number": 6,
+          "name": "Сумо скрутка",
+          "sanskrit": "Паривритта Стамбхасана"
+        },
+        {
+          "id": "struna-07",
+          "number": 7,
+          "name": "Нижний упор с одной ногой",
+          "sanskrit": "Трианга Дандасана 2"
+        },
+        {
+          "id": "struna-08",
+          "number": 8,
+          "name": "Лодка на ягодицах",
+          "sanskrit": "Ардха Навасана"
+        }
+      ]
+    },
+    {
+      "id": "detali",
+      "name": "Детали",
+      "page": 5,
+      "steps": [
+        {
+          "id": "detali-01",
+          "number": 1,
+          "name": "Уголок",
+          "sanskrit": "Ардха Брахмачариасана"
+        },
+        {
+          "id": "detali-02",
+          "number": 2,
+          "name": "Поза посоха",
+          "sanskrit": "Дандасана"
+        },
+        {
+          "id": "detali-03",
+          "number": 3,
+          "name": "Лодка на спине",
+          "sanskrit": "Ардха Навасана 2"
+        },
+        {
+          "id": "detali-04",
+          "number": 4,
+          "name": "Полумост с одной ногой",
+          "sanskrit": "Эка Пада Питхасана"
+        },
+        {
+          "id": "detali-05",
+          "number": 5,
+          "name": "Низкая лодка",
+          "sanskrit": "Ардха Навасана 3"
+        },
+        {
+          "id": "detali-06",
+          "number": 6,
+          "name": "Широкий угол лежа на спине с коленями на полу",
+          "sanskrit": "Урдхва Мукха Супта Конасана"
+        },
+        {
+          "id": "detali-07",
+          "number": 7,
+          "name": "Вытяжение ног лёжа",
+          "sanskrit": "Супта Пашчимотанасана"
+        },
+        {
+          "id": "detali-08",
+          "number": 8,
+          "name": "Русалка",
+          "sanskrit": "Паршва Урдхва Падасана"
+        }
+      ]
+    },
+    {
+      "id": "centering",
+      "name": "Центрирование",
+      "page": 6,
+      "steps": [
+        {
+          "id": "centering-01",
+          "number": 1,
+          "name": "Наклон стоя с закрытым замком",
+          "sanskrit": "Баддха Хаста Уттанасана"
+        },
+        {
+          "id": "centering-02",
+          "number": 2,
+          "name": "Нижний упор",
+          "sanskrit": "Чатуранга Дандасана"
+        },
+        {
+          "id": "centering-03",
+          "number": 3,
+          "name": "Воин 1",
+          "sanskrit": "Вирабхадрасана 1"
+        },
+        {
+          "id": "centering-04",
+          "number": 4,
+          "name": "Боковой воин",
+          "sanskrit": "Вирабхадрасана 2"
+        },
+        {
+          "id": "centering-05",
+          "number": 5,
+          "name": "Стойка на предплечьях с одной ногой",
+          "sanskrit": "Эка Пада Пинча Маюрасана"
+        },
+        {
+          "id": "centering-06",
+          "number": 6,
+          "name": "Полубакасана с одной ногой",
+          "sanskrit": "Ардха Эка Падабакасана"
+        },
+        {
+          "id": "centering-07",
+          "number": 7,
+          "name": "Скрутка на предплечье с колен",
+          "sanskrit": "Вакра Гоасана"
+        },
+        {
+          "id": "centering-08",
+          "number": 8,
+          "name": "Прогиб с колен",
+          "sanskrit": "Анахатасана"
+        }
+      ]
+    }
+  ]
+}

@@ -45,6 +45,17 @@ function scenarioDiagnostics(result, label) {
   const quality = numericData(result.diag && result.diag.quality);
   if (!quality || quality.status !== 'solved' || quality.converged !== true || quality.finite !== true)
     throw new Error('Unverified scenario solve: ' + label);
+  const physicalBalance = numericData(result.diag?.physicalBalance);
+  if (quality.physicalBalanceVerified !== true || physicalBalance?.verified !== true
+      || physicalBalance.assemblyVerified !== true || !Number.isFinite(physicalBalance.maxAssemblyDifference)
+      || physicalBalance.maxAssemblyDifference > 1e-7)
+    throw new Error('Unverified physical force assembly: ' + label);
+  for (const key of ['forceResidualN', 'momentResidualNm']) finite(physicalBalance[key], label + '/physical/' + key);
+  for (const [residual, tolerance] of [['forceResidualN', 'forceToleranceN'], ['momentResidualNm', 'momentToleranceNm']]) {
+    finite(physicalBalance[tolerance], label + '/physical/' + tolerance);
+    if (physicalBalance[residual] < 0 || physicalBalance[tolerance] < 0 || physicalBalance[residual] > physicalBalance[tolerance])
+      throw new Error('Physical equilibrium exceeds tolerance: ' + label);
+  }
   for (const key of ['forceResidualN', 'momentResidualNm']) finite(quality[key], label + '/' + key);
   const balance = numericData(result.balance);
   if (!balance || !Array.isArray(balance.forceN) || balance.forceN.length !== 3
@@ -62,7 +73,7 @@ function scenarioDiagnostics(result, label) {
     if (Math.abs(v) / weightN > FORCE_BALANCE_RELATIVE_TOLERANCE)
       throw new Error('Body mass equilibrium not verified: ' + label);
   });
-  return { quality, floor: balance };
+  return { quality, physicalBalance, floor: balance };
 }
 
 export function assembleSensitivity(results, provenance) {
@@ -95,6 +106,7 @@ export function assembleSensitivity(results, provenance) {
     poses[pose] = {
       muscles, joints,
       quality: Object.fromEntries(Object.keys(diagnostics).map(id => [id, diagnostics[id].quality])),
+      physicalBalance: Object.fromEntries(Object.keys(diagnostics).map(id => [id, diagnostics[id].physicalBalance])),
       floor: Object.fromEntries(Object.keys(diagnostics).map(id => [id, diagnostics[id].floor])),
     };
   }

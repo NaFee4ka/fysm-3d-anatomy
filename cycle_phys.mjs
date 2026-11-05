@@ -32,16 +32,28 @@
 //       resid: N or N·m (largest equilibrium residual), reserves: Σ|reserve torque| N·m, iters, ms, tone: number of toned units } ] }
 import * as THREE from 'three';
 import fs from 'fs';
+import { createHash } from 'node:crypto';
 import { createAnatomy } from './anatomy3.js';
 import { makePhysics } from './physics_core.mjs';
 import { CUE_TONE } from './physics_params.mjs';
+import { CYCLE_PHYSICS_SOURCE_FILES, CYCLE_PHYSICS_INPUT_KEY, validateCyclePhysicsSources } from './cycle_quality.mjs';
 
 const args = process.argv.slice(2);
 const arg = (k, d) => { const i = args.indexOf(k); return i >= 0 && i + 1 < args.length ? args[i + 1] : d; };
 const flag = k => args.includes(k);
 const IN = arg('--in', 'cycle_keys/cycle.json'), OUT = arg('--out', 'cycle_phys.json');
 const EVERY = +arg('--every', 1), FROM = +arg('--from', 0), TO = arg('--to', null), SEGF = arg('--seg', null);
-const SMOOTH = +arg('--smooth', 0.15), ITERS = +arg('--iters', 16000), QUIET = flag('--quiet');
+const SMOOTH = +arg('--smooth', 0.15), ITERS = +arg('--iters', 48000), QUIET = flag('--quiet');
+const sourceHashes = () => Object.fromEntries(CYCLE_PHYSICS_SOURCE_FILES.map(name => [name,
+  createHash('sha256').update(fs.readFileSync(name === CYCLE_PHYSICS_INPUT_KEY ? IN : name)).digest('hex')]));
+const sourceSha256 = sourceHashes();
+// Partial reruns must never relabel retained old solutions as newly computed.
+const previousOutput = flag('--merge') && fs.existsSync(OUT) ? JSON.parse(fs.readFileSync(OUT, 'utf8')) : null;
+if (previousOutput) {
+  validateCyclePhysicsSources(previousOutput, sourceSha256);
+  if (previousOutput.opts?.smooth !== SMOOTH || previousOutput.opts?.iters !== ITERS || previousOutput.opts?.every !== EVERY)
+    throw new Error('Round physics: cannot merge different solver options; rerun without --merge');
+}
 
 const A = createAnatomy(THREE);
 const PH = makePhysics(A, { mass: 70 });
@@ -158,8 +170,11 @@ function record(r, extra) {
     grips: r.gripF.map(g => ({ side: g.side, P: arr(g.P), F: [r1(g.F.x), r1(g.F.y), r1(g.F.z)] })),
     com: arr(r.com), margin: r3(margin(poly, [r.com.x, r.com.z])), jr,
     resid: +r.maxRes.toPrecision(3), reserves: r1(Object.values(r.reserve).reduce((a, x) => a + Math.abs(x), 0)), iters: r.iters,
-    quality: r.quality,
-    modelLimits: { forceLengthClampedStrands: r.lt.filter(length => length < 0.4 || length > 1.7).length },
+    quality: r.quality, physicalBalance: r.physicalBalance,
+    modelLimits: { forceLengthClampedStrands: 0, fibreFractionFloorUnits: [],
+      forceLengthOutsideTypicalStrands: r.lt.filter(length => length < 0.4 || length > 1.7).length,
+      pathQuality: r.pathQuality, constitutive: r.constitutive, contactQuality: r.contactQuality,
+      unidentifiedUnits: r.unidentifiedUnits || [] },
   };
 }
 function solveFrame(c, tone, grips, prev) {
@@ -203,20 +218,28 @@ for (const i of want) {
   if ((atStart && (s.from === 'bow' || s.from === 'fold')) || (atEnd && (s.to === 'bow' || s.to === 'fold'))) gs = ['L', 'R'];
   const t0 = Date.now();
   // warm start only from the frame just before (a jump of several frames is a different problem)
-  const r = solveFrame(c, tone, gripsFor(W, gs), i - prevIdx <= Math.max(1, EVERY) ? prev : null);
+  let r;
+  try { r = solveFrame(c, tone, gripsFor(W, gs), i - prevIdx <= Math.max(1, EVERY) ? prev : null); }
+  catch (error) {
+    error.message = `Round frame ${i} (${fr.seg}, T=${fr.T}s): ` + error.message;
+    throw error;
+  }
   const rec = record(r, { i, T: fr.T, seg: fr.seg, t: fr.t, ms: Date.now() - t0, tone: Object.keys(tone).length });
   out.push(rec);
   prev = r; prevIdx = i;
   if (!QUIET && (out.length % 10 === 1 || i === want[want.length - 1])) console.log(String(i).padStart(4), ('T=' + fr.T).padEnd(8), fr.seg, String(rec.ms).padStart(5) + 'ms', 'iters', String(rec.iters).padStart(5), 'resid', rec.resid, 'reserves', rec.reserves, 'margin', rec.margin, gs.length ? 'grip ' + gs.join('') : '');
 }
 let frames = out;
-if (flag('--merge') && fs.existsSync(OUT)) {
-  const old = JSON.parse(fs.readFileSync(OUT, 'utf8'));
+if (previousOutput) {
+  const old = previousOutput;
   const byI = new Map(old.frames.map(f => [f.i, f]));
   for (const f of out) byI.set(f.i, f);
   frames = [...byI.values()].sort((a, b) => a.i - b.i);
   if (flag('--no-poses')) Object.assign(poses, old.poses);
 }
-const res = { src: IN, fps: cyc.fps, T: cyc.T, units: UNITS, ligs: LIGS, segs: cyc.segs, holds: cyc.holds, provisional: cyc.segs.some(s => s.provisional), opts: { smooth: SMOOTH, iters: ITERS, every: EVERY }, poses, frames };
+// A long solve may overlap other work in a shared checkout. Refuse to publish
+// if even one dependency changed while this process was calculating frames.
+validateCyclePhysicsSources({ sourceSha256 }, sourceHashes());
+const res = { src: IN, sourceSha256, fps: cyc.fps, T: cyc.T, units: UNITS, ligs: LIGS, segs: cyc.segs, holds: cyc.holds, provisional: cyc.segs.some(s => s.provisional), opts: { smooth: SMOOTH, iters: ITERS, every: EVERY }, poses, frames };
 fs.writeFileSync(OUT, JSON.stringify(res));
 console.log('wrote', OUT, frames.length, 'frames', ((Date.now() - tStart) / 1000).toFixed(1) + 's');

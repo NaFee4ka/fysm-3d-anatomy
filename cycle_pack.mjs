@@ -16,9 +16,10 @@
 //   stats: { T, thresholds:{act:[.08,.2,.4], lig:[.02,.05]}, muscles:{u:{trans:{L,R}, pose:{p:{L,R}}, stretch:{peak,peakT,pose}}},
 //            ligs:{id:{trans:{L,R}, pose:{p:{L,R}}}}, joints:{...} }
 import fs from 'fs';
+import { createHash } from 'node:crypto';
 import * as THREE from 'three';
 import { createAnatomy } from './anatomy3.js';
-import { validateCyclePhysics, packJointLoads } from './cycle_quality.mjs';
+import { validateCyclePhysics, validateCyclePhysicsSources, packJointLoads, CYCLE_PHYSICS_SOURCE_FILES, CYCLE_PHYSICS_INPUT_KEY } from './cycle_quality.mjs';
 import { validateMotionCollisions } from './cycle_collision_check.mjs';
 
 const A = createAnatomy(THREE);
@@ -26,12 +27,32 @@ const V = (x, y, z) => new THREE.Vector3(x, y, z);
 // options (for tests): --cycle FILE --phys FILE --stats FILE --out FILE
 const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d; };
 const CYCLE_F = arg('--cycle', 'cycle_keys/cycle.json'), PHYS_F = arg('--phys', 'cycle_phys.json'), STATS_F = arg('--stats', 'cycle_stats.json'), OUT_F = arg('--out', 'cycle_data.json');
-const cyc = JSON.parse(fs.readFileSync(CYCLE_F, 'utf8'));
-const phys = fs.existsSync(PHYS_F) ? JSON.parse(fs.readFileSync(PHYS_F, 'utf8')) : null;
-const statsIn = fs.existsSync(STATS_F) ? JSON.parse(fs.readFileSync(STATS_F, 'utf8')) : null;
+const digest = raw => createHash('sha256').update(raw).digest('hex');
+const cycleRaw = fs.readFileSync(CYCLE_F), physicsRaw = fs.existsSync(PHYS_F) ? fs.readFileSync(PHYS_F) : null;
+const cyc = JSON.parse(cycleRaw);
+const phys = physicsRaw ? JSON.parse(physicsRaw) : null;
+const sourceHashes = () => Object.fromEntries(CYCLE_PHYSICS_SOURCE_FILES.map(name => [name,
+  digest(fs.readFileSync(name === CYCLE_PHYSICS_INPUT_KEY ? CYCLE_F : name))]));
+const statsRaw = fs.existsSync(STATS_F) ? fs.readFileSync(STATS_F) : null;
+const statsIn = statsRaw ? JSON.parse(statsRaw) : null;
 const modelQuality = validateCyclePhysics(cyc, phys, {
   units: Object.keys(A.UNITS), ligs: [...Object.keys(A.LIGS), ...Object.keys(A.CAP_NAMES).map(id => 'cap_' + id)],
+  physicsSha256: physicsRaw ? digest(physicsRaw) : null,
+  sourceSha256: phys ? { ...sourceHashes(), [CYCLE_PHYSICS_INPUT_KEY]: digest(cycleRaw) } : null,
 });
+function checkStatisticsSources() {
+  if (!phys && !statsIn) return;
+  if (!phys || !statsIn || statsIn.sourcePhysicsSha256 !== digest(physicsRaw))
+    throw new Error('Round statistics: missing or stale physics provenance; rerun ./cycle_run.sh');
+  const hashes = statsIn.provenance?.sourceSha256;
+  if (!hashes || Object.keys(hashes).length !== 1 || hashes['cycle_stats.mjs'] !== digest(fs.readFileSync('cycle_stats.mjs')))
+    throw new Error('Round statistics: stale cycle_stats.mjs provenance; rerun ./cycle_run.sh');
+}
+checkStatisticsSources();
+if (modelQuality) {
+  modelQuality.statsSha256 = digest(statsRaw);
+  modelQuality.statsSourceSha256 = { ...statsIn.provenance.sourceSha256 };
+}
 const fps = cyc.fps || 10, n = cyc.frames.length, dt = 1 / fps;
 const SEGN = A.SEG.map(s => s.name);
 const UNITS = Object.keys(A.UNITS);
@@ -160,7 +181,8 @@ if (fs.existsSync('fascia3.js') && fs.existsSync('books/fascia_model.json')) {
   const F = createFascia(A, THREE, JSON.parse(fs.readFileSync('books/fascia_model.json', 'utf8')));
   const ids = F.LINES.map(l => l.id), K = ids.length;
   const pst = JSON.parse(fs.readFileSync('physics.json', 'utf8')).stand.muscles;
-  const Fmax = Object.fromEntries(Object.entries(pst).map(([u, m]) => [u, m.Fmax]));
+  const Fmax = Object.fromEntries(Object.entries(pst).map(([u, m]) =>
+    [u, m.status === 'unidentified' ? 0 : m.Fmax]));
   const S = new Float32Array(n * K), E = new Float32Array(n * K);
   const tf = Date.now();
   confs.forEach((c, f) => {
@@ -249,6 +271,14 @@ const out = {
 // Check the normalized, quantized quaternions and their slerp exactly as the
 // browser decodes them, rather than approving only the original keyframes.
 out.collisionCheck = await validateMotionCollisions(out);
+if (phys) {
+  validateCyclePhysicsSources(phys, sourceHashes());
+  if (digest(fs.readFileSync(PHYS_F)) !== modelQuality.physicsSha256)
+    throw new Error('Round physics changed during packing; rerun ./cycle_run.sh');
+  checkStatisticsSources();
+  if (digest(fs.readFileSync(STATS_F)) !== modelQuality.statsSha256)
+    throw new Error('Round statistics changed during packing; rerun ./cycle_run.sh');
+}
 const txt = JSON.stringify(out);
 fs.writeFileSync(OUT_F, txt);
 console.log(OUT_F, (txt.length / 1024).toFixed(0), 'KB,', n, 'frames,', r2(cyc.T), 's,', 'activation:', out.placeholder.act ? 'PLACEHOLDER (zeros)' : 'physics', provisional ? '| provisional frames' : '| real frames', '| floor', !!floor16, '| stats', statsIn ? 'cycle_stats.json' : 'computed here');

@@ -18,11 +18,16 @@
 //   peak = max(trans.peak, pose values); int = trans.int + H·Σ pose a; time active = t08 + H·#(poses with a ≥ 0.08); mean = int / (T + 5H)
 //   for ligaments the pose term is H·Σ max(0, pose strain) and time taut t02 + H·#(poses with strain ≥ 0.02).
 import fs from 'fs';
+import { createHash } from 'node:crypto';
 
 const args = process.argv.slice(2);
 const arg = (k, d) => { const i = args.indexOf(k); return i >= 0 && i + 1 < args.length ? args[i + 1] : d; };
 const IN = arg('--in', 'cycle_phys.json'), OUT = arg('--out', 'cycle_stats.json');
-const P = JSON.parse(fs.readFileSync(IN, 'utf8'));
+const digest = raw => createHash('sha256').update(raw).digest('hex');
+const physicsRaw = fs.readFileSync(IN), sourcePhysicsSha256 = digest(physicsRaw);
+const sourceFile = new URL('./cycle_stats.mjs', import.meta.url);
+const sourceSha256 = { 'cycle_stats.mjs': digest(fs.readFileSync(sourceFile)) };
+const P = JSON.parse(physicsRaw);
 const POSES = ['dog', 'plank', 'half', 'bow', 'fold'];
 const ACT = [0.08, 0.2, 0.4], LIG = [0.02, 0.05];
 const r3 = v => Math.round(v * 1000) / 1000, r2 = v => Math.round(v * 100) / 100;
@@ -115,7 +120,10 @@ if (consecutive) P.units.forEach((u, k) => { for (const sd of ['L', 'R']) {
 } });
 jumps.sort((a, b) => Math.abs(b.jump) - Math.abs(a.jump));
 const spikes = [...SPIKES.entries()].map(([i, us]) => ({ i, T: F.find(f => f.i === i).T, seg: F.find(f => f.i === i).seg, n: us.length, units: us.slice(0, 6) })).sort((a, b) => b.n - a.n);
-const out = { spikes, T: r2(Ttrans), segs: P.segs, holds: P.holds, provisional: !!P.provisional, thresholds: { act: ACT, lig: LIG }, muscles, ligs, joints, byHold, flags, smooth: { consecutive, reversals, worst: jumps.slice(0, 12) } };
+const out = { sourcePhysicsSha256, provenance: { sourceSha256 }, spikes, T: r2(Ttrans), segs: P.segs, holds: P.holds, provisional: !!P.provisional, thresholds: { act: ACT, lig: LIG }, muscles, ligs, joints, byHold, flags, smooth: { consecutive, reversals, worst: jumps.slice(0, 12) } };
+if (digest(fs.readFileSync(IN)) !== sourcePhysicsSha256
+    || digest(fs.readFileSync(sourceFile)) !== sourceSha256['cycle_stats.mjs'])
+  throw new Error('Round statistics: source changed during calculation; rerun ./cycle_run.sh');
 fs.writeFileSync(OUT, JSON.stringify(out));
 
 // ---------- summary ----------

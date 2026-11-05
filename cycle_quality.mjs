@@ -1,6 +1,14 @@
 // Release/preview guards for already solved cycle data. This module never runs a
 // solver and does not turn solver convergence into anatomical validation.
 export const HELD_POSES = Object.freeze(['dog', 'plank', 'half', 'bow', 'fold']);
+// Keys are canonical even when the CLI receives a different input filename:
+// the cycle key hashes the exact raw bytes supplied to --in / --cycle.
+// Only code and inputs occur here, never cycle_phys.json or another output.
+export const CYCLE_PHYSICS_INPUT_KEY = 'cycle_keys/cycle.json';
+export const CYCLE_PHYSICS_SOURCE_FILES = Object.freeze([
+  'anatomy3.js', 'physics_core.mjs', 'physics_params.mjs', 'cycle_phys.mjs',
+  'cycle_quality.mjs', 'poses.json', 'package-lock.json', CYCLE_PHYSICS_INPUT_KEY,
+]);
 const REACTIONS = ['L5S1', 'T12L1', 'hip', 'knee', 'ankle', 'gh', 'elbow', 'wrist'];
 const QUALITY_NUMBERS = ['primalResidual', 'dualResidual', 'equalityViolation', 'inequalityViolation', 'boundViolation', 'primalTolerance', 'dualTolerance', 'forceResidualN', 'momentResidualNm'];
 
@@ -9,6 +17,21 @@ function requireTrue(condition, message) {
 }
 const finite = value => typeof value === 'number' && Number.isFinite(value);
 const close = (a, b) => finite(a) && finite(b) && Math.abs(a - b) <= 1e-6;
+const sha256 = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
+
+// Pure validation: callers supply hashes of their current raw inputs. Keeping
+// filesystem reads outside this module permits independent synthetic fixtures.
+export function validateCyclePhysicsSources(physics, current) {
+  for (const [label, hashes] of [['recorded', physics?.sourceSha256], ['current', current]]) {
+    requireTrue(hashes && typeof hashes === 'object' && !Array.isArray(hashes)
+      && Object.keys(hashes).length === CYCLE_PHYSICS_SOURCE_FILES.length
+      && CYCLE_PHYSICS_SOURCE_FILES.every(name => sha256(hashes[name])),
+    'missing or invalid ' + label + ' source SHA-256 manifest');
+  }
+  for (const name of CYCLE_PHYSICS_SOURCE_FILES) requireTrue(physics.sourceSha256[name] === current[name],
+    'stale physics source ' + name + '; rerun ./cycle_run.sh');
+  return { ...physics.sourceSha256 };
+}
 
 function numericArray(array, count, name) {
   requireTrue(Array.isArray(array) && array.length === count && array.every(finite), 'invalid numeric array ' + name);
@@ -29,6 +52,15 @@ function checkRecord(record, units, ligs, label) {
   requireTrue(quality.primalResidual <= quality.primalTolerance && quality.dualResidual <= quality.dualTolerance
     && quality.equalityViolation <= quality.primalTolerance && quality.inequalityViolation <= quality.primalTolerance
     && quality.boundViolation <= quality.primalTolerance, 'quality flags contradict numerical tolerances ' + label);
+  requireTrue(quality.physicalBalanceVerified === true && record.physicalBalance?.verified === true
+    && record.physicalBalance.assemblyVerified === true,
+    'physical force-path equilibrium was not checked ' + label);
+  requireTrue(['forceResidualN', 'momentResidualNm', 'forceToleranceN', 'momentToleranceNm', 'maxAssemblyDifference'].every(name =>
+    finite(record.physicalBalance[name]) && record.physicalBalance[name] >= 0)
+    && record.physicalBalance.maxAssemblyDifference <= 1e-7
+    && record.physicalBalance.forceResidualN <= record.physicalBalance.forceToleranceN
+    && record.physicalBalance.momentResidualNm <= record.physicalBalance.momentToleranceNm,
+    'physical force-path assembly disagrees with equilibrium ' + label);
   for (const side of ['L', 'R']) {
     numericArray(record['a' + side], units, label + '/a' + side);
     requireTrue(record['a' + side].every(value => value >= 0 && value <= 1), 'effort outside [0,1] ' + label);
@@ -54,6 +86,8 @@ function checkRecord(record, units, ligs, label) {
 
 export function validateCyclePhysics(cycle, physics, expected = {}) {
   if (!physics) return null; // A geometry-only preview keeps its placeholder flag.
+  const sourceSha256 = validateCyclePhysicsSources(physics, expected.sourceSha256);
+  requireTrue(sha256(expected.physicsSha256), 'missing or invalid raw physics SHA-256');
   requireTrue(Array.isArray(cycle.frames) && cycle.frames.length >= 2 && finite(cycle.fps) && cycle.fps > 0,
     'invalid kinematic frame grid');
   const count = cycle.frames.length;
@@ -94,11 +128,37 @@ export function validateCyclePhysics(cycle, physics, expected = {}) {
   const fullCoverage = completeIndices && every === 1;
   return {
     verified: fullCoverage, fullCoverage, solvedFramesVerified: true,
+    sourcesVerified: true, sourceSha256, physicsSha256: expected.physicsSha256,
     frameCount: physics.frames.length, publishedFrameCount: count, heldPoseCount: HELD_POSES.length,
     maxForceResidualN: Math.max(...physics.frames.map(frame => frame.quality.forceResidualN)),
     maxMomentResidualNm: Math.max(...physics.frames.map(frame => frame.quality.momentResidualNm)),
+    physicalBalanceVerified: true,
+    maxPhysicalForceResidualN: Math.max(...physics.frames.map(frame => frame.physicalBalance.forceResidualN)),
+    maxPhysicalMomentResidualNm: Math.max(...physics.frames.map(frame => frame.physicalBalance.momentResidualNm)),
+    maxForceAssemblyDifference: Math.max(...physics.frames.map(frame => frame.physicalBalance.maxAssemblyDifference)),
     maxReserveTotalNm: Math.max(...physics.frames.map(frame => frame.reserves)),
     forceLengthLimitedFrames: physics.frames.filter(frame => frame.modelLimits.forceLengthClampedStrands > 0).length,
+    forceLengthExtrapolatedFrames: physics.frames.filter(frame => frame.modelLimits.forceLengthOutsideTypicalStrands > 0).length,
+    unidentifiedUnits: [...new Set(physics.frames.flatMap(frame => frame.modelLimits.unidentifiedUnits || []))].sort(),
+    modelLimits: {
+      unidentifiedUnits: [...new Set(physics.frames.flatMap(frame => frame.modelLimits.unidentifiedUnits || []))].sort(),
+      pathQuality: {
+        quarantinedFrames: physics.frames.filter(frame => frame.modelLimits.pathQuality?.quarantinedStrands > 0).length,
+        maxQuarantinedStrands: Math.max(0, ...physics.frames.map(frame => frame.modelLimits.pathQuality?.quarantinedStrands || 0)),
+        quarantinedStrands: Math.max(0, ...physics.frames.map(frame => frame.modelLimits.pathQuality?.quarantinedStrands || 0)),
+        invalidPaths: [...new Map(physics.frames.flatMap(frame => frame.modelLimits.pathQuality?.invalidPaths || [])
+          .map(item => [item.id, item])).values()],
+        quarantinedUnits: [...new Set(physics.frames.flatMap(frame => frame.modelLimits.pathQuality?.quarantinedUnits || []))].sort(),
+        maxDerivativeMismatchM: Math.max(0, ...physics.frames.map(frame => frame.modelLimits.pathQuality?.maxDerivativeMismatchM || 0)),
+        maxDisabledNominalCapacityN: Math.max(0, ...physics.frames.map(frame => frame.modelLimits.pathQuality?.disabledNominalCapacityN || 0)),
+      },
+      constitutive: {
+        assumption: 'rigid-tendon-relative-to-standing', fibreFractionFloorApplied: false, forceLengthClamped: false,
+        slackFiberFrames: physics.frames.filter(frame => frame.modelLimits.constitutive?.slackFiberStrands > 0).length,
+        maxSlackFiberStrands: Math.max(0, ...physics.frames.map(frame => frame.modelLimits.constitutive?.slackFiberStrands || 0)),
+        slackFiberStrands: Math.max(0, ...physics.frames.map(frame => frame.modelLimits.constitutive?.slackFiberStrands || 0)),
+      },
+    },
     friction: { kind: 'inscribed-coulomb-polygon', facets: 16 },
     recruitment: 'prescribed-cues', effortDefinition: 'active-force-over-maximum-isometric-force', dynamics: 'quasi-static',
   };

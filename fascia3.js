@@ -251,7 +251,15 @@ export function createFascia(A, THREE, model) {
   // adapters: a static pose of physics.json (left side, the poses are symmetric) and a frame of cycle_phys.json
   function physFromStatic(ph) {
     const a = {}, Fmax = {}, Fp = {};
-    for (const [u, mm] of Object.entries(ph.muscles)) { a[u] = { L: mm.a, R: mm.a }; Fmax[u] = mm.Fmax; Fp[u] = { L: mm.Fp, R: mm.Fp }; }
+    for (const [u, mm] of Object.entries(ph.muscles)) {
+      const known = Number.isFinite(mm.a) && (!mm.status || mm.status === 'estimated');
+      a[u] = { L: known ? mm.a : 0, R: known ? mm.a : 0 };
+      // Unknown intrinsic finger force has no identified capacity in this
+      // model. Retain nominal capacity for quarantined/partial paths, matching
+      // the displayed force fraction's unchanged Fmax denominator.
+      Fmax[u] = mm.status === 'unidentified' ? 0 : mm.Fmax;
+      Fp[u] = { L: mm.Fp || 0, R: mm.Fp || 0 };
+    }
     return { a, Fmax, Fp };
   }
   function physFromFrame(fr, units, FmaxByUnit) {
