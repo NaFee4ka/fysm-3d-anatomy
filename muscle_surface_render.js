@@ -34,6 +34,33 @@ function muscleDQSign(real, offset, reference, referenceOffset, bone, referenceB
   return 1;
 }
 
+// A stateless shortest-arc DQS cannot choose a continuous half-turn branch.
+// Fade its contribution to zero before that branch changes. This numerical
+// display fallback keeps the original support weights; it is not a volume or
+// constitutive law. The plateau covers the sign tie epsilon and Float32 noise;
+// .05 corresponds to a relative rotation within about 5.73 degrees of 180.
+function muscleDQContinuity(indices, weights, real, offset) {
+  let referenceSlot = 0;
+  for (let j = 1; j < 4; j++) if (weights[offset + j] > weights[offset + referenceSlot]) referenceSlot = j;
+  const reference = indices[offset + referenceSlot] * 4;
+  const a = real[reference], b = real[reference + 1], c = real[reference + 2], d = real[reference + 3];
+  const referenceNorm2 = a * a + b * b + c * c + d * d;
+  let minimum = 1;
+  for (let j = 0; j < 4; j++) {
+    if (!(weights[offset + j] > 0)) continue;
+    const at = indices[offset + j] * 4;
+    if (at === reference) continue;
+    const x = real[at], y = real[at + 1], z = real[at + 2], w = real[at + 3];
+    const norm2 = x * x + y * y + z * z + w * w;
+    const dot = Math.abs(x * a + y * b + z * c + w * d) / Math.sqrt(referenceNorm2 * norm2);
+    minimum = Math.min(minimum, dot);
+  }
+  if (minimum >= .05) return 1;
+  if (minimum <= .00001) return 0;
+  const u = (minimum - .00001) / (.05 - .00001);
+  return u * u * (3 - 2 * u);
+}
+
 export function blendMuscleDualQuaternion(indices, weights, real, dual, offset = 0, out = new Float64Array(8)) {
   let referenceSlot = 0;
   for (let j = 1; j < 4; j++) if (weights[offset + j] > weights[offset + referenceSlot]) referenceSlot = j;
@@ -96,7 +123,10 @@ export function deformMuscleVertex(point, axis, indices, weights, real, dual, of
     // blend is a display correction for DQS bulging, not a tissue parameter.
     const agreement = Math.min(1, Math.hypot(bx, by, bz) / sum);
     const u = Math.max(0, Math.min(1, (1 - agreement) / .65));
-    const amount = .8 * u * u * (3 - 2 * u);
+    const bend = .8 * u * u * (3 - 2 * u), continuity = muscleDQContinuity(indices, weights, real, offset);
+    // Preserve the former arithmetic exactly outside the half-turn window.
+    const amount = continuity === 1 ? bend : 1 - (1 - bend) * continuity;
+    if (amount === 1) return out.set(lx / sum, ly / sum, lz / sum);
     out.x += (lx / sum - out.x) * amount;
     out.y += (ly / sum - out.y) * amount;
     out.z += (lz / sum - out.z) * amount;
@@ -166,9 +196,66 @@ float muscleBendBlend(vec3 axis,mat3 rotation) {
   float u=clamp((1.0-agreement)/0.65,0.0,1.0);
   return 0.8*u*u*(3.0-2.0*u);
 }
+float muscleDQContinuity(vec4 indices,vec4 weights) {
+  int referenceSlot=0;
+  for(int k=1;k<4;k++) if(weights[k]>weights[referenceSlot]) referenceSlot=k;
+  int referenceBone=int(indices[referenceSlot]);
+  vec4 reference=muscleDQReal[referenceBone];
+  float referenceNorm2=dot(reference,reference),minimum=1.0;
+  for(int k=0;k<4;k++) {
+    if(weights[k]<=0.0) continue;
+    int bone=int(indices[k]);
+    if(bone==referenceBone) continue;
+    vec4 q=muscleDQReal[bone];
+    float agreement=abs(dot(q,reference))/sqrt(referenceNorm2*dot(q,q));
+    minimum=min(minimum,agreement);
+  }
+  if(minimum>=0.05) return 1.0;
+  if(minimum<=0.00001) return 0.0;
+  float u=(minimum-0.00001)/(0.05-0.00001);
+  return u*u*(3.0-2.0*u);
+}
+float muscleHybridBlend(vec3 axis,mat3 rotation,vec4 indices,vec4 weights) {
+  float bend=muscleBendBlend(axis,rotation),continuity=muscleDQContinuity(indices,weights);
+  return continuity>=1.0?bend:1.0-(1.0-bend)*continuity;
+}
 vec3 muscleHybridPoint(vec3 p,vec3 axis,vec4 indices,vec4 weights,vec4 qr,vec4 qd) {
   mat3 rotation;vec3 translation;muscleLinearTransform(indices,weights,rotation,translation);
-  return mix(muscleDQPoint(p,qr,qd),rotation*p+translation,muscleBendBlend(axis,rotation));
+  float blend=muscleHybridBlend(axis,rotation,indices,weights);
+  vec3 linear=rotation*p+translation;
+  return blend>=1.0?linear:mix(muscleDQPoint(p,qr,qd),linear,blend);
+}
+vec3 muscleReferenceRotate(vec3 v,vec4 indices,vec4 weights) {
+  int referenceSlot=0;
+  for(int k=1;k<4;k++) if(weights[k]>weights[referenceSlot]) referenceSlot=k;
+  return muscleQRotate(muscleDQReal[int(indices[referenceSlot])],v);
+}
+vec3 muscleHybridNormal(vec3 local,mat3 rotation,vec4 qr,vec4 indices,vec4 weights,float blend) {
+  float continuity=muscleDQContinuity(indices,weights);
+  // A rank-deficient LBS surface has no unique normal. In the half-turn
+  // plateau use the static dominant bone's normal, never the ambiguous DQ.
+  vec3 reference=muscleReferenceRotate(local,indices,weights);
+  if(continuity<=0.0) return reference;
+  vec3 rigid=muscleQRotate(qr,local);
+  mat3 cofactor=mat3(cross(rotation[1],rotation[2]),cross(rotation[2],rotation[0]),cross(rotation[0],rotation[1]));
+  vec3 linear=cofactor*local;
+  if(dot(linear,linear)>0.000000000001) linear=normalize(linear);
+  else linear=rigid;
+  vec3 normal=mix(normalize(rigid),linear,blend);
+  if(dot(normal,normal)<0.000000000001) normal=rigid;
+  // Preserve the previous shader's arithmetic outside the display window.
+  if(continuity>=1.0) return normal;
+  normal=mix(reference,normal,continuity);
+  return dot(normal,normal)<0.000000000001?reference:normal;
+}
+vec3 muscleHybridTangent(vec3 local,mat3 rotation,vec4 qr,vec4 indices,vec4 weights,float blend) {
+  float continuity=muscleDQContinuity(indices,weights);
+  vec3 reference=muscleReferenceRotate(local,indices,weights);
+  if(continuity<=0.0) return reference;
+  vec3 tangent=mix(muscleQRotate(qr,local),rotation*local,blend);
+  if(continuity>=1.0) return tangent;
+  tangent=mix(reference,tangent,continuity);
+  return dot(tangent,tangent)<0.000000000001?reference:tangent;
 }
 `;
 }
@@ -463,7 +550,7 @@ export async function createMuscleSurfaces(A, THREE, data, opts = {}) {
         muscleBlendDQ(skinIndex,skinWeight,muscleReal,muscleDual);
         mat3 muscleLinearRotation;vec3 muscleLinearTranslation;
         muscleLinearTransform(skinIndex,skinWeight,muscleLinearRotation,muscleLinearTranslation);
-        float muscleBend=muscleBendBlend(muscleAxis,muscleLinearRotation);
+        float muscleBend=muscleHybridBlend(muscleAxis,muscleLinearRotation,skinIndex,skinWeight);
         float muscleTransverse=1.0+(muscleBellyScale-1.0)*muscleRadial.w;
       `);
       shader.vertexShader = shader.vertexShader.replace('#include <skinnormal_vertex>', `
@@ -472,24 +559,18 @@ export async function createMuscleSurfaces(A, THREE, data, opts = {}) {
         // geometric approximation, rather than a constitutive tissue normal.
         vec3 muscleLocalNormal=objectNormal/muscleTransverse
           +(1.0-1.0/muscleTransverse)*muscleAxis*dot(muscleAxis,objectNormal);
-        vec3 muscleRigidNormal=muscleQRotate(muscleReal,muscleLocalNormal);
-        mat3 muscleCofactor=mat3(cross(muscleLinearRotation[1],muscleLinearRotation[2]),
-          cross(muscleLinearRotation[2],muscleLinearRotation[0]),cross(muscleLinearRotation[0],muscleLinearRotation[1]));
-        vec3 muscleLinearNormal=muscleCofactor*muscleLocalNormal;
-        if(dot(muscleLinearNormal,muscleLinearNormal)>0.000000000001) muscleLinearNormal=normalize(muscleLinearNormal);
-        else muscleLinearNormal=muscleRigidNormal;
-        objectNormal=mix(normalize(muscleRigidNormal),muscleLinearNormal,muscleBend);
-        if(dot(objectNormal,objectNormal)<0.000000000001)objectNormal=muscleRigidNormal;
+        objectNormal=muscleHybridNormal(muscleLocalNormal,muscleLinearRotation,muscleReal,skinIndex,skinWeight,muscleBend);
         #ifdef USE_TANGENT
           vec3 muscleLocalTangent=muscleTransverse*objectTangent
             +(1.0-muscleTransverse)*muscleAxis*dot(muscleAxis,objectTangent);
-          objectTangent=mix(muscleQRotate(muscleReal,muscleLocalTangent),muscleLinearRotation*muscleLocalTangent,muscleBend);
+          objectTangent=muscleHybridTangent(muscleLocalTangent,muscleLinearRotation,muscleReal,skinIndex,skinWeight,muscleBend);
         #endif
       `);
       shader.vertexShader = shader.vertexShader.replace('#include <skinning_vertex>', `
         vec3 musclePoint=transformed+(muscleTransverse-1.0)*muscleRadial.xyz;
-        transformed=mix(muscleDQPoint(musclePoint,muscleReal,muscleDual),
-          muscleLinearRotation*musclePoint+muscleLinearTranslation,muscleBend);
+        vec3 muscleLinearPoint=muscleLinearRotation*musclePoint+muscleLinearTranslation;
+        transformed=muscleBend>=1.0?muscleLinearPoint:mix(muscleDQPoint(musclePoint,muscleReal,muscleDual),
+          muscleLinearPoint,muscleBend);
       `);
       if (intersectionMarks) {
         shader.uniforms.muscleIntersections = { value: intersectionMarks };
@@ -501,7 +582,7 @@ export async function createMuscleSurfaces(A, THREE, data, opts = {}) {
           diffuseColor.rgb = mix(diffuseColor.rgb, muscleTendonColor, intersectionTint);`);
       }
     };
-    material.customProgramCacheKey = () => 'muscle-dqs-bend-v2-' + nodes.length + (intersectionMarks ? '-rectus' : '');
+    material.customProgramCacheKey = () => 'muscle-dqs-bend-halfturn-v3-' + nodes.length + (intersectionMarks ? '-rectus' : '');
     const mesh = new THREE.SkinnedMesh(geometry, material);
     mesh.userData = { kind: 'muscle', unit: item.unit, side: item.side, anatomicalSurface: true, skinningMethod: 'bend-aware-dual-quaternion' };
     mesh.frustumCulled = false;

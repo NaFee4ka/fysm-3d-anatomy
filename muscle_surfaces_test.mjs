@@ -11,6 +11,7 @@ import { gzipSync, gunzipSync } from 'node:zlib';
 import * as THREE from 'three';
 import { createAnatomy } from './anatomy3.js';
 import { createMuscleSurfaces } from './muscle_surface_render.js';
+import { createTransitions } from './transition_runtime.mjs';
 
 const A = createAnatomy(THREE);
 const root = A.SEG.find(s => !s.parent);
@@ -272,13 +273,23 @@ async function runSuite(label, data, stride) {
       for (let k = 1; k < colors.length; k += 3) if (colors[k] > offColors[m][k]) greenChanged = true;
     }
     assert(greenChanged, 'working muscle bellies must turn green');
+    let transitionStates = 0;
+    if (args.has('--transitions')) {
+      const runtime = createTransitions(THREE, A, JSON.parse(readFileSync('transitions/data.json', 'utf8')));
+      assert(runtime.valid, 'a verified transition packet is required');
+      for (const track of runtime.tracks) for (const fraction of [.125, .375, .625, .875]) {
+        const conf = runtime.sampleTrack(track.id, track.duration * fraction);
+        checkState(`transition/${track.id}/${fraction}`, A.computeWorld(conf.local, conf.rootQ, conf.rootP));
+        transitionStates++;
+      }
+    }
     surfaces.setAppearance(() => ({ active: false, opacity: 1 }));
     for (let m = 0; m < surfaces.pickables.length; m++) {
       const mesh = surfaces.pickables[m];
       assert.deepEqual(mesh.geometry.attributes.color.array, offColors[m]);
       assert.equal(mesh.material.transparent, false); assert.equal(mesh.material.depthWrite, true);
     }
-    summaries.push({ suite: label, units: manifest.real + manifest.reconstructed, bodyPartsUnits: manifest.real, reconstructedUnits: manifest.reconstructed, meshes: surfaces.pickables.length, triangles: data.parts.reduce((sum, p) => sum + p.m, 0), poseSliderStates: A.POSES.length * 3, cycleFrames: cycleIndices.length, practicePoses, asymmetricFrames, vertexStride: stride, skinnedSamples, maxRestError, maxRigidError, maxProximalAttachmentError, exactSourceSeams: sourceSeams.length, maxSourceSeamGap });
+    summaries.push({ suite: label, units: manifest.real + manifest.reconstructed, bodyPartsUnits: manifest.real, reconstructedUnits: manifest.reconstructed, meshes: surfaces.pickables.length, triangles: data.parts.reduce((sum, p) => sum + p.m, 0), poseSliderStates: A.POSES.length * 3, cycleFrames: cycleIndices.length, practicePoses, transitionStates, asymmetricFrames, vertexStride: stride, skinnedSamples, maxRestError, maxRigidError, maxProximalAttachmentError, exactSourceSeams: sourceSeams.length, maxSourceSeamGap });
   } finally { surfaces.dispose(); }
 }
 

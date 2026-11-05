@@ -11,9 +11,11 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 /*__MUSCLE_SURFACES_LIB__*/
 /*__CONNECTIVE_SURFACES_LIB__*/
 /*__JOINT_SURFACES_LIB__*/
+/*__SPINE_SURFACES_LIB__*/
+/*__TRANSITIONS_LIB__*/
 
 // ---------- typography: keep short words and dashes off line ends ----------
-const SHORT = 'в|во|и|не|ни|до|на|с|со|к|ко|о|об|от|у|по|за|из|а|но|же|для|при|без|над|под|про|или|как|что|это|то|их|его|её|ее|чем|чём|уже';
+const SHORT = 'в|во|и|не|ни|до|на|с|со|к|ко|о|об|от|у|по|за|из|а|но|же|для|при|без|над|под|про|или|как|что|это|то|их|его|её|ее|чем|чём|уже|через|перед|после|между';
 const RE_SHORT = new RegExp('(^|[\\s(«„"])(' + SHORT + ')[\\t\\r\\n ]+', 'giu');
 function nb(s) {
   let result = String(s), previous;
@@ -44,8 +46,11 @@ const FASCIA_NOTES = /*__FASCIA_NOTES__*/null;
 const MUSCLE_SURFACE_DATA = /*__MUSCLE_SURFACES__*/null;
 const JOINT_SURFACE_DATA = /*__JOINT_SURFACES__*/null;
 const CAPSULE_RIM_DATA = /*__CAPSULE_RIMS__*/null;
+const SPINE_SURFACE_DATA = /*__SPINE_SURFACES__*/null;
 const PRACTICE_DATA = /*__PRACTICE__*/null;
 const PRACTICE_PHYSICS = /*__PRACTICE_PHYSICS__*/null;
+const TRANSITION_DATA = /*__TRANSITIONS__*/null;
+const TRANSITIONS = typeof createTransitions === 'function' ? createTransitions(THREE, A, TRANSITION_DATA) : null;
 const PRACTICE_ALGORITHMS = PRACTICE_DATA?.algorithms || [];
 const PRACTICE_BY_ID = new Map(PRACTICE_ALGORITHMS.map(a => [a.id, a]));
 const practiceConfs = Object.fromEntries(Object.entries(PRACTICE_DATA?.poses || {}).map(([id, data]) => [id, {
@@ -302,6 +307,7 @@ function cycForceSet(i) {
 }
 function updateForces() {
   if (!forceSets) return;
+  if (state.mode === 'transition') return updateTransitionForces();
   if (state.mode === 'practice') {
     forceSets.pose.visible = forceSets.stand.visible = false;
     if (cycForce) cycForce.visible = false;
@@ -438,6 +444,12 @@ const vertToJoint = {};   // vertebra name -> spine joint id
   for (const n of order) vertToJoint[n] = map[n];
 }
 for (const bk of buckets.values()) {
+  // The atlas-axis articulation has no intervertebral disk. This one legacy
+  // primitive is anatomically incorrect regardless of atlas-loader support.
+  if (bk.mat === 'disc' && bk.seg === 'neckB' && bk.name === 'Межпозвонковый диск C2–C1') {
+    for (const geometry of bk.geos) geometry.dispose();
+    continue;
+  }
   const geo = mergeGeometries(bk.geos, false);
   let mesh;
   if (bk.mat === 'cart') { mesh = new THREE.Mesh(geo, cartMat()); mesh.renderOrder = 2; cartMeshes.push(mesh); }
@@ -662,13 +674,14 @@ for (const s of caps) (capStrands[s.inst.unit + '_' + s.inst.side] ||= []).push(
 
 // ---------- state ----------
 const state = { t: 1, poseId: 'dog', bones: true, joints: true, ligs: true, musclesOuter: true, musclesDeep: true, light: true, forces: false, lightMode: 'length', sel: null, playing: null, mode: 'pose', cycT: 0, fascia: false, flines: false, algorithmId: 'struna', practiceStep: 0 };
-let muscleSurfaces = null, connectiveSurfaces = null, jointSurfaces = null;
+let muscleSurfaces = null, connectiveSurfaces = null, jointSurfaces = null, spineSurfaces = null;
 // physics: muscle effort from the static solution, at the full pose and in plain standing
 const ACTIVE_MIN = 0.08;
 const activeOf = id => new Set(Object.entries(PHYS[id].muscles).filter(([, m]) => knownMuscleEstimate(m) && m.a >= ACTIVE_MIN).map(([u]) => u));
 let activeSet = activeOf('dog');
 const lerpN = (a, b, t) => a + (b - a) * t;
 function effortOf(unit, id, side = 'L') {
+  if (state.mode === 'transition') return 0;
   if (state.mode === 'practice') {
     const record = practiceMuscleRecord(unit, side);
     return knownMuscleEstimate(record) ? record.a : 0;
@@ -677,6 +690,7 @@ function effortOf(unit, id, side = 'L') {
   return lerpN(knownMuscleEstimate(s0) ? s0.a : 0, knownMuscleEstimate(p) ? p.a : 0, state.t);
 }
 function jointPhys(id, pose) {
+  if (state.mode === 'transition') return null;
   if (state.mode === 'practice') return practicePhysics()?.joints?.[id] || null;
   return PHYS[pose || state.poseId].joints[id.replace(/_R$/, '_L')] || null;
 }
@@ -700,6 +714,7 @@ function syncSurfaceVisibility() {
   if (muscleSurfaces) muscleSurfaces.setVisibility(unit => A.UNITS[unit].deep ? state.musclesDeep : state.musclesOuter);
   if (connectiveSurfaces) connectiveSurfaces.setVisibility(part => part.kind === 'lig' ? state.ligs : state.joints);
   if (jointSurfaces) jointSurfaces.setVisibility(state.joints);
+  if (spineSurfaces) spineSurfaces.setVisibility(state.joints);
 }
 function updateJointSourceNote(status) {
   const note = document.getElementById('joint-source-note');
@@ -743,7 +758,9 @@ const FIT_PTS = [['f3c_L', [0.21, 0.63, -0.02]], ['f3c_R', [-0.21, 0.63, -0.02]]
 let overrideConf = null;
 function applyPose(t) {
   let conf;
-  if (state.mode === 'practice') {
+  if (state.mode === 'transition' && transition.route) {
+    conf = TRANSITIONS.sample(transition.route, transition.time);
+  } else if (state.mode === 'practice') {
     conf = practiceConfs[practiceCurrent().step.id];
   } else if (state.mode === 'cycle' && CYC) {
     conf = fillCycConf(state.cycT, cycConf, cycNow);
@@ -785,6 +802,7 @@ function applyPose(t) {
   if (muscleSurfaces) muscleSurfaces.update(P.W, pathCache);
   if (connectiveSurfaces) connectiveSurfaces.update(P.W, pathCache);
   if (jointSurfaces) jointSurfaces.update(P.W);
+  if (spineSurfaces) spineSurfaces.update(P.W);
   for (const id in jointById) { const jj = jointById[id]; jj.res = A.analyzeJoint(jj.def, P.local, P.W, state.mode === 'pose' && STATS[state.poseId] ? STATS[state.poseId].joint[id].mode : undefined); jj.k = Math.max(0, Math.min(1, Math.abs(jj.res.primary || 0) / (jj.res.comps[0] ? jj.res.comps[0].rom : 90))); }
   regions = A.analyzeRegions(P.local);
   const box = new THREE.Box3();
@@ -797,6 +815,7 @@ function applyPose(t) {
 }
 // fascia follows the body; while the round plays it is refreshed about 15 times a second (≈ 18 ms per update)
 function fasciaPhys() {
+  if (state.mode === 'transition') return null;
   if (state.mode === 'practice') {
     const ph = practicePhysics();
     if (!ph) return null;
@@ -833,7 +852,7 @@ function fasciaPhys() {
 function updateFascia(W, force) {
   if (!FR || !(state.fascia || state.flines)) return;
   const now = performance.now();
-  const moving = (state.mode === 'cycle' && cyc && cyc.playing) || morph || cycMorph || state.playing;
+  const moving = (state.mode === 'cycle' && cyc && cyc.playing) || (state.mode === 'transition' && transition.playing) || morph || cycMorph || state.playing;
   if (!force && moving && now - fasciaAt < 66) return;
   fasciaAt = now;
   fasciaM = FASC.withPhysics(FASC.measure(W || poseW, { paths: true }), fasciaPhys());
@@ -916,6 +935,14 @@ function updateMaterials(time) {
       setOpacity(part.mat, sel && !own ? 0.35 : 1, own ? 0.75 : 0.5);
     }
   });
+  if (spineSurfaces) for (const part of spineSurfaces.parts) {
+    const own = sel?.kind === 'spinalDisc' && sel.id === part.id;
+    // A neutral selection highlight must not imply a force estimate at this
+    // individual disk level; gold is reserved for calculated joint reactions.
+    part.mesh.material.emissive.setHex(0x8797a8);
+    part.mesh.material.emissiveIntensity = state.light && own ? .45 : 0;
+    setOpacity(part.mesh.material, sel && !own ? .45 : 1, part.baseOpacity ?? .9);
+  }
   for (const id in jointById) {
     const jj = jointById[id];
     const meshes = glowByJoint[id] || [];
@@ -1035,11 +1062,23 @@ function pick(cx, cy) {
   if (state.bones) objs.push(...boneMeshes);
   if (FR && (state.fascia || state.flines)) for (const m of FR.pickables) if (m.visible) objs.push(m);
   const hits = ray.intersectObjects(objs, false);
-  const first = hits[0];
+  let first = hits[0];
+  if (first && jointPick.includes(first.object)) {
+    // Coarse invisible touch targets can enclose an atlas disk. Prefer the
+    // nearest real visible surface only when that surface is the disk itself;
+    // do not reach through a closer bone, muscle or other cartilage.
+    const visibleHit = hits.find(hit => {
+      if (jointPick.includes(hit.object) || hit.object.material?.visible === false) return false;
+      for (let object = hit.object; object; object = object.parent) if (!object.visible) return false;
+      return true;
+    });
+    if (visibleHit?.object.userData.kind === 'spinalDisc') first = visibleHit;
+  }
   if (first) {
     const d = first.object.userData;
     if (d.kind === 'fascia') return select({ kind: 'fascia', id: d.id, side: d.side });
     if (d.kind === 'line' || d.kind === 'station') return select({ kind: 'fline', id: d.id || d.line, side: d.side });
+    if (d.kind === 'spinalDisc') return select({ kind: 'spinalDisc', id: d.id });
     if (d.kind === 'muscle' || d.kind === 'lig' || d.kind === 'joint') return select(d);
     if (d.kind === 'cap') return select({ kind: 'joint', id: d.unit + '_' + d.side });
     if (d.kind === 'cart' && d.joint) return select({ kind: 'joint', id: d.joint });
@@ -1181,6 +1220,7 @@ function supportHTML(P, S) {
   return html;
 }
 function renderCues() {
+  if (state.mode === 'transition') return renderTransitionCues();
   if (state.mode === 'practice') return renderPracticeCues();
   const P = POSE[state.poseId], S = STATS[state.poseId];
   cuesEl.innerHTML = `
@@ -1242,6 +1282,10 @@ function updateResearchQuality() {
   const node = document.getElementById('model-quality');
   if (!node) return;
   const lines = [];
+  if (state.mode === 'transition') {
+    node.innerHTML = `<p class="meter-foot">${practiceText('Переход — геометрическая иллюстрация. Во время движения силы, мышечная активность и динамическое равновесие не рассчитываются. Собственные статические оценки доступны после нажатия «Открыть позу».')}</p>`;
+    return;
+  }
   if (state.mode === 'practice') {
     node.innerHTML = practiceQualityHTML(practicePhysics());
     return;
@@ -1309,7 +1353,7 @@ function bindCardButtons() {
   const f = info.querySelector('.card-focus'); if (f) f.addEventListener('click', () => focusSelection());
 }
 function closeBtn() { return `<button class="card-close" aria-label="Закрыть карточку"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>`; }
-function focusBtn() { return `<button class="btn btn-sm card-focus"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg><span>Показать на модели</span></button>`; }
+function focusBtn() { return `<button class="btn btn-sm card-focus"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg><span>${nb('Показать на модели')}</span></button>`; }
 function poseNote(text) { const P = POSE[state.poseId]; return text ? `<h3 class="card-sub">${nb('В позе «' + P.name + '»')}</h3><p class="role">${nb(text)}</p>` : ''; }
 function effortBlock(unit) {
   const m = PHYS[state.poseId].muscles[unit];
@@ -1437,6 +1481,29 @@ function renderBone(d) {
     <p class="role">${nb('Форма кости не меняется. Меняется её положение: смотри соседние суставы, их хрящи подсвечены по углу.')}</p>`;
   bindCardButtons();
 }
+function renderSpinalDisc(id) {
+  const part = spineSurfaces?.parts.find(p => p.id === id);
+  if (!part) { state.sel = null; return renderInfoBase(); }
+  const ratio = part.registration?.volumeRatio, fitGap = part.registration?.maxInterBoneFitDifferenceM;
+  const limits = [Number.isFinite(ratio) ? 'После подгонки объём этой сетки составляет ' + researchNumber(ratio, 2) + ' исходного объёма атласа.' : '',
+    Number.isFinite(fitGap) ? 'Максимальное различие преобразований соседних костей при подгонке — ' + researchNumber(fitGap * 1000, 1) + ' мм.' : ''].filter(Boolean);
+  info.innerHTML = `${closeBtn()}<p class="card-eyebrow">${practiceText('Межпозвонковый диск · форма из атласа')}</p>
+    <h2 class="card-title">${practiceText(part.name)}</h2><p class="latin">${practiceText(part.latin || '')}</p>
+    <p class="role">${practiceText('Форма диска взята из BodyParts3D 4.0. Регистрация между соседними костями и движение при изгибе — геометрические приближения.')}</p>
+    ${limits.length ? `<p class="meter-foot" data-spine-fit-limits>${practiceText(limits.join(' ') + ' Это ограничения геометрической подгонки, не измеренное сжатие ткани и не суставный зазор.')}</p>` : ''}
+    ${part.levelAssignment === 'inferred' ? `<p class="meter-foot">${practiceText('Уровень диска определён по его положению в анатомическом наборе; в исходной подписи этот уровень не указан.')}</p>` : ''}
+    <p class="meter-foot">${practiceText('Это отдельный анатомический уровень. Реакции укрупнённых суставов позвоночника не являются измеренной нагрузкой именно на этот диск. Давление, сжатие и внутреннее строение ткани не рассчитываются.')}</p>
+    <p class="meter-foot">${practiceText('Источник: BodyParts3D, DBCLS, CC BY 4.0' + (part.sourceIds?.length ? '; элементы ' + part.sourceIds.join(', ') : '') + '.')}</p>${focusBtn()}`;
+  bindCardButtons();
+}
+function updateSpineSourceNote(status) {
+  const note = $('spine-source-note');
+  if (!note) return;
+  note.textContent = nb(status === 'ready'
+    ? 'Межпозвонковые диски: 23 формы из BodyParts3D. Подгонка к общему скелету меняет исходную форму; её ограничения указаны в карточке диска. Движение — геометрическое приближение; давление и сжатие ткани не рассчитываются.'
+    : 'Межпозвонковые диски показаны условной схемой: формы из атласа в этом браузере недоступны.');
+}
+
 function renderInfo() {
   renderInfoBase();
   if (state.mode !== 'practice') appendLinesOf();
@@ -1445,6 +1512,8 @@ function renderInfo() {
 }
 function renderInfoBase() {
   const s = state.sel;
+  if (s?.kind === 'spinalDisc') return renderSpinalDisc(s.id);
+  if (state.mode === 'transition') return renderTransitionInfo();
   if (state.mode === 'practice') return renderPracticeInfo();
   if (s && s.kind === 'fline') return renderLine(s.id);
   if (s && s.kind === 'fascia') return renderFasciaEl(s.id);
@@ -1472,11 +1541,16 @@ function select(d) {
   }
   if (d && d.kind === 'muscle') { const deep = !!A.UNITS[d.unit].deep; if (deep && !state.musclesDeep) setLayer('musclesDeep', true); if (!deep && !state.musclesOuter) setLayer('musclesOuter', true); }
   if (d && d.kind === 'lig' && !state.ligs) setLayer('ligs', true);
-  if (d && d.kind === 'joint' && !state.joints) setLayer('joints', true);
+  if (d && (d.kind === 'joint' || d.kind === 'spinalDisc') && !state.joints) setLayer('joints', true);
   renderInfo();
 }
 function focusSelection() {
   const s = state.sel; if (!s) return;
+  if (s.kind === 'spinalDisc' && spineSurfaces) {
+    const bounds = spineSurfaces.getBounds(s.id);
+    if (bounds) { const sphere = bounds.getBoundingSphere(new THREE.Sphere()); return focusOn(sphere.center, Math.max(.23, sphere.radius * 3)); }
+    return;
+  }
   const surfaceBounds = s.kind === 'muscle' && muscleSurfaces ? muscleSurfaces.getBounds(s.unit, s.side || 'L')
     : s.kind === 'lig' && connectiveSurfaces ? connectiveSurfaces.getBounds('lig', s.unit, s.side || 'L') : null;
   if (surfaceBounds) {
@@ -1518,6 +1592,7 @@ function focusSelection() {
 }
 
 function setLayer(name, on) {
+  if (state.mode === 'transition' && name === 'forces') on = false;
   if (state.mode === 'practice' && name === 'forces' && !practicePhysics()) on = false;
   state[name] = on;
   const btn = document.querySelector(`[data-layer="${name}"]`);
@@ -1531,10 +1606,11 @@ function setLayer(name, on) {
   if (FR && name === 'flines') { FR.setLayer('lines', on); updateFascia(null, true); if (on && !state.sel) select({ kind: 'flines' }); }
   if (FR && name === 'light') updateFascia(null, true);
   if (state.sel && ((state.sel.kind === 'fline' || state.sel.kind === 'flines') && !state.flines || state.sel.kind === 'fascia' && !state.fascia)) select(null);
-  if (state.sel && ((state.sel.kind === 'muscle' && !muscleVisible(unitStrands[state.sel.unit][0])) || (state.sel.kind === 'lig' && !state.ligs) || (state.sel.kind === 'joint' && !state.joints) || (state.sel.kind === 'bone' && !state.bones))) select(null);
+  if (state.sel && ((state.sel.kind === 'muscle' && !muscleVisible(unitStrands[state.sel.unit][0])) || (state.sel.kind === 'lig' && !state.ligs) || ((state.sel.kind === 'joint' || state.sel.kind === 'spinalDisc') && !state.joints) || (state.sel.kind === 'bone' && !state.bones))) select(null);
 }
 document.querySelectorAll('[data-layer]').forEach(b => b.addEventListener('click', () => setLayer(b.dataset.layer, b.getAttribute('aria-pressed') !== 'true')));
 function setLightMode(mode) {
+  if (state.mode === 'transition' && mode !== 'length') return;
   if (state.mode === 'practice' && mode !== 'length' && !practicePhysics()) return;
   state.lightMode = mode;
   document.querySelectorAll('[data-lightmode]').forEach(b => b.setAttribute('aria-pressed', b.dataset.lightmode === mode ? 'true' : 'false'));
@@ -1550,7 +1626,7 @@ const slider = $('pose'), poseOut = $('pose-out'), playBtn = $('play');
 let poseDirty = true, morphDone = false;
 function legacyPhysicsInterpolated() { return state.mode === 'pose' && state.t > .015 && state.t < .985; }
 function setT(t, fromSlider) {
-  if (state.mode === 'practice') t = 1;
+  if (state.mode === 'practice' || state.mode === 'transition') t = 1;
   state.t = Math.max(0, Math.min(1, t));
   if (!fromSlider) slider.value = Math.round(state.t * 100);
   poseOut.textContent = Math.round(state.t * 100) + '%';
@@ -1561,7 +1637,7 @@ function setT(t, fromSlider) {
 slider.addEventListener('input', () => { state.playing = null; setPlayLabel(); setT(slider.value / 100, true); });
 function setPlayLabel() { playBtn.setAttribute('aria-pressed', state.playing ? 'true' : 'false'); playBtn.querySelector('span').textContent = state.playing ? 'Стоп' : 'Переход'; }
 playBtn.addEventListener('click', () => {
-  if (state.mode === 'practice') return;
+  if (state.mode === 'practice' || state.mode === 'transition') return;
   if (state.playing) { state.playing = null; setPlayLabel(); return; }
   if (reduceMotion) { setT(state.t > 0.5 ? 0 : 1); return; }
   const from = state.t >= 0.999 ? 0 : state.t;
@@ -1601,7 +1677,9 @@ function unidentifiedMuscle(unit) {
     || !!CYC?.modelQuality?.unidentifiedUnits?.includes(unit);
 }
 function muscleEstimateUnavailable(record) {
-  const text = record?.status === 'unidentified'
+  const text = record?.status === 'transition-uncomputed'
+    ? 'В переходе оценки сил не рассчитаны. Доступны форма мышцы и геометрическая длина её пути. Собственная статическая оценка открывается кнопкой «Открыть позу».'
+    : record?.status === 'unidentified'
     ? 'Отдельная сила этой группы пальцев не определена: модель не разрешает суставы пальцев и силу их хвата. Нулевое значение здесь не означало бы, что мышца не работает.'
     : record?.status === 'quarantined'
       ? 'Оценка силы исключена: пути этой мышцы в показанном положении анатомически несогласованы. Форма и длина пути доступны; достоверного процента усилия для этой мышцы нет.'
@@ -1675,6 +1753,7 @@ function practiceQualityHTML(ph, compact = false) {
   return `<section class="practice-quality" data-practice-quality="verified">${lines.map(line => `<p class="meter-foot">${practiceText(line)}</p>`).join('')}</section>`;
 }
 function practiceMuscleLoadHTML(unit, side) {
+  if (state.mode === 'transition') return muscleEstimateUnavailable({ status: 'transition-uncomputed' });
   const ph = practicePhysics(), record = ph?.muscles?.[unit]?.[side];
   if (!ph) return '';
   if (!knownMuscleEstimate(record)) return muscleEstimateUnavailable(record);
@@ -1731,15 +1810,20 @@ function setPageHash(hash, replace = false) {
   if (location.hash !== target) history[replace ? 'replaceState' : 'pushState'](null, '', target);
 }
 function syncPracticeControls() {
+  const inTransition = state.mode === 'transition';
   const on = state.mode === 'practice';
   const hasPhysics = !!practicePhysics();
   document.body.classList.toggle('practice-mode', on);
   document.body.classList.toggle('practice-uncomputed', on && !hasPhysics);
-  $('main-mode').setAttribute('aria-pressed', on ? 'false' : 'true');
+  $('main-mode').setAttribute('aria-pressed', on || inTransition ? 'false' : 'true');
+  $('transitions-mode').setAttribute('aria-pressed', inTransition ? 'true' : 'false');
+  $('transition-navigation').hidden = !inTransition;
+  $('transition-player').hidden = !inTransition;
+  document.body.classList.toggle('transition-mode', inTransition);
   $('practice-mode').setAttribute('aria-pressed', on ? 'true' : 'false');
-  $('base-poses').hidden = on;
+  $('base-poses').hidden = on || inTransition;
   $('practice-navigation').hidden = !on;
-  posePlayer.hidden = on || state.mode === 'cycle';
+  posePlayer.hidden = on || inTransition || state.mode === 'cycle';
   cyclePlayer.hidden = on || state.mode !== 'cycle';
   for (const b of document.querySelectorAll('[data-lightmode]')) b.setAttribute('aria-pressed', b.dataset.lightmode === state.lightMode ? 'true' : 'false');
   document.body.classList.toggle('mode-effort', state.lightMode === 'effort');
@@ -1753,7 +1837,8 @@ function syncPracticeControls() {
   $('method-context').textContent = nb(on
     ? 'Показано статическое равновесие реконструкции по фотографии. Левые и правые мышцы рассчитаны отдельно, без заданного по фотографии тонуса. Личные сила и гибкость не измерены.'
     : 'Усилия и нагрузки — оценки общей квазистатической модели. Минимальный тонус по подсказкам влияет на распределение работы. Сравнение с расчётом без этих минимумов показывает чувствительность к этому допущению; это не доверительный интервал и не персональная точность.');
-  $('legend-lig-length').textContent = nb(on
+  if (inTransition) syncTransitionPhysicsControls();
+  $('legend-lig-length').textContent = nb(on || inTransition
     ? 'Тёплый свет на связке или капсуле — её путь длиннее, чем в стойке'
     : 'Связки и капсулы светятся тёплым там, где берут натяжение');
 }
@@ -1767,6 +1852,9 @@ function updatePracticeHeader() {
     : '3D-реконструкция по фото. Оценка нагрузки для этой геометрии недоступна.');
   $('practice-prev').disabled = state.practiceStep === 0;
   $('practice-next').disabled = state.practiceStep === algorithm.steps.length - 1;
+  $('practice-transition-next').disabled = state.practiceStep === algorithm.steps.length - 1 || !TRANSITIONS?.valid;
+  $('practice-flow').disabled = state.practiceStep === algorithm.steps.length - 1 || !TRANSITIONS?.valid;
+  $('practice-flow').textContent = nb(state.practiceStep === 0 ? 'Проиграть алгоритм' : 'Продолжить алгоритм');
   document.querySelectorAll('[data-algorithm]').forEach(b => b.setAttribute('aria-pressed', b.dataset.algorithm === algorithm.id ? 'true' : 'false'));
   $('practice-steps').innerHTML = algorithm.steps.map((s, i) => `<button class="btn practice-step" data-practice-step="${i}" aria-label="${practiceText('Поза ' + s.number + '. ' + s.name)}" aria-pressed="${state.practiceStep === i}"${state.practiceStep === i ? ' aria-current="step"' : ''}>${s.number}</button>`).join('');
   $('practice-steps').querySelectorAll('[data-practice-step]').forEach(b => b.addEventListener('click', () => enterPractice(algorithm.id, Number(b.dataset.practiceStep))));
@@ -1777,6 +1865,7 @@ function updatePracticeHeader() {
 function enterPractice(id = state.algorithmId, index = state.practiceStep, writeHash = true) {
   const algorithm = PRACTICE_BY_ID.get(id);
   if (!Array.isArray(algorithm?.steps) || !Number.isInteger(index) || index < 0 || index >= algorithm.steps.length || !Object.hasOwn(practiceConfs, algorithm.steps[index].id)) return false;
+  if (state.mode === 'transition') stopTransition();
   const previousLightMode = state.lightMode, previousForces = state.forces;
   if (state.mode !== 'practice') {
     practiceReturn = { mode: state.mode, poseId: state.poseId, t: state.t, cycT: state.cycT, lightMode: state.lightMode, forces: state.forces };
@@ -1839,7 +1928,7 @@ function renderPracticeCues() {
     <p class="role">${practiceText('Положение восстановлено по фотографии. Точные углы и индивидуальная гибкость не измерены.')}</p>
     ${notes.length ? `<ul class="plain">${notes.map(n => `<li>${practiceText(n)}</li>`).join('')}</ul>` : ''}
     <p class="meter-foot">${practiceText('Источник: «' + PRACTICE_DATA.source.title + '», раздел «' + PRACTICE_DATA.section + '», страница PDF ' + algorithm.page + '. Названия и порядок поз сохранены.')}</p>
-    <p class="meter-foot">${practiceText('Показано статическое положение. Переходы между позами не реконструированы.')}</p>
+    <p class="meter-foot">${practiceText('Показано статическое положение. Раздел «Переходы» иллюстрирует движение модели между позами; эти траектории не заданы в методичке.')}</p>
     ${ph ? `<h3 class="card-sub">${practiceText('Опора по оценке модели')}</h3>${physicsLoadHTML(null, ph)}${inferredSupportNotes(ph).map(note => `<p class="meter-foot">${practiceText(note)}</p>`).join('')}${practiceContactsHTML(ph)}` : ''}
     ${physicalLimitSummaryHTML(ph)}${practiceQualityHTML(ph, true)}
     ${image ? `<details class="practice-reference"><summary>${practiceText('Фото из методички')}</summary><img src="${image}" alt="${practiceText(algorithm.referenceAlt || 'Восемь поз алгоритма «' + algorithm.name + '» из методички FYSM')}" loading="lazy"><p class="meter-foot">${practiceText('«' + PRACTICE_DATA.source.title + '», страница PDF ' + algorithm.page + '.')}</p></details>` : ''}`;
@@ -1870,7 +1959,7 @@ function renderPracticeInfo() {
     const j = jointById[s.id], r = j.res;
     info.innerHTML = `${closeBtn()}<p class="card-eyebrow">${practiceText('Сустав · ' + sideWord(s.id))}</p><h2 class="card-title">${practiceText(j.def.name)}</h2>
       <h3 class="card-sub">${practiceText('Углы показанного положения')}</h3><ul class="parts comps">${r.comps.map(c => `<li><span>${practiceText(c.label)}</span><span class="num gold-t">${fmtDeg(c.value)}</span>${romBar(c.value, c.rom)}<span class="part-note">${practiceText('Диапазон модели до ' + c.rom + '°. ' + (c.note || ''))}</span></li>`).join('')}</ul>
-      <p class="meter-foot">${practiceText('Углы — геометрическая оценка реконструкции по фото.')}</p>${practiceJointLoadHTML(s.id)}${jointSourceHTML(s.id)}${focusBtn()}`;
+      <p class="meter-foot">${practiceText(state.mode === 'transition' ? 'Углы — геометрическая оценка текущего положения модели.' : 'Углы — геометрическая оценка реконструкции по фото.')}</p>${practiceJointLoadHTML(s.id)}${jointSourceHTML(s.id)}${focusBtn()}`;
     bindCardButtons(); return;
   }
   if (FASC && s && /^(fline|fascia|flines)$/.test(s.kind)) {
@@ -1909,8 +1998,223 @@ function renderPracticeInfo() {
   bindCardButtons();
 }
 
+// ---------- transitions: prepared geometric routes, independent of force estimates ----------
+const transition = { route: null, from: '', to: '', time: 0, playing: false, speed: 1, last: 0,
+  cardAt: 0, qualityKey: '', preferredLight: 'length', sequence: null, holdUntil: 0 };
+const transitionPose = id => TRANSITIONS?.poses?.find(p => p.id === id) || null;
+const transitionLabel = p => p?.kind === 'practice'
+  ? (PRACTICE_BY_ID.get(p.algorithmId)?.name || p.algorithmId) + ' · ' + (p.stepIndex + 1) + '. ' + p.name : p?.name || '';
+function transitionEndpoint() {
+  if (state.mode !== 'transition' || !transition.route) return null;
+  if (transition.time <= 1e-8) return transitionPose(transition.from);
+  if (transition.time >= transition.route.duration - 1e-8) return transitionPose(transition.to);
+  return null;
+}
+function updateTransitionForces() {
+  // Prepared routes have adjusted floor placement and no matching force solve,
+  // including at their endpoints. Never attach an original static force set.
+  forceSets.pose.visible = forceSets.stand.visible = false;
+  if (cycForce) cycForce.visible = false;
+  if (practiceForce) practiceForce.visible = false;
+}
+
+function currentTransitionPoseId() {
+  if (state.mode === 'transition') return transition.time >= transition.route.duration / 2 ? transition.to : transition.from;
+  if (state.mode === 'practice') return practiceCurrent()?.step.id;
+  return state.poseId;
+}
+function transitionNextId(id) {
+  const p = transitionPose(id);
+  if (p?.kind === 'practice') {
+    const a = PRACTICE_BY_ID.get(p.algorithmId);
+    if (a?.steps[p.stepIndex + 1]) return a.steps[p.stepIndex + 1].id;
+  }
+  const catalog = TRANSITIONS?.poses || [], i = catalog.findIndex(p => p.id === id);
+  return catalog[(i + 1) % catalog.length]?.id;
+}
+function syncTransitionPhysicsControls() {
+  if (state.mode !== 'transition') return;
+  if (state.lightMode !== 'length') { state.lightMode = 'length'; fasciaM = null; }
+  document.body.classList.add('transition-moving');
+  document.body.classList.add('practice-mode');
+  document.body.classList.toggle('mode-effort', state.lightMode === 'effort');
+  for (const b of document.querySelectorAll('[data-lightmode]')) b.setAttribute('aria-pressed', b.dataset.lightmode === state.lightMode ? 'true' : 'false');
+  document.querySelector('[data-layer="forces"]').disabled = true;
+  document.querySelector('[data-layer="forces"]').setAttribute('aria-pressed', 'false');
+  document.querySelector('[data-lightmode="effort"]').disabled = true;
+  $('method-context').textContent = nb('Переход — геометрическая иллюстрация движения общей модели. Длительность выбрана для просмотра. Траектории и темп не заданы фотографиями методички. Положения тела и отдельных суставов скорректированы для анимации. Это иллюстрация; силы на всём переходе не рассчитаны. Статические оценки доступны в исходной позе через «Открыть позу».');
+}
+function transitionAdjustmentNotes(id) {
+  const result = [], visit = adjustment => {
+    if (!adjustment || typeof adjustment !== 'object') return;
+    if (typeof adjustment.note === 'string' && adjustment.note.trim()) result.push(adjustment.note.trim());
+    if (Array.isArray(adjustment.adjustments)) adjustment.adjustments.forEach(visit);
+  };
+  visit(TRANSITION_DATA?.endpoints?.[id]?.kinematicAdjustment);
+  return [...new Set(result)];
+}
+function transitionPhase() {
+  return transition.route?.phases?.find(p => transition.time >= p.t0 - 1e-8 && transition.time < p.t1 - 1e-8)
+    || transition.route?.phases?.at(-1) || null;
+}
+function updateTransitionHeader() {
+  const from = transitionPose(transition.from), to = transitionPose(transition.to);
+  if (!from || !to || !transition.route) return;
+  const end = transitionEndpoint();
+  $('pose-sanskrit').textContent = nb(end ? (end.id === transition.from ? 'Переходы · исходная поза' : 'Переходы · конечная поза') : 'Переходы · движение модели');
+  $('pose-name').textContent = nb(end ? transitionLabel(end) : transitionLabel(from) + ' → ' + transitionLabel(to));
+  const phase = transitionPhase();
+  $('transition-phase').textContent = nb(end ? 'Поза «' + end.name + '»' : phase?.label || 'Движение между позами');
+  $('transition-out').textContent = nb(fmtSec(transition.time).replace(/с$/, 'сек.') + ' / ' + fmtSec(transition.route.duration).replace(/с$/, 'сек.'));
+  const percent = Math.max(0, Math.min(1, transition.time / transition.route.duration));
+  $('transition-time').value = Math.round(percent * 1000);
+  $('transition-time').style.setProperty('--fill', percent * 100 + '%');
+  $('transition-time').setAttribute('aria-valuetext', nb(fmtSec(transition.time) + ': ' + (end?.name || phase?.label || 'переход')));
+  $('transition-play').setAttribute('aria-pressed', transition.playing ? 'true' : 'false');
+  $('transition-play').textContent = nb(transition.playing ? 'Пауза' : transition.time >= transition.route.duration - 1e-8 ? 'Повторить' : 'Пуск');
+  $('transition-open-pose').textContent = nb(end ? 'Открыть позу' : 'К конечной позе');
+  const adjustments = end ? transitionAdjustmentNotes(end.id) : [];
+  $('transition-adjustments').hidden = !adjustments.length;
+  $('transition-adjustments').textContent = nb(adjustments.join(' '));
+  canvas.setAttribute('aria-label', nb('3D-переход: «' + from.name + '» → «' + to.name + '». Вращай, приближай и выбирай части тела.'));
+  document.querySelectorAll('[data-pose]').forEach(b => b.setAttribute('aria-pressed', 'false'));
+  cycleTab.setAttribute('aria-pressed', 'false');
+}
+function setTransitionTime(time) {
+  if (state.mode !== 'transition' || !transition.route || !Number.isFinite(time)) return;
+  transition.time = Math.max(0, Math.min(transition.route.duration, time));
+  const end = transitionEndpoint();
+  if (end?.kind === 'pose') state.poseId = end.id;
+  else if (end?.kind === 'practice') { state.algorithmId = end.algorithmId; state.practiceStep = end.stepIndex; }
+  const key = end?.id || 'moving';
+  if (key !== transition.qualityKey) { transition.qualityKey = key; syncTransitionPhysicsControls(); renderCues(); }
+  updateTransitionHeader(); poseDirty = true;
+}
+function transitionPause() {
+  transition.playing = false; transition.holdUntil = 0;
+  if (state.mode === 'transition') updateTransitionHeader();
+}
+function stopTransition() {
+  transitionPause(); transition.sequence = null;
+  if (state.mode === 'transition') state.mode = 'pose';
+  document.body.classList.remove('transition-mode', 'transition-moving');
+  state.lightMode = transition.preferredLight;
+  syncPracticeControls();
+}
+function enterTransition(fromId, toId, options = {}) {
+  const from = transitionPose(fromId), to = transitionPose(toId);
+  if (!TRANSITIONS?.valid || !from || !to || fromId === toId) return false;
+  let route;
+  try { route = TRANSITIONS.route(fromId, toId); } catch { return false; }
+  if (!route || !Number.isFinite(route.duration) || route.duration <= 0) return false;
+  const sequence = options.sequence || null;
+  const automaticNext = state.mode === 'transition' && options.writeHash === false && sequence
+    && transition.sequence === sequence && transition.to === fromId;
+  const preferredLight = state.mode === 'transition' ? transition.preferredLight : state.lightMode;
+  if (state.mode === 'practice') exitPractice(false, false);
+  if (state.mode === 'cycle') exitCycle();
+  transitionPause();
+  state.mode = 'transition'; state.t = 1; state.playing = null;
+  if (!automaticNext) { state.sel = null; state.camAnim = null; }
+  morph = null; cycMorph = null; overrideConf = null; setPlayLabel(); cycPause();
+  transition.route = route; transition.from = fromId; transition.to = toId;
+  transition.sequence = sequence; transition.preferredLight = preferredLight; transition.qualityKey = '';
+  transition.cardAt = 0; transition.holdUntil = 0;
+  if (FR && !automaticNext) FR.focus(null);
+  fasciaM = null;
+  if (!automaticNext) { VIEW_DIR = CYCLE_VIEW.clone(); state.userMoved = false; }
+  $('transition-from').value = fromId; $('transition-to').value = toId;
+  $('transition-error').hidden = true;
+  syncPracticeControls(); setTransitionTime(0); applyPose(1); poseDirty = false;
+  renderCues(); renderInfo(); updateMaterials(performance.now()); updateForces();
+  if (!automaticNext) resetView(false);
+  if (options.writeHash !== false || automaticNext) setPageHash('transition/' + fromId + '/' + toId, !!automaticNext);
+  if (options.play && !reduceMotion) { transition.playing = true; transition.last = performance.now(); updateTransitionHeader(); }
+  return true;
+}
+function playTransition() {
+  if (state.mode !== 'transition' || !transition.route) return;
+  if (transition.time >= transition.route.duration - 1e-8) setTransitionTime(0);
+  transition.playing = true; transition.last = performance.now(); transition.holdUntil = 0; updateTransitionHeader();
+}
+function transitionStep(now) {
+  if (!transition.playing || !transition.route) return;
+  const delta = Math.max(0, Math.min(.15, (now - transition.last) / 1000)); transition.last = now;
+  if (transition.holdUntil) {
+    if (now < transition.holdUntil) return;
+    transition.holdUntil = 0;
+    const a = PRACTICE_BY_ID.get(transition.sequence), p = transitionPose(transition.to), next = a?.steps[p?.stepIndex + 1];
+    if (next && enterTransition(transition.to, next.id, { play: true, sequence: a.id, writeHash: false })) return;
+    transitionPause(); return;
+  }
+  setTransitionTime(transition.time + delta * transition.speed);
+  if (transition.time >= transition.route.duration - 1e-8) {
+    const a = PRACTICE_BY_ID.get(transition.sequence), p = transitionPose(transition.to);
+    if (a?.steps[p?.stepIndex + 1]) transition.holdUntil = now + 1000;
+    else transitionPause();
+  }
+}
+function renderTransitionCues() {
+  const from = transitionPose(transition.from), to = transitionPose(transition.to);
+  cuesEl.innerHTML = `<p class="card-eyebrow">${practiceText('Переход между асанами')}</p><h2 class="card-title">${practiceText(transitionLabel(from) + ' → ' + transitionLabel(to))}</h2>
+    <p class="role">${practiceText('Движение модели показывает изменение формы и суставных углов. Маршрут и длительность — иллюстрация, а не техника или темп выполнения из методички.')}</p>
+    ${transition.route.phases?.length ? `<ol class="plain">${transition.route.phases.map(p => `<li>${practiceText(p.label)}</li>`).join('')}</ol>` : ''}
+    <p class="meter-foot">${practiceText('Положения тела и отдельных суставов скорректированы для анимации. Это геометрическая иллюстрация. На всём переходе, включая начальную и конечную позы, силы и активность мышц не рассчитаны. Исходная поза со своей статической оценкой открывается кнопкой «Открыть позу».')}</p>
+    <p class="meter-foot">${practiceText('Слои тканей, длины их путей и суставные углы доступны на паузе и во время просмотра.')}</p>
+    <p class="meter-foot">${practiceText('Проверки траектории относятся к геометрии модели. Полная динамика, контакт всех мягких тканей и персональная возможность выполнить движение не подтверждены. В исходной анатомической подгонке остаются локальные пересечения костей; проверка не доказывает отсутствие всех пересечений тела.')}</p>`;
+}
+function renderTransitionInfo() { return renderPracticeInfo(); }
+
+function openTransitionEndpoint() {
+  const endpoint = transitionEndpoint() || transitionPose(transition.to);
+  if (!endpoint) return;
+  stopTransition();
+  if (endpoint.kind === 'practice') enterPractice(endpoint.algorithmId, endpoint.stepIndex);
+  else { state.poseId = endpoint.id; activeSet = activeOf(endpoint.id); VIEW_DIR = new THREE.Vector3(...POSE[endpoint.id].view).normalize(); buildForces(endpoint.id); setT(1); applyPose(1); poseDirty = false; updateHeader(); renderCues(); renderInfo(); updateForces(); resetView(false); setPageHash(endpoint.id); }
+}
+function initTransitions() {
+  if (!TRANSITIONS?.valid || TRANSITIONS.poses?.length !== 30) return;
+  $('transitions-mode').hidden = false;
+  const groups = [['pose', 'Основные позы'], ...PRACTICE_ALGORITHMS.map(a => [a.id, a.name])];
+  const html = groups.map(([group, label]) => `<optgroup label="${practiceText(label)}">${TRANSITIONS.poses.filter(p => group === 'pose' ? p.kind === 'pose' : p.algorithmId === group).map(p => `<option value="${practiceText(p.id)}">${practiceText(transitionLabel(p))}</option>`).join('')}</optgroup>`).join('');
+  $('transition-from').innerHTML = $('transition-to').innerHTML = html;
+  $('transitions-mode').addEventListener('click', () => {
+    if (state.mode === 'transition') return;
+    const from = currentTransitionPoseId(); enterTransition(from, transitionNextId(from));
+  });
+  $('transition-build').addEventListener('click', () => {
+    const ok = enterTransition($('transition-from').value, $('transition-to').value);
+    $('transition-error').hidden = ok;
+  });
+  $('transition-swap').addEventListener('click', () => enterTransition(transition.to, transition.from));
+  $('transition-play').addEventListener('click', () => transition.playing ? transitionPause() : playTransition());
+  $('transition-time').addEventListener('input', event => { transitionPause(); transition.sequence = null; setTransitionTime(Number(event.target.value) / 1000 * transition.route.duration); });
+  $('transition-restart').addEventListener('click', () => { transitionPause(); setTransitionTime(0); });
+  $('transition-open-pose').addEventListener('click', openTransitionEndpoint);
+  document.querySelectorAll('[data-transition-speed]').forEach(button => button.addEventListener('click', () => {
+    transition.speed = Number(button.dataset.transitionSpeed);
+    document.querySelectorAll('[data-transition-speed]').forEach(b => b.setAttribute('aria-pressed', b === button ? 'true' : 'false'));
+  }));
+  $('practice-transition-next').addEventListener('click', () => {
+    const a = PRACTICE_BY_ID.get(state.algorithmId), from = a?.steps[state.practiceStep], to = a?.steps[state.practiceStep + 1];
+    if (from && to) enterTransition(from.id, to.id);
+  });
+  $('practice-flow').addEventListener('click', () => {
+    const a = PRACTICE_BY_ID.get(state.algorithmId), from = a?.steps[state.practiceStep], to = a?.steps[state.practiceStep + 1];
+    if (from && to) enterTransition(from.id, to.id, { play: true, sequence: a.id });
+  });
+  document.addEventListener('keydown', event => {
+    if (state.mode !== 'transition' || event.altKey || event.ctrlKey || event.metaKey || /INPUT|SELECT|TEXTAREA|BUTTON|SUMMARY/.test(event.target.tagName) || event.target.isContentEditable) return;
+    if (event.code === 'Space') { event.preventDefault(); transition.playing ? transitionPause() : playTransition(); }
+    else if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); transitionPause(); transition.sequence = null; setTransitionTime(transition.time + (event.key === 'ArrowLeft' ? -1 : 1) * .5); }
+    else if (event.key === 'Home' || event.key === 'End') { event.preventDefault(); transitionPause(); setTransitionTime(event.key === 'Home' ? 0 : transition.route.duration); }
+  });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) transitionPause(); });
+}
+
 // ---------- pose switching ----------
 function updateHeader() {
+  if (state.mode === 'transition') return updateTransitionHeader();
   if (state.mode === 'practice') return updatePracticeHeader();
   const cycMode = state.mode === 'cycle';
   document.querySelectorAll('[data-pose]').forEach(b => b.setAttribute('aria-pressed', !cycMode && b.dataset.pose === state.poseId ? 'true' : 'false'));
@@ -1924,11 +2228,14 @@ function updateHeader() {
   document.querySelectorAll('[data-pose]').forEach(b => b.setAttribute('aria-pressed', b.dataset.pose === state.poseId ? 'true' : 'false'));
 }
 function switchPose(id) {
+  if (!Object.hasOwn(POSE, id)) return;
+  const wasTransition = state.mode === 'transition';
+  if (wasTransition) stopTransition();
   const wasCycle = state.mode === 'cycle';
   const wasPractice = state.mode === 'practice';
-  if (!Object.hasOwn(POSE, id) || (id === state.poseId && !wasCycle && !wasPractice)) return;
-  // the frame of the round is a reused object: the morph starts from a copy (with its place on the mat)
-  const from = !wasPractice && displayConf ? cloneConf(displayConf) : null;
+  if (!Object.hasOwn(POSE, id) || (id === state.poseId && !wasCycle && !wasPractice && !wasTransition)) return;
+  // Navigation selects a saved pose immediately. Motion belongs to the
+  // prepared Transition player, not an unchecked cross-pose quaternion blend.
   if (wasPractice) exitPractice(false, false);
   if (wasCycle) exitCycle();
   state.poseId = id;
@@ -1937,7 +2244,10 @@ function switchPose(id) {
   buildForces(id);
   state.playing = null; setPlayLabel();
   setT(1);
-  morph = reduceMotion || !from ? null : { from, t0: performance.now(), dur: 1200, u: 0 };
+  morph = null;
+  // Static navigation is immediate: update the measured geometry before a
+  // retained tissue card reads joint angles or strand lengths.
+  applyPose(1); poseDirty = false;
   state.userMoved = false;
   if (state.sel && state.sel.kind === 'bone') state.sel = null;
   updateHeader();
@@ -2035,15 +2345,17 @@ function cycStep(now) {
   setCycT(Math.min(CYC.T, t1));
 }
 function enterCycle(startT, writeHash = true) {
+  const wasTransition = state.mode === 'transition';
+  if (wasTransition) stopTransition();
   if (!CYC || state.mode === 'cycle') return;
   const wasPractice = state.mode === 'practice';
   if (wasPractice) exitPractice(false, false);
-  const from = !wasPractice && displayConf ? cloneConf(displayConf) : null;
-  if (from && !from.rootP) from.rootP = placedRootP(from.local, from.rootQ);
+  // Enter the checked circle at its saved frame without a separate, unchecked
+  // morph from the previously selected pose.
   state.mode = 'cycle';
   state.playing = null; setPlayLabel(); morph = null;
   const h = CYC.holds.find(x => x.pose === state.poseId);
-  cycMorph = reduceMotion || !from ? null : { from, t0: performance.now(), dur: 900, u: 0 };
+  cycMorph = null;
   VIEW_DIR = CYCLE_VIEW.clone();
   state.userMoved = false;
   if (state.sel && (state.sel.kind === 'bone' || state.sel.kind === 'cart')) state.sel = null;
@@ -2397,8 +2709,9 @@ function memberBtn(mb) {
   if (FASC.EL[mb.unit]) return `<button class="link-btn" data-fel="${mb.unit}">${nm}</button>`;
   return `<span>${nm}</span>`;
 }
-function whereNow() { return state.mode === 'cycle' && CYC ? 'сейчас' : (state.t > 0.5 ? 'в позе «' + POSE[state.poseId].name + '»' : 'в стойке'); }
+function whereNow() { if (state.mode === 'transition') return 'в показанном положении перехода'; return state.mode === 'cycle' && CYC ? 'сейчас' : (state.t > 0.5 ? 'в позе «' + POSE[state.poseId].name + '»' : 'в стойке'); }
 function bookNote(id) {
+  if (state.mode === 'transition' || state.mode === 'practice') return '';
   if (!FASCIA_NOTES || !FASCIA_NOTES[id]) return '';
   if (state.mode === 'cycle' && CYC) {
     const seg = CYC.segs[cycSegAt(state.cycT)];
@@ -2517,12 +2830,20 @@ if (PRACTICE_ALGORITHMS.length) {
   $('practice-algorithms').innerHTML = PRACTICE_ALGORITHMS.map(a => `<button class="btn" data-algorithm="${a.id}" aria-pressed="false">${practiceText(a.name)}</button>`).join('');
   $('practice-algorithms').querySelectorAll('[data-algorithm]').forEach(b => b.addEventListener('click', () => enterPractice(b.dataset.algorithm, 0)));
   $('practice-mode').addEventListener('click', () => enterPractice());
-  $('main-mode').addEventListener('click', () => exitPractice());
+  $('main-mode').addEventListener('click', () => {
+    if (state.mode === 'transition') { switchPose(state.poseId); syncPracticeControls(); applyPose(state.t); poseDirty = false; renderCues(); renderInfo(); updateForces(); resetView(false); }
+    else exitPractice();
+  });
   $('practice-prev').addEventListener('click', () => enterPractice(state.algorithmId, state.practiceStep - 1));
   $('practice-next').addEventListener('click', () => enterPractice(state.algorithmId, state.practiceStep + 1));
 }
 function applyPracticeHash() {
   const hash = location.hash.slice(1);
+  if (hash.startsWith('transition/')) {
+    const match = /^transition\/([a-z0-9-]+)\/([a-z0-9-]+)$/.exec(hash);
+    if (match && enterTransition(match[1], match[2], { writeHash: false })) return;
+    setPageHash(state.poseId, true);
+  }
   if (hash === 'practice' || hash.startsWith('practice/')) {
     const match = /^practice\/([a-z]+)\/([1-8])$/.exec(hash);
     if (match && enterPractice(match[1], Number(match[2]) - 1, false)) return;
@@ -2533,6 +2854,7 @@ function applyPracticeHash() {
   if (state.mode === 'practice') exitPractice(true, false);
   if (Object.hasOwn(POSE, hash)) switchPose(hash);
   else if (hash === 'cycle' || hash === 'krug') { enterCycle(0, false); cycPause(); cycMorph = null; }
+  else if (state.mode === 'transition') { switchPose(state.poseId); syncPracticeControls(); }
 }
 window.addEventListener('hashchange', applyPracticeHash);
 for (const P of POSES) STATS[P.id] = computeStats(P.id);
@@ -2558,9 +2880,10 @@ renderInfo();
 $('stage').classList.add('ready');
 stage.dataset.muscleSurfaces = 'loading';
 stage.dataset.jointSurfaces = 'loading';
+stage.dataset.spineSurfaces = 'loading';
 // Replace only the exact schematic structures covered by a decoded package.
-// Minor joints and spine retain their existing surfaces; failure retains all
-// schematic joint surfaces and reports that state in the source note.
+// Minor joints retain their existing surfaces; atlas spine disks load separately.
+// Failure retains schematic joint surfaces and reports that state in the note.
 setTimeout(async () => {
   try {
     const surfaces = typeof createJointSurfaces === 'function'
@@ -2588,6 +2911,33 @@ setTimeout(async () => {
     console.warn('Joint surface reconstructions could not load; schematic surfaces remain visible.', error);
   }
 }, 0);
+// Atlas disks remain independent of the coarse spine force model. Replace only
+// their exact legacy counterparts after all 23 parts have loaded successfully.
+setTimeout(async () => {
+  try {
+    const surfaces = typeof createSpineSurfaces === 'function'
+      ? await createSpineSurfaces(THREE, A, SPINE_SURFACE_DATA) : null;
+    if (!surfaces || surfaces.parts.length !== 23) {
+      if (surfaces) surfaces.dispose();
+      stage.dataset.spineSurfaces = 'fallback'; updateSpineSourceNote('fallback'); return;
+    }
+    surfaces.update(poseW); spineSurfaces = surfaces;
+    for (const mesh of discMeshes.slice()) {
+      const key = mesh.userData.seg + '|' + mesh.userData.name;
+      if (surfaces.covered.has(key)) removeModelMesh(mesh);
+    }
+    model.add(surfaces.group);
+    for (const part of surfaces.parts) {
+      part.mesh.userData.baseOpacity = part.baseOpacity ?? part.mesh.material.opacity;
+      discMeshes.push(part.mesh);
+    }
+    syncSurfaceVisibility(); poseDirty = true;
+    stage.dataset.spineSurfaces = 'ready'; updateSpineSourceNote('ready');
+  } catch (error) {
+    stage.dataset.spineSurfaces = 'fallback'; updateSpineSourceNote('fallback');
+    console.warn('Spinal atlas disks could not load; schematic disks remain visible.', error);
+  }
+}, 0);
 // Keep the procedural muscles visible while the anatomical meshes decode and
 // acquire their visual skin weights. A failed import retains that complete view.
 setTimeout(async () => {
@@ -2612,17 +2962,19 @@ if (CYC) {
   cycleTab.hidden = false;
   buildCycMarks();
   // reduced motion: the round is not played by itself, only scrubbed
-  if (reduceMotion) { cycPlayBtn.hidden = true; document.querySelector('.cyc .seg-inline').hidden = true; }
+  if (reduceMotion) { cycPlayBtn.hidden = true; cyclePlayer.querySelector('.seg-inline').hidden = true; }
   const h0 = (location.hash || '').replace('#', '');
   if (h0 === 'cycle' || h0 === 'krug') enterCycle(0, false);
 }
-if (location.hash === '#practice' || location.hash.startsWith('#practice/')) applyPracticeHash();
+initTransitions();
+if (location.hash === '#practice' || location.hash.startsWith('#practice/') || location.hash.startsWith('#transition/')) applyPracticeHash();
 
 let lastInfoT = -1;
 const cycFollow = new THREE.Vector3(), _fd = new THREE.Vector3();
 function frame(now) {
   requestAnimationFrame(frame);
-  if (state.mode === 'cycle') cycStep(now);
+  if (state.mode === 'transition') transitionStep(now);
+  else if (state.mode === 'cycle') cycStep(now);
   else if (state.playing) {
     const p = state.playing, u = Math.min(1, (now - p.t0) / p.dur);
     const e = u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
@@ -2643,7 +2995,9 @@ function frame(now) {
   }
   if (poseDirty) {
     applyPose(state.t); poseDirty = false;
-    if (state.mode === 'cycle') cyc.cardDirty = true;
+    if (state.mode === 'transition') {
+      if (!transition.playing || (now - transition.cardAt >= 200 && now - cyc.infoBusy >= 900)) { renderInfo(); transition.cardAt = now; }
+    } else if (state.mode === 'cycle') cyc.cardDirty = true;
     // the open card follows the slider, and is redrawn once the switch to another pose has finished
     else if (researchPoseKey() !== lastResearchKey || (state.sel && (morphDone || Math.abs(state.t - lastInfoT) > 0.004))) { renderInfo(); lastInfoT = state.t; }
     morphDone = false;
@@ -2656,7 +3010,7 @@ function frame(now) {
     controls.target.lerp(centerTarget, state.mode === 'cycle' ? 0.08 : 0.1);
     const want = controls.target.clone().addScaledVector(VIEW_DIR, fitDistance());
     camera.position.lerp(want, 0.1);
-  } else if (state.mode === 'cycle') { controls.target.add(_fd); camera.position.add(_fd); }
+  } else if (state.mode === 'cycle' || state.mode === 'transition') { controls.target.add(_fd); camera.position.add(_fd); }
   updateMaterials(now);
   updateForces();
   controls.update();

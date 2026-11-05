@@ -40,19 +40,20 @@ assert(maxRigidError < 1e-6, 'DQS changed a single rigid support');
 // onto its axis. DQS must retain the independently known circular cross section.
 const identity = { q: Q(), t: V() }, half = { q: Q().setFromAxisAngle(V(0, 1, 0), Math.PI), t: V() };
 const twist = palette([identity, half]);
-const ring = [], linearRing = [];
+const ring = [], linearRing = [], hybridRing = [];
 for (let k = 0; k < 32; k++) {
   const a = k * 2 * Math.PI / 32, point = V(.05 * Math.cos(a), .5, .05 * Math.sin(a));
   const actual = transform(point, [0, 1, 0, 0], [.5, .5, 0, 0], twist);
   const hybrid = deformMuscleVertex(point, V(0, 1, 0), [0, 1, 0, 0], [.5, .5, 0, 0], twist.real, twist.dual, 0, V());
   const expected = point.clone().applyAxisAngle(V(0, 1, 0), Math.PI / 2);
   assert(actual.distanceTo(expected) < 1e-9);
-  assert(hybrid.distanceTo(expected) < 1e-9, 'bend correction must not flatten a pure axial twist');
+  const linear = point.clone().multiplyScalar(.5).addScaledVector(point.clone().applyQuaternion(half.q), .5);
+  assert(hybrid.distanceTo(linear) < 1e-9, 'the half-turn continuity plateau must equal the analytic LBS limit');
   assert(Math.abs(Math.hypot(actual.x, actual.z) - .05) < 1e-10);
   const reordered = transform(point, [1, 0, 0, 0], [.5, .5, 0, 0], twist);
   assert(reordered.distanceTo(actual) < 1e-10, 'half-turn tie changed when the two slots were reordered');
   ring.push(actual);
-  linearRing.push(point.clone().multiplyScalar(.5).addScaledVector(point.clone().applyQuaternion(half.q), .5));
+  linearRing.push(linear); hybridRing.push(hybrid);
 }
 const area = points => Math.abs(points.reduce((sum, p, k) => {
   const next = points[(k + 1) % points.length]; return sum + p.x * next.z - next.x * p.z;
@@ -60,15 +61,26 @@ const area = points => Math.abs(points.reduce((sum, p, k) => {
 const expectedArea = 32 * .05 ** 2 * Math.sin(2 * Math.PI / 32) / 2;
 assert(Math.abs(area(ring) - expectedArea) < 1e-12);
 assert(area(linearRing) < 1e-20, 'the comparison fixture must actually reproduce LBS collapse');
+assert(area(hybridRing) < 1e-20, 'balanced half-turn hybrid collapse is a declared geometric limitation');
+// Quantized weights arbitrarily close to balanced do not preserve thickness
+// either: the analytic linear area ratio is (w0-w1)^2 at a half-turn.
+const quantizedWeight = 32767 / 65535;
+const quantizedRing = Array.from({ length: 32 }, (_, k) => {
+  const point = V(.05 * Math.cos(k * 2 * Math.PI / 32), .5, .05 * Math.sin(k * 2 * Math.PI / 32));
+  return deformMuscleVertex(point, V(0, 1, 0), [0, 1, 0, 0],
+    [quantizedWeight, 1 - quantizedWeight, 0, 0], twist.real, twist.dual, 0, V());
+});
+const quantizedAreaRatio = area(quantizedRing) / expectedArea;
+assert(Math.abs(quantizedAreaRatio - (2 * quantizedWeight - 1) ** 2) < 1e-15,
+  'near-balanced quantized half-turn must expose its analytic loss of thickness');
 const hingePalette = palette([identity, { q: Q().setFromAxisAngle(V(1, 0, 0), Math.PI), t: V() }]);
 const hingePoint = V(.05, .5, 0);
 const hingeDQS = transform(hingePoint, [0, 1, 0, 0], [.5, .5, 0, 0], hingePalette);
 const hingeHybrid = deformMuscleVertex(hingePoint, V(0, 1, 0), [0, 1, 0, 0], [.5, .5, 0, 0],
   hingePalette.real, hingePalette.dual, 0, V());
-assert(hingeHybrid.distanceTo(V(.05, 0, .1)) < 1e-9,
-  'a fully folded hinge must limit DQS bulging with the declared bounded 80% linear blend');
-assert(hingeHybrid.distanceTo(V(.05, 0, 0)) / hingeDQS.distanceTo(V(.05, 0, 0)) > .19,
-  'the hinge correction must retain a nonzero DQS contribution');
+assert(hingeHybrid.distanceTo(V(.05, 0, 0)) < 1e-9,
+  'a half-turn hinge must equal its continuous LBS limit, including loss of cross-section');
+assert(hingeDQS.distanceTo(V(.05, 0, 0)) > .49, 'raw DQS hinge comparison must remain independent');
 for (let sample = 0; sample < 32; sample++) {
   const commonQ = rotation(), commonT = vector(2), point = vector();
   const movedPalette = palette([identity, half].map(({ q, t }) => ({
@@ -122,8 +134,8 @@ assert(maxCovariantError < 2e-6, 'DQS lost whole-body rigid covariance');
 assert(maxHybridCovariantError < 2e-6, 'bend-aware skinning lost whole-body rigid covariance');
 
 // Exercise the public SkinnedMesh vertex query and actual triangle raycaster,
-// not only the numeric helper. The little half-turn strip has exact anatomical
-// endpoints and a middle vertex that LBS would collapse onto the support axis.
+// not only the numeric helper. At 150 degrees this strip is outside the new
+// half-turn window, so the original analytical DQS/raycast behavior remains.
 const segments = [{ name: 'root', parent: null, J: V() },
   { name: 'a', parent: 'root', J: V() }, { name: 'b', parent: 'root', J: V(0, 1, 0) }];
 const restWorld = { root: { p: V(), q: Q() }, a: { p: V(), q: Q() }, b: { p: V(0, 1, 0), q: Q() } };
@@ -143,7 +155,8 @@ const strip = await createMuscleSurfaces(model, THREE, { v: 1, parts: [{ unit: '
 let raycastErrorM = null, endpointErrorM = null;
 try {
   const mesh = strip.pickables[0], restBuffer = mesh.geometry.attributes.position.array.slice();
-  const W = { ...restWorld, b: { p: V(0, 1, 0), q: half.q } };
+  const stripAngle = 5 * Math.PI / 6;
+  const W = { ...restWorld, b: { p: V(0, 1, 0), q: Q().setFromAxisAngle(V(0, 1, 0), stripAngle) } };
   const paths = new Map([[inst.id, [V(), V(0, 1.5, 0)]]]);
   strip.update(W, paths);
   const radius = mesh.muscleDeformation.scale.value;
@@ -157,10 +170,10 @@ try {
     if (bone === 'a') wa += weights[8 + k]; else if (bone === 'b') wb += weights[8 + k];
   }
   const restMiddle = V().fromBufferAttribute(mesh.geometry.attributes.position, 2);
-  const angle = 2 * Math.atan2(wb, wa);
+  const angle = 2 * Math.atan2(wb * Math.sin(stripAngle / 2), wa + wb * Math.cos(stripAngle / 2));
   const expectedMiddle = restMiddle.clone(); expectedMiddle.x *= radius; expectedMiddle.z *= radius;
   expectedMiddle.applyAxisAngle(V(0, 1, 0), angle);
-  assert(c.distanceTo(expectedMiddle) < 1e-7, 'public CPU mesh query diverged from the analytic half-turn deformation');
+  assert(c.distanceTo(expectedMiddle) < 1e-7, 'public CPU mesh query diverged from the analytic 150-degree deformation');
   assert(Math.hypot(c.x, c.z) > .04, 'public mesh query silently fell back to collapsed LBS');
   assert.deepEqual(mesh.geometry.attributes.position.array, restBuffer, 'deformation changed the supplied atlas/rest vertices');
   for (const bone of mesh.skeleton.bones) assert.deepEqual(bone.scale.toArray(), [1, 1, 1]);
@@ -190,12 +203,64 @@ const fixture = { glsl: muscleDualQuaternionGLSL(4), groups: [
   { real: [...fixturePalette.real], dual: [...fixturePalette.dual], cases },
   { real: [...halfFixture.real], dual: [...halfFixture.dual], cases: halfCases },
 ] };
+// A half-turn sign choice is discontinuous in raw DQS. Check both signs of
+// the actual normalized quaternion dot, the former tie and new plateau edges,
+// zero weights and small positive weights. Weights are fixed atlas inputs;
+// no continuity claim is made for changing a weight through zero.
+let halfTurnSweepCases = 0, maxHalfTurnPairErrorM = 0;
+for (const center of [0, 1e-6, 1e-5, .05]) {
+  for (const sign of [-1, 1]) for (const secondary of [0, 1e-8, .03317625820636749, .49999237048905165, .5]) {
+    const positions = [];
+    for (const step of [-1e-9, 1e-9]) {
+      const dot = sign * center + step;
+      const q = Q(0, Math.sqrt(1 - dot * dot), 0, dot);
+      const transforms = [identity, { q, t: V(.02, 0, -.03) }, identity, identity];
+      const p = palette(transforms), weights = Float32Array.from([1 - secondary, secondary, 0, 0]);
+      const ids = [0, 1, 2, 3], point = V(.05, .5, .03), axis = V(0, 1, 0);
+      const actual = deformMuscleVertex(point, axis, ids, weights, p.real, p.dual, 0, V());
+      positions.push(actual);
+      if (secondary === 0) assert(actual.distanceTo(point) < 1e-12, 'zero-weight half-turn must be ignored');
+      if (Math.abs(dot) < 9e-6 && secondary > 0) {
+        const linear = point.clone().multiplyScalar(weights[0])
+          .addScaledVector(point.clone().applyQuaternion(q).add(transforms[1].t), weights[1])
+          .divideScalar(weights[0] + weights[1]);
+        assert(actual.distanceTo(linear) < 1e-8, 'half-turn plateau is not the independently evaluated LBS limit');
+      }
+      const commonQ = Q().setFromAxisAngle(V(1, 2, 3).normalize(), 1.37), commonT = V(.8, -.3, .6);
+      const movedPalette = palette(transforms.map(({ q, t }) => ({ q: commonQ.clone().multiply(q),
+        t: t.clone().applyQuaternion(commonQ).add(commonT) })));
+      const moved = deformMuscleVertex(point, axis, ids, weights, movedPalette.real, movedPalette.dual, 0, V());
+      assert(moved.distanceTo(actual.clone().applyQuaternion(commonQ).add(commonT)) < 2e-6,
+        'half-turn fallback lost common-world rigid covariance');
+      const negated = { real: p.real.slice(), dual: p.dual.slice() };
+      for (let k = 4; k < 8; k++) { negated.real[k] *= -1; negated.dual[k] *= -1; }
+      assert(actual.distanceTo(deformMuscleVertex(point, axis, ids, weights,
+        negated.real, negated.dual, 0, V())) < 1e-12, 'half-turn fallback depends on quaternion sign');
+      const test = { point: point.toArray(), ids, weights: [...weights], axis: axis.toArray(),
+        radial: [0, 0, 0, 0], scale: 1, expected: actual.toArray(), normal: [1, 0, 0] };
+      // At the rank-deficient plateau shading uses the stable reference-bone
+      // convention. A physical normal is undefined on a collapsed surface.
+      if (Math.abs(dot) < 9e-6 || secondary === 0) test.expectedNormal = [1, 0, 0];
+      fixture.groups.push({ real: [...p.real], dual: [...p.dual], cases: [test] });
+      fixture.groups.push({ real: [...negated.real], dual: [...negated.dual], cases: [test] });
+      const movedTest = { ...test, expected: moved.toArray() };
+      if (test.expectedNormal) movedTest.expectedNormal = V(...test.expectedNormal).applyQuaternion(commonQ).toArray();
+      fixture.groups.push({ real: [...movedPalette.real], dual: [...movedPalette.dual], cases: [movedTest] });
+      halfTurnSweepCases++;
+    }
+    maxHalfTurnPairErrorM = Math.max(maxHalfTurnPairErrorM, positions[0].distanceTo(positions[1]));
+  }
+}
+assert(maxHalfTurnPairErrorM < 1e-7, 'infinitesimal pose changes still produce a half-turn position jump');
+const gpuCasesPrepared = fixture.groups.reduce((n, group) => n + group.cases.length, 0);
 if (process.argv.includes('--gpu-fixture')) console.log(JSON.stringify(fixture));
 else console.log(JSON.stringify({ passed: true, rigidCases: 128, antipodalCases: 128 * 16,
-  covarianceCases: 128, halfTurnRingVertices: ring.length, retainedCrossSectionRatio: area(ring) / expectedArea,
-  halfTurnCovarianceCases: 96, fullHingeLinearBlend: .8,
+  covarianceCases: 128, halfTurnRingVertices: ring.length, rawDQSCrossSectionRatio: area(ring) / expectedArea,
+  hybridHalfTurnCrossSectionRatio: area(hybridRing) / expectedArea,
+  quantizedHalfTurnCrossSectionRatio: quantizedAreaRatio,
+  halfTurnCovarianceCases: 96, fullHingeLinearBlend: 1,
   linearBlendCrossSectionRatio: area(linearRing) / expectedArea,
   maxRigidErrorM: maxRigidError, maxAntipodalErrorM: maxAntipodalError, maxCovariantErrorM: maxCovariantError,
   maxHybridCovariantErrorM: maxHybridCovariantError,
   endpointErrorM, raycastErrorM,
-  gpuCasesPrepared: cases.length + halfCases.length }));
+  halfTurnSweepCases, maxHalfTurnPairErrorM, gpuCasesPrepared }));

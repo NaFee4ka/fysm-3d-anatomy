@@ -32,7 +32,7 @@ html, body { height: 100%; }
 body { margin: 0; box-sizing: border-box; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); background: var(--ink); color: var(--bone); font: 15px/1.5 var(--font-ui); -webkit-font-smoothing: antialiased; }
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--ink); }
 button { font: inherit; color: inherit; }
-button:focus-visible, input:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
 .warm-t { color: var(--warm); } .cool-t { color: var(--cool); } .gold-t { color: var(--gold); } .work-t { color: var(--work); }
 
@@ -80,6 +80,13 @@ button:disabled { cursor: default; opacity: .4; }
 body.practice-mode .rank-row { grid-template-columns: minmax(0, 1fr); row-gap: 4px; }
 body.practice-mode [data-static-physics] { display: none; }
 body.practice-uncomputed [data-lightmode="effort"], body.practice-uncomputed [data-layer="forces"], body.practice-uncomputed [data-physics-legend] { display: none; }
+.transition-selects { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; margin-block: 12px; }
+.transition-selects label { display: grid; gap: 5px; color: var(--muted); font-size: 13px; }
+.transition-selects select { box-sizing: border-box; width: 100%; min-width: 0; min-height: 44px; padding: 10px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--raise); color: var(--bone); font: inherit; }
+.transition-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-block: 10px; }
+.transition-actions .btn { font-size: 13px; min-height: 44px; height: auto; padding-block: 8px; white-space: normal; }
+#transition-player > .seg { margin-top: 6px; }
+body.transition-moving [data-static-physics], body.transition-moving [data-physics-legend], body.transition-moving [data-lightmode="effort"], body.transition-moving [data-layer="forces"] { display: none; }
 .practice-quality { margin-top: 12px; padding: 0 12px 10px; border: 1px solid var(--line); border-radius: 10px; }
 .practice-physics { margin-top: 16px; padding-top: 4px; border-top: 1px solid var(--line); }
 .practice-physics .meter { margin-top: 10px; }
@@ -295,6 +302,7 @@ body.no-light .legend-wrap { opacity: 0.45; }
     <nav class="mode-nav" aria-label="Раздел приложения">
       <button class="btn" id="main-mode" aria-pressed="true">Позы и круг</button>
       <button class="btn" id="practice-mode" aria-pressed="false" hidden>Алгоритмы FYSM</button>
+      <button class="btn" id="transitions-mode" aria-pressed="false" hidden>Переходы</button>
     </nav>
     <div class="top-title">
       <p class="eyebrow" id="pose-sanskrit">Адхо мукха шванасана</p>
@@ -308,7 +316,7 @@ body.no-light .legend-wrap { opacity: 0.45; }
       <button class="pose-tab" data-pose="bow" aria-pressed="false"><span class="num">4</span>Корзинка</button>
       <button class="pose-tab" data-pose="fold" aria-pressed="false"><span class="num">5</span>Наклон</button>
       <button class="pose-tab" data-pose="handstand" aria-pressed="false"><span class="num">6</span>Стойка на руках</button>
-      <button class="pose-tab pose-tab-cycle" id="cycle-tab" aria-pressed="false" hidden><span class="num"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v4.5h-4.5"/></svg></span>Круг: все переходы</button>
+      <button class="pose-tab pose-tab-cycle" id="cycle-tab" aria-pressed="false" hidden><span class="num"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v4.5h-4.5"/></svg></span>Круг: пять поз</button>
     </nav>
     <div id="practice-navigation" hidden>
       <nav class="practice-algorithms" id="practice-algorithms" aria-label="Алгоритмы FYSM"></nav>
@@ -318,7 +326,16 @@ body.no-light .legend-wrap { opacity: 0.45; }
         <output class="practice-progress" id="practice-progress" aria-live="polite"></output>
         <button class="btn" id="practice-next">Далее →</button>
       </div>
+      <div class="transition-actions"><button class="btn" id="practice-transition-next" disabled>Переход к следующей</button><button class="btn" id="practice-flow" disabled>Проиграть алгоритм</button></div>
       <p class="practice-caption" id="practice-caption">3D-реконструкция по фото. Усилия и нагрузки — оценки статической модели.</p>
+    </div>
+    <div id="transition-navigation" hidden>
+      <div class="transition-selects">
+        <label for="transition-from">Из позы<select id="transition-from"></select></label>
+        <label for="transition-to">В позу<select id="transition-to"></select></label>
+      </div>
+      <div class="transition-actions"><button class="btn" id="transition-build">Показать переход</button><button class="btn" id="transition-swap" aria-label="Поменять начальную и конечную позы">↔ Обратно</button></div>
+      <p class="meter-foot" id="transition-error" role="status" hidden>Выбери разные начальную и конечную позы.</p>
     </div>
   </header>
 
@@ -334,6 +351,15 @@ body.no-light .legend-wrap { opacity: 0.45; }
   </div>
 
   <aside class="panel gutter">
+    <div id="transition-player" class="cyc" hidden>
+      <div class="pose-top"><label for="transition-time">Переход между асанами</label><output id="transition-out" class="num" for="transition-time"></output></div>
+      <input id="transition-time" type="range" min="0" max="1000" step="1" value="0" aria-label="Время перехода">
+      <p class="cyc-phase" id="transition-phase"></p>
+      <p class="callout" id="transition-adjustments" hidden></p>
+      <div class="transition-actions"><button class="btn" id="transition-play" aria-pressed="false">Пуск</button><button class="btn" id="transition-restart">В начало</button><button class="btn" id="transition-open-pose">Открыть позу</button></div>
+      <div class="seg seg-inline" role="group" aria-label="Скорость перехода"><button data-transition-speed="0.5" aria-pressed="false">0,5×</button><button data-transition-speed="1" aria-pressed="true">1×</button><button data-transition-speed="2" aria-pressed="false">2×</button></div>
+      <p class="meter-foot">Геометрическая иллюстрация. Силы и мышечная активность в переходе не рассчитаны; темп не задан методичкой.</p>
+    </div>
     <div id="cycle-player" class="cyc" hidden>
       <div class="pose-top"><label for="cyc-t">Круг: пять поз и переходы</label><output id="cyc-out" class="num" for="cyc-t">0,0 с</output></div>
       <div class="cyc-track">
@@ -435,6 +461,7 @@ body.no-light .legend-wrap { opacity: 0.45; }
 
     <p class="note" id="muscle-source-note" role="status">Загружаются объёмные формы мышц. Пока показана схема мышечных пучков.</p>
     <p class="note" id="joint-source-note" role="status">Загружаются уточнённые суставные поверхности. Пока показана схема хрящей.</p>
+      <p class="meter-foot" id="spine-source-note">Межпозвонковые диски: загружаются формы из анатомического атласа. Движение тканей — геометрическое приближение.</p>
     <p class="note">Модель взрослого мужчины ростом около 176 см и весом 70 кг. Кости и доступные поверхности мышц взяты из анатомической базы <a href="https://dbarchive.biosciencedbc.jp/en/bodyparts3d/desc.html" target="_blank" rel="noopener noreferrer">BodyParts3D</a>, упрощены и подогнаны к одному скелету. Недостающие мышцы, связки, капсулы и фасции реконструированы по точкам крепления и направлениям волокон. Формы плавно деформируются вместе со скелетом, прикрепления закреплены за своими сегментами. Толщина мышечного брюшка меняется приближённо. Светлая окраска прикреплений и сухожильных перемычек условна. Давление тканей и точное сохранение их объёма не рассчитываются; при глубоком сгибании возможны локальные пересечения. Удлинение пути связки или фасции относительно стойки не равно растяжению самой ткани.</p>
     <p class="note" data-static-physics>Усилия и нагрузки — оценки статической модели. Мышцы распределяют работу по условию равновесия с наименьшим суммарным усилием. Максимальные силы взяты из опубликованных моделей, рычаги соответствуют действующим силам на сегментах. Анатомически несогласованные пути исключаются из оценки силы и отмечаются в ограничениях. Учтены опора, трение, хват, пассивные ткани и упоры суставов. Подсказки задают минимальный тонус отдельных мышц. В промежуточных положениях бегунка усилие интерполируется между стойкой и полной позой; кадры круга рассчитаны отдельно. Инерция, нервное управление и индивидуальная гибкость не учитываются; фасции пока не передают силу в решателе. Настоящая форма поверхности сама по себе не подтверждает точность оценки нагрузки.</p>
     <p class="note">BodyParts3D, © The Database Center for Life Science, <a href="https://dbarchive.biosciencedbc.jp/en/bodyparts3d/lic.html" target="_blank" rel="noopener noreferrer">CC Attribution 4.0 International</a>. Зубы достроены по ширинам коронок взрослого.</p>

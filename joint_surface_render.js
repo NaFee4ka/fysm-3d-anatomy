@@ -68,7 +68,21 @@ export async function createJointSurfaces(A, THREE, data, opts = {}) {
     throw error;
   }
 
+  const drivenSegments = [...new Set(parts.map(part => part.seg))];
   function update(W) {
+    // A malformed interpolated frame must leave the complete last good pose
+    // intact. Checking while composing each part would move the first joints
+    // before a missing/invalid later segment failed, producing a mixed frame.
+    // Keep the supplied rotations unchanged so the surfaces still follow the
+    // same matrices as their bones, including historical quantized poses.
+    for (const seg of drivenSegments) {
+      const w = W?.[seg], p = w?.p, q = w?.q;
+      const normSq = q && q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
+      if (!p || !q || ![p.x, p.y, p.z, q.x, q.y, q.z, q.w].every(Number.isFinite)
+          || !Number.isFinite(normSq) || normSq < 1e-12) {
+        throw new Error('Invalid joint surface transform: ' + seg);
+      }
+    }
     // Only one rigid matrix per part changes. Static vertex/normal buffers and
     // their local bounds remain untouched throughout poses and the round.
     for (const part of parts) {

@@ -12,6 +12,8 @@ import base64
 import math
 from build_verification import (PRACTICE_GEOMETRY_INPUTS, current_sources, digest,
                                 verify_static_physics, verify_practice_physics, verify_cycle_physics)
+from transition_release import verify_transitions
+from spine_release import verify_spine_surfaces
 
 # New practice poses have their own data, independent of the six calculated
 # poses and the verified round. Never attach another pose's force estimates.
@@ -64,6 +66,8 @@ if cycle != 'null':
     verify_cycle_physics(root, cycle_object)
 verify_static_physics(root)
 practice_physics = verify_practice_physics(root, practice_ids)
+transitions = verify_transitions(root)
+spine_surfaces = verify_spine_surfaces(root)
 fl = (root / 'fascia3.js').read_text().replace('export function', 'function').replace('export const', 'const')
 fr = (root / 'fascia_render.js').read_text().replace('export function', 'function')
 fascia_lib = 'const FASCIA_LIB = (() => {\n' + fl + '\nreturn { createFascia, LINE_COLORS };\n})();\n' + fr
@@ -75,6 +79,8 @@ def inline_factory(filename, factory):
 muscle_lib = inline_factory('muscle_surface_render.js', 'createMuscleSurfaces')
 connective_lib = inline_factory('connective_surface_render.js', 'createConnectiveSurfaces')
 joint_lib = inline_factory('joint_surface_render.js', 'createJointSurfaces')
+transition_lib = inline_factory('transition_runtime.mjs', 'createTransitions')
+spine_lib = inline_factory('spine_surface_render.js', 'createSpineSurfaces')
 muscle_data = (root / 'muscles' / 'muscles_bp3d.json').read_text(encoding='utf-8')
 joint_data = (root / 'joints' / 'joints.json').read_text(encoding='utf-8')
 capsule_rims = (root / 'joints' / 'capsule-rims.json').read_text(encoding='utf-8')
@@ -89,9 +95,13 @@ app = app.replace('/*__CAPSULE_RIMS__*/null', capsule_rims)
 app = app.replace('/*__RESEARCH_SENSITIVITY__*/null', research_sensitivity)
 app = app.replace('/*__PRACTICE__*/null', json.dumps(practice, ensure_ascii=False, separators=(',', ':')))
 app = app.replace('/*__PRACTICE_PHYSICS__*/null', json.dumps(practice_physics, ensure_ascii=False, separators=(',', ':')))
+app = app.replace('/*__TRANSITIONS_LIB__*/', transition_lib)
+app = app.replace('/*__TRANSITIONS__*/null', json.dumps(transitions, ensure_ascii=False, separators=(',', ':')))
+app = app.replace('/*__SPINE_SURFACES_LIB__*/', spine_lib)
+app = app.replace('/*__SPINE_SURFACES__*/null', json.dumps(spine_surfaces, ensure_ascii=False, separators=(',', ':')))
 tpl = (root / 'template3.html').read_text()
 out = tpl.replace('/*__APP__*/', app.replace('/*__DEBUG__*/', ''))
-dbg = tpl.replace('/*__APP__*/', app.replace('/*__DEBUG__*/', 'window.__dbg = { camera, controls, setT, setLayer, select, state, resetView, VIEW_DIR, centerTarget, THREE, get W() { return poseW; }, strands, jointById, A, focusOn, switchPose, STATS, setLightMode, PHYS, setOverride: c => { overrideConf = c; poseDirty = true; }, CYC, cyc, enterCycle, exitCycle, setCycT, cycPlay, cycPause, roundStats, FASC, FR, get fasciaM() { return fasciaM; }, updateFascia, get viewDir() { return VIEW_DIR; }, get muscleSurfaces() { return muscleSurfaces; }, get connectiveSurfaces() { return connectiveSurfaces; }, get jointSurfaces() { return jointSurfaces; }, cartMeshes, discMeshes, glowByJoint, boneMeshes, PRACTICE_DATA, PRACTICE_PHYSICS, practicePhysics, practiceMuscleRecord, enterPractice, exitPractice, practiceCurrent, get displayConf() { return displayConf; }, get morph() { return morph; }, get forcesGroup() { return forcesGroup; } };'))
+dbg = tpl.replace('/*__APP__*/', app.replace('/*__DEBUG__*/', 'window.__dbg = { camera, controls, setT, setLayer, select, state, resetView, VIEW_DIR, centerTarget, THREE, get W() { return poseW; }, strands, jointById, A, focusOn, switchPose, STATS, setLightMode, PHYS, setOverride: c => { overrideConf = c; poseDirty = true; }, CYC, cyc, enterCycle, exitCycle, setCycT, cycPlay, cycPause, roundStats, FASC, FR, get fasciaM() { return fasciaM; }, updateFascia, get viewDir() { return VIEW_DIR; }, get muscleSurfaces() { return muscleSurfaces; }, get connectiveSurfaces() { return connectiveSurfaces; }, get jointSurfaces() { return jointSurfaces; }, get spineSurfaces() { return spineSurfaces; }, cartMeshes, discMeshes, glowByJoint, boneMeshes, PRACTICE_DATA, PRACTICE_PHYSICS, practicePhysics, practiceMuscleRecord, enterPractice, exitPractice, practiceCurrent, get displayConf() { return displayConf; }, get morph() { return morph; }, get forcesGroup() { return forcesGroup; }, TRANSITIONS, TRANSITION_DATA, transition, enterTransition, setTransitionTime, transitionPause, playTransition, transitionEndpoint, openTransitionEndpoint };'))
 outdir.mkdir(exist_ok=True)
 (outdir / 'index.html').write_text(out, encoding='utf-8')
 (outdir / 'test.html').write_text(dbg, encoding='utf-8')
