@@ -49,8 +49,18 @@ const CAPSULE_RIM_DATA = /*__CAPSULE_RIMS__*/null;
 const SPINE_SURFACE_DATA = /*__SPINE_SURFACES__*/null;
 const PRACTICE_DATA = /*__PRACTICE__*/null;
 const PRACTICE_PHYSICS = /*__PRACTICE_PHYSICS__*/null;
-const TRANSITION_DATA = /*__TRANSITIONS__*/null;
-const TRANSITIONS = typeof createTransitions === 'function' ? createTransitions(THREE, A, TRANSITION_DATA) : null;
+// Пакет переходов (~22 МБ JSON) встроен сжатым и распаковывается после показа модели:
+// крупный литерал в модуле не давал странице запуститься в мобильном WebKit.
+const TRANSITION_PACKED = /*__TRANSITIONS__*/null;
+let TRANSITION_DATA = null, TRANSITIONS = null;
+async function loadTransitions() {
+  if (typeof TRANSITION_PACKED !== 'string' || typeof createTransitions !== 'function' || typeof DecompressionStream === 'undefined') return false;
+  const bin = Uint8Array.from(atob(TRANSITION_PACKED), c => c.charCodeAt(0));
+  const text = await new Response(new Blob([bin]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
+  TRANSITION_DATA = JSON.parse(text);
+  TRANSITIONS = createTransitions(THREE, A, TRANSITION_DATA);
+  return !!TRANSITIONS?.valid;
+}
 const PRACTICE_ALGORITHMS = PRACTICE_DATA?.algorithms || [];
 const PRACTICE_BY_ID = new Map(PRACTICE_ALGORITHMS.map(a => [a.id, a]));
 const practiceConfs = Object.fromEntries(Object.entries(PRACTICE_DATA?.poses || {}).map(([id, data]) => [id, {
@@ -2980,9 +2990,21 @@ if (CYC) {
   const h0 = hashPath();
   if (h0 === 'cycle' || h0 === 'krug') enterCycle(0, false);
 }
-initTransitions();
-if (hashPath() === 'practice' || hashPath().startsWith('practice/') || hashPath().startsWith('transition/')) applyPracticeHash();
-else applyHashLayers();
+stage.dataset.transitions = 'loading';
+if (hashPath() === 'practice' || hashPath().startsWith('practice/')) applyPracticeHash();
+else if (!hashPath().startsWith('transition/')) applyHashLayers();
+setTimeout(async () => {
+  try {
+    const ok = await loadTransitions();
+    if (ok) initTransitions();
+    stage.dataset.transitions = ok ? 'ready' : 'fallback';
+  } catch (error) {
+    TRANSITIONS = null; stage.dataset.transitions = 'fallback';
+    console.warn('Transition package could not load; static poses remain available.', error);
+  }
+  if (state.mode === 'practice') syncPracticeControls();
+  if (hashPath().startsWith('transition/')) applyPracticeHash();
+}, 0);
 
 let lastInfoT = -1;
 const cycFollow = new THREE.Vector3(), _fd = new THREE.Vector3();
