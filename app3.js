@@ -2837,29 +2837,43 @@ if (PRACTICE_ALGORITHMS.length) {
   $('practice-prev').addEventListener('click', () => enterPractice(state.algorithmId, state.practiceStep - 1));
   $('practice-next').addEventListener('click', () => enterPractice(state.algorithmId, state.practiceStep + 1));
 }
+// Адрес вида #poza?layers=muscles,ligs,fascia: часть до «?» — раздел, layers — слои для включения.
+const LAYER_ALIASES = { muscles: ['musclesOuter', 'musclesDeep'] };
+function hashPath() { return location.hash.slice(1).split('?')[0]; }
+function applyHashLayers() {
+  const raw = new URLSearchParams(location.hash.split('?')[1] || '').get('layers');
+  if (!raw) return;
+  const known = new Map([...document.querySelectorAll('[data-layer]')].map(b => [b.dataset.layer.toLowerCase(), b.dataset.layer]));
+  for (const item of raw.split(',')) {
+    const key = item.trim().toLowerCase();
+    for (const name of LAYER_ALIASES[key] || (known.has(key) ? [known.get(key)] : [])) setLayer(name, true);
+  }
+}
 function applyPracticeHash() {
-  const hash = location.hash.slice(1);
+  const hash = hashPath();
   if (hash.startsWith('transition/')) {
     const match = /^transition\/([a-z0-9-]+)\/([a-z0-9-]+)$/.exec(hash);
-    if (match && enterTransition(match[1], match[2], { writeHash: false })) return;
+    if (match && enterTransition(match[1], match[2], { writeHash: false })) { applyHashLayers(); return; }
     setPageHash(state.poseId, true);
   }
   if (hash === 'practice' || hash.startsWith('practice/')) {
     const match = /^practice\/([a-z]+)\/([1-8])$/.exec(hash);
-    if (match && enterPractice(match[1], Number(match[2]) - 1, false)) return;
+    if (match && enterPractice(match[1], Number(match[2]) - 1, false)) { applyHashLayers(); return; }
     const first = PRACTICE_ALGORITHMS[0];
     if (first && enterPractice(first.id, 0, false)) setPageHash('practice/' + first.id + '/1', true);
+    applyHashLayers();
     return;
   }
   if (state.mode === 'practice') exitPractice(true, false);
   if (Object.hasOwn(POSE, hash)) switchPose(hash);
   else if (hash === 'cycle' || hash === 'krug') { enterCycle(0, false); cycPause(); cycMorph = null; }
   else if (state.mode === 'transition') { switchPose(state.poseId); syncPracticeControls(); }
+  applyHashLayers();
 }
 window.addEventListener('hashchange', applyPracticeHash);
 for (const P of POSES) STATS[P.id] = computeStats(P.id);
 {
-  const h = (location.hash || '').replace('#', '');
+  const h = hashPath();
   if (Object.hasOwn(POSE, h)) { state.poseId = h; activeSet = activeOf(h); VIEW_DIR = new THREE.Vector3(...POSE[h].view).normalize(); }
 }
 buildForces(state.poseId);
@@ -2963,11 +2977,12 @@ if (CYC) {
   buildCycMarks();
   // reduced motion: the round is not played by itself, only scrubbed
   if (reduceMotion) { cycPlayBtn.hidden = true; cyclePlayer.querySelector('.seg-inline').hidden = true; }
-  const h0 = (location.hash || '').replace('#', '');
+  const h0 = hashPath();
   if (h0 === 'cycle' || h0 === 'krug') enterCycle(0, false);
 }
 initTransitions();
-if (location.hash === '#practice' || location.hash.startsWith('#practice/') || location.hash.startsWith('#transition/')) applyPracticeHash();
+if (hashPath() === 'practice' || hashPath().startsWith('practice/') || hashPath().startsWith('transition/')) applyPracticeHash();
+else applyHashLayers();
 
 let lastInfoT = -1;
 const cycFollow = new THREE.Vector3(), _fd = new THREE.Vector3();
