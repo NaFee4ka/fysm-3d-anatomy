@@ -2198,7 +2198,11 @@ function initTransitions() {
   });
   $('transition-swap').addEventListener('click', () => enterTransition(transition.to, transition.from));
   $('transition-play').addEventListener('click', () => transition.playing ? transitionPause() : playTransition());
-  $('transition-time').addEventListener('input', event => { transitionPause(); transition.sequence = null; setTransitionTime(Number(event.target.value) / 1000 * transition.route.duration); });
+  $('transition-time').addEventListener('input', event => {
+    // значение читаем до transitionPause(): она перерисовывает шапку и возвращает ползунок на текущее время
+    const wanted = Number(event.target.value) / 1000 * transition.route.duration;
+    transitionPause(); transition.sequence = null; setTransitionTime(wanted);
+  });
   $('transition-restart').addEventListener('click', () => { transitionPause(); setTransitionTime(0); });
   $('transition-open-pose').addEventListener('click', openTransitionEndpoint);
   document.querySelectorAll('[data-transition-speed]').forEach(button => button.addEventListener('click', () => {
@@ -2878,6 +2882,7 @@ function applyPracticeHash() {
   if (Object.hasOwn(POSE, hash)) switchPose(hash);
   else if (hash === 'cycle' || hash === 'krug') { enterCycle(0, false); cycPause(); cycMorph = null; }
   else if (state.mode === 'transition') { switchPose(state.poseId); syncPracticeControls(); }
+  else if (hash) setPageHash(state.mode === 'cycle' ? 'cycle' : state.poseId, true);   // неизвестный адрес: приводим к показанному
   applyHashLayers();
 }
 window.addEventListener('hashchange', applyPracticeHash);
@@ -3002,7 +3007,8 @@ setTimeout(async () => {
     TRANSITIONS = null; stage.dataset.transitions = 'fallback';
     console.warn('Transition package could not load; static poses remain available.', error);
   }
-  if (state.mode === 'practice') syncPracticeControls();
+  // кнопки «Переход к следующей» и «Проиграть алгоритм» зависят от пакета переходов: после его загрузки (прямая ссылка #practice/…) обновляем и шапку
+  if (state.mode === 'practice') { syncPracticeControls(); updatePracticeHeader(); }
   if (hashPath().startsWith('transition/')) applyPracticeHash();
 }, 0);
 
