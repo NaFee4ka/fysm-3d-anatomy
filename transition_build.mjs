@@ -532,6 +532,21 @@ function fitSavedTrackFrames() {
     track.frames[track.frames.length - 1] = { ...endpoints[track.to], t: track.duration };
   }
 }
+// Endpoints whose reconstruction was deliberately changed and may be replanned
+// without regenerating unaffected coordinates. Every other change still needs
+// --geometry-only.
+const PARTIAL_REPLAN_POSE_IDS = ['centering-03'];
+function partialReplanRequests(catalog, affectedIds) {
+  const affected = new Set(affectedIds);
+  const requests = affectedIds.map(id => ({ id: 'release-' + id, kind: 'release', from: id, to: '__neutral' }));
+  for (const pose of catalog) {
+    if (pose.kind !== 'practice' || pose.stepIndex === 7) continue;
+    const next = catalog.find(p => p.algorithmId === pose.algorithmId && p.stepIndex === pose.stepIndex + 1);
+    if (next && (affected.has(pose.id) || affected.has(next.id)))
+      requests.push({ id: 'neighbour-' + pose.id + '-' + next.id, kind: 'neighbour', from: pose.id, to: next.id });
+  }
+  return requests;
+}
 // CANDIDATE_VALIDATOR_BEGIN
 function validateRawPlan(saved, { A, THREE, catalog, endpoints, sourceHashes, sourceNames }) {
   const object = o => !!o && typeof o === 'object' && !Array.isArray(o);
@@ -570,13 +585,12 @@ function validateRawPlan(saved, { A, THREE, catalog, endpoints, sourceHashes, so
           || origin.endpointCount !== Object.keys(endpoints).length) return false;
     } else if (origin.kind === 'partial-coordinate-replanning') {
       const list = xs => Array.isArray(xs) && xs.every(x => typeof x === 'string') && new Set(xs).size === xs.length;
-      const requests = [{ id: 'release-centering-06', kind: 'release', from: 'centering-06', to: '__neutral' },
-        { id: 'neighbour-centering-05-centering-06', kind: 'neighbour', from: 'centering-05', to: 'centering-06' },
-        { id: 'neighbour-centering-06-centering-07', kind: 'neighbour', from: 'centering-06', to: 'centering-07' }];
+      const affectedIds = Array.isArray(origin.affectedPoseIds) ? origin.affectedPoseIds : [];
+      const requests = partialReplanRequests(catalog, affectedIds);
       if (origin.scope !== 'preserve-unaffected-coordinates-replan-changed-endpoints'
           || origin.endpointCount !== Object.keys(endpoints).length || origin.allCanonicalEndpointRowsReplaced !== true
           || origin.retainedInteriorCoordinatesPreserved !== true || !Array.isArray(origin.endpointGroundingRebases)
-          || !exact(origin.affectedPoseIds, ['centering-06']) || !exact(origin.regeneratedRequests, requests)
+          || !affectedIds.length || affectedIds.some(id => !PARTIAL_REPLAN_POSE_IDS.includes(id)) || !exact(origin.regeneratedRequests, requests)
           || !list(origin.retainedTrackIds) || !list(origin.discardedTrackIds) || !list(origin.regeneratedTrackIds)
           || !Number.isInteger(origin.oldTrackCount) || origin.oldTrackCount !== origin.retainedTrackIds.length + origin.discardedTrackIds.length
           || origin.retainedTrackIds.some(id => origin.discardedTrackIds.includes(id) || origin.regeneratedTrackIds.includes(id))
@@ -587,7 +601,7 @@ function validateRawPlan(saved, { A, THREE, catalog, endpoints, sourceHashes, so
             || ['previousRootY', 'currentRootY', 'previousSourceRootY', 'currentSourceRootY', 'previousGroundOffsetM', 'currentGroundOffsetM'].some(k => !Number.isFinite(r[k]))
             || r.currentRootY !== endpoints[r.id].rootP[1] || r.currentSourceRootY !== endpoints[r.id].sourceRootP[1]
             || r.currentGroundOffsetM !== endpoints[r.id].groundOffsetM)) return false;
-      for (const id of origin.retainedTrackIds) if ([saved.tracks[id].from, saved.tracks[id].to].includes('centering-06')) return false;
+      for (const id of origin.retainedTrackIds) if (affectedIds.includes(saved.tracks[id].from) || affectedIds.includes(saved.tracks[id].to)) return false;
       for (const request of requests) {
         const present = origin.regeneratedTrackIds.includes(request.id), track = saved.tracks[request.id];
         const fallbacks = origin.regeneratedFallbacks.filter(f => f?.from === request.from && f?.to === request.to);
@@ -597,7 +611,7 @@ function validateRawPlan(saved, { A, THREE, catalog, endpoints, sourceHashes, so
       if (origin.regeneratedTrackIds.some(id => !requests.some(r => r.id === id))
           || origin.regeneratedFallbacks.some(f => typeof f?.reason !== 'string'
             || !requests.some(r => r.kind === 'neighbour' && r.from === f.from && r.to === f.to))
-          || !exact(origin.regeneratedFallbacks, saved.neighbourFallbacks.filter(f => [f?.from, f?.to].includes('centering-06')))) return false;
+          || !exact(origin.regeneratedFallbacks, saved.neighbourFallbacks.filter(f => affectedIds.includes(f?.from) || affectedIds.includes(f?.to)))) return false;
     } else {
       const requests = [{ id: 'release-bow', kind: 'release', from: 'bow', to: '__neutral' },
         { id: 'release-half', kind: 'release', from: 'half', to: '__neutral' }];
@@ -729,8 +743,9 @@ function selectPartialCoordinateReplan(saved, { A, THREE, catalog, endpoints, so
     previousSourceRootY: saved.endpoints[id].sourceRootP[1], currentSourceRootY: endpoints[id].sourceRootP[1],
     previousGroundOffsetM: saved.endpoints[id].groundOffsetM, currentGroundOffsetM: endpoints[id].groundOffsetM }));
   if (changedEndpoints.includes('__neutral')) fail('neutral hub changed');
-  // This recovery is deliberately limited to the measured C6 recalculation.
-  if (JSON.stringify(changedEndpoints) !== JSON.stringify(['centering-06'])) fail('changed endpoints exceed the authorized C6 scope');
+  // This recovery is deliberately limited to the listed reconstructions.
+  if (!changedEndpoints.length || changedEndpoints.some(id => !PARTIAL_REPLAN_POSE_IDS.includes(id)))
+    fail('changed endpoints exceed the authorized scope ' + PARTIAL_REPLAN_POSE_IDS.join(', '));
   for (const pose of catalog) {
     const track = saved.tracks['release-' + pose.id];
     if (!track || track.from !== pose.id || track.to !== '__neutral') fail('missing canonical release ' + pose.id);
@@ -740,13 +755,7 @@ function selectPartialCoordinateReplan(saved, { A, THREE, catalog, endpoints, so
     if (affected.has(track.from) || affected.has(track.to)) discardedTrackIds.push(id);
     else retainedTracks[id] = JSON.parse(JSON.stringify(track));
   }
-  const requests = changedEndpoints.map(id => ({ id: 'release-' + id, kind: 'release', from: id, to: '__neutral' }));
-  for (const pose of catalog) {
-    if (pose.kind !== 'practice' || pose.stepIndex === 7) continue;
-    const next = catalog.find(p => p.algorithmId === pose.algorithmId && p.stepIndex === pose.stepIndex + 1);
-    if (next && (affected.has(pose.id) || affected.has(next.id)))
-      requests.push({ id: 'neighbour-' + pose.id + '-' + next.id, kind: 'neighbour', from: pose.id, to: next.id });
-  }
+  const requests = partialReplanRequests(catalog, changedEndpoints);
   const publicIds = new Set(catalog.map(p => p.id));
   if (saved.neighbourFallbacks.some(f => !f || !publicIds.has(f.from) || !publicIds.has(f.to) || typeof f.reason !== 'string'))
     fail('invalid original neighbour fallback');

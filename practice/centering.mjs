@@ -155,12 +155,14 @@ function warriorOne() {
   orientFoot(L, p.rootQ, p.rootP, 'R', qAx(X, 64));
   L.toes_R = qAx(X, -64);
   const W = wOf(p);
+  // Photo: palms pressed together above the head. Wrists stay a hand's
+  // thickness apart so the two hands keep separate bone volumes.
   for (const sd of SIDES) {
     const sh = W[`hum_${sd}`].p;
     const hq = handBasis(V(0, 1, .1), V(-1, 0, 0));
-    arm(p, sd, sh.clone().add(V(sign(sd) * .025, .576, .025)), sh.clone().add(V(sign(sd) * .12, .4, .2)), sd === 'L' ? hq : mirrorQ(hq), 'soft');
+    arm(p, sd, V(sign(sd) * .03, sh.y + .53, sh.z + .03), sh.clone().add(V(sign(sd) * .12, .4, .2)), sd === 'L' ? hq : mirrorQ(hq), 'flat');
   }
-  return finish(p, ['Передняя нога согнута в выпаде; задняя пятка поднята, как на фотографии.'], [-1, .22, .65]);
+  return finish(p, ['Передняя нога согнута в выпаде; задняя пятка поднята, как на фотографии. Ладони сведены над головой.'], [-1, .22, .65]);
 }
 
 function sideWarrior() {
