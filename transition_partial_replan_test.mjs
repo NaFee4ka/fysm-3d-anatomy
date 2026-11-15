@@ -35,7 +35,7 @@ const context = () => ({ A, THREE, catalog: structuredClone(data.poses), endpoin
 const selected = select(data, context());
 assert.equal(JSON.stringify(data), before);
 assert.equal(JSON.stringify(selected.origin.affectedPoseIds), JSON.stringify([AFFECTED]));
-assert.equal(Object.keys(selected.retainedTracks).length, 46);
+assert.equal(Object.keys(selected.retainedTracks).length, Object.keys(data.tracks).length - 3);
 assert.equal(JSON.stringify(selected.origin.discardedTrackIds), JSON.stringify(['neighbour-centering-02-centering-03', 'neighbour-centering-03-centering-04', 'release-centering-03']));
 assert.equal(JSON.stringify(selected.requests.map(r => r.id)), JSON.stringify([
   'release-centering-03', 'neighbour-centering-02-centering-03', 'neighbour-centering-03-centering-04']));
@@ -58,7 +58,7 @@ extra.tracks.unexpectedIncident.id = 'unexpectedIncident';
 const expanded = select(extra, context());
 assert(expanded.origin.discardedTrackIds.includes('unexpectedIncident'));
 assert(!Object.hasOwn(expanded.retainedTracks, 'unexpectedIncident'));
-assert.equal(Object.keys(expanded.retainedTracks).length, 46);
+assert.equal(Object.keys(expanded.retainedTracks).length, Object.keys(data.tracks).length - 3);
 const negativeContexts = [
   c => { c.sourceHashes['anatomy3.js'] = '0'.repeat(64); },
   c => { c.sourceHashes['skull/bones_bp3d.json'] = '0'.repeat(64); },
@@ -120,4 +120,4 @@ for (const [i, alter] of corruptOrigins.entries()) {
   assert.equal(validate(invalid, c), false, 'partial-origin corruption ' + i);
 }
 console.log('PASS partial coordinate selector:', negativeContexts.length + 2,
-  'selection rejections plus', corruptOrigins.length, 'origin rejections; 46 tracks /', interiorFrames, 'interior frames retained exactly; all incident tracks of the changed pose dropped and both current neighbour requests scheduled. No inherited PASS.');
+  'selection rejections plus', corruptOrigins.length, 'origin rejections;', Object.keys(selected.retainedTracks).length, 'tracks /', interiorFrames, 'interior frames retained exactly; all incident tracks of the changed pose dropped and both current neighbour requests scheduled. No inherited PASS.');
