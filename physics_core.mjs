@@ -61,7 +61,7 @@ export function spineJointEnergy(q, parameter) {
   for (let a = 0; a < 3; a++) {
     const angle = angles[a];
     energy += 0.5 * parameter.k[a] * angle * angle / D;
-    const limit = (a === 0 ? (angle >= 0 ? parameter.flex : parameter.ext) : parameter.side) * D;
+    const limit = (a === 0 ? (angle >= 0 ? parameter.flex : parameter.ext) : a === 1 ? parameter.rot ?? parameter.side : parameter.side) * D;
     const span = 0.4 * limit, u = (Math.abs(angle) - 0.6 * limit) / span;
     if (u > 0) energy += parameter.Mlim * span * (Math.expm1(4 * u) / 4 - u) / Math.expm1(4);
   }

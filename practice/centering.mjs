@@ -242,10 +242,12 @@ function kneelingTwist() {
   // The photograph does not measure individual spinal angles. Share the
   // torso turn across the lumbar and thoracic model joints, inside each
   // model range, instead of assigning 25 degrees to a 10-degree joint.
+  // Axial rotation is mostly thoracic: the lumbar joints take about 5 degrees
+  // each and the thoracic ones up to 16, as in SPINE_PASSIVE.rot.
   const oldTrunk = qAx(X, -3).multiply(qAx(Y, -20))
     .multiply(qAx(X, -3).multiply(qAx(Y, -25)))
     .multiply(qAx(X, -3).multiply(qAx(Y, -25)));
-  spine(L, [0, 0, -3, -3, -3], [-14, -14, -12, -10, -10]);
+  spine(L, [0, 0, -3, -3, -3], [-5, -5, -8, -16, -16]);
   const newTrunk = ['lumA', 'lumB', 'thA', 'thB', 'thC']
     .reduce((q, segment) => q.multiply(L[segment]), IDQ.clone());
   // Preserve the source head orientation while sharing the remaining turn

@@ -15,7 +15,7 @@ export const MUSCLE = {
   supra: { F: 490, phi: 0.63 }, infra: { F: 1210, phi: 0.7 }, teresMin: { F: 350, phi: 0.5 }, subscap: { F: 1380, phi: 0.72 },
   teresMaj: { F: 425, phi: 0.85 }, coracobr: { F: 240, phi: 0.5 },
   // arm and forearm
-  tricLong: { F: 800, phi: 0.48 }, tricLat: { F: 620, phi: 0.53 }, tricMed: { F: 620, phi: 0.53 }, anconeus: { F: 350, phi: 0.6 },
+  tricLong: { F: 800, phi: 0.48 }, tricLat: { F: 620, phi: 0.53 }, tricMed: { F: 620, phi: 0.95 }, anconeus: { F: 350, phi: 0.6 },
   bicLong: { F: 625, phi: 0.3 }, bicShort: { F: 435, phi: 0.4 }, brachialis: { F: 990, phi: 0.6 }, brachiorad: { F: 260, phi: 0.56 },
   pronTeres: { F: 560, phi: 0.27 }, pronQuad: { F: 75, phi: 0.85 }, supinator: { F: 475, phi: 0.54 },
   wristFlex: { F: 350, phi: 0.2 }, wristExt: { F: 500, phi: 0.25 }, palmaris: { F: 27, phi: 0.19 },
@@ -86,15 +86,17 @@ export const PASSIVE = {
 // ligaments, N·m per degree (flexion, axial rotation, side bend); beyond 60% of the range a stiff
 // end-range stop adds up to Mlim (facet joints, spinous processes, ligaments pulled taut).
 // Ranges per model joint, degrees, for a flexible person.
+// rot — axial rotation to one side. It differs from side bending: 2–3° per lumbar motion segment, 4–5° per
+// thoracic one, about 40° at C1–C2 (White and Panjabi), so the lumbar joints stop early and the thoracic ones late.
 export const SPINE_PASSIVE = {
-  ls: { k: [1.2, 1.8, 1.2], flex: 35, ext: 20, side: 15, Mlim: 20 },
-  l34: { k: [1.0, 1.5, 1.0], flex: 35, ext: 20, side: 15, Mlim: 20 },
-  tl: { k: [1.0, 1.5, 1.0], flex: 20, ext: 14, side: 12, Mlim: 20 },
-  t89: { k: [0.8, 1.2, 0.8], flex: 18, ext: 14, side: 10, Mlim: 20 },
-  t45: { k: [0.8, 1.2, 0.8], flex: 18, ext: 14, side: 10, Mlim: 20 },
-  ct: { k: [0.3, 0.45, 0.3], flex: 25, ext: 30, side: 20, Mlim: 5 },
-  c45: { k: [0.25, 0.4, 0.25], flex: 25, ext: 30, side: 20, Mlim: 5 },
-  ao: { k: [0.2, 0.3, 0.2], flex: 20, ext: 25, side: 15, Mlim: 4 },
+  ls: { k: [1.2, 1.8, 1.2], flex: 35, ext: 20, side: 15, rot: 7, Mlim: 20 },
+  l34: { k: [1.0, 1.5, 1.0], flex: 35, ext: 20, side: 15, rot: 7, Mlim: 20 },
+  tl: { k: [1.0, 1.5, 1.0], flex: 20, ext: 14, side: 12, rot: 10, Mlim: 20 },
+  t89: { k: [0.8, 1.2, 0.8], flex: 18, ext: 14, side: 10, rot: 18, Mlim: 20 },
+  t45: { k: [0.8, 1.2, 0.8], flex: 18, ext: 14, side: 10, rot: 18, Mlim: 20 },
+  ct: { k: [0.3, 0.45, 0.3], flex: 25, ext: 30, side: 20, rot: 15, Mlim: 5 },
+  c45: { k: [0.25, 0.4, 0.25], flex: 25, ext: 30, side: 20, rot: 25, Mlim: 5 },
+  ao: { k: [0.2, 0.3, 0.2], flex: 20, ext: 25, side: 15, rot: 45, Mlim: 4 },
 };
 
 // Floor: relative stiffness of the tissue under each contact (bony = stiff) and friction on a yoga mat.
@@ -132,6 +134,9 @@ export const POSE_STOPS = {
   // (the stretched tendons of the finger and wrist flexors and the palmar capsule carry part of the load: M is larger than for the other poses)
   handstand: { wrist: [{ dir: 1, from: 70, to: 100, M: 20 }, { dir: -1, from: 50, to: 85, M: 10 }] },
 };
+// The 24 photographed positions are held by the same flexible practitioner: palms flat under near-vertical
+// forearms (Spider, half crow, low plank) put the wrist at 90–95°, as the handstand does.
+export const PRACTICE_STOPS = { wrist: POSE_STOPS.handstand.wrist };
 export const JOINT_STOPS = {
   ankle: [{ dir: 1, from: 40, to: 65, M: 15 }],
   knee: [{ dir: -1, from: 2, to: 10, M: 40 }],

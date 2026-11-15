@@ -221,7 +221,7 @@ function singleLegLowPlank() {
     for (const side of ['L', 'R']) {
       const sign = side === 'L' ? 1 : -1;
       const Q = handBasis(V(0, 0, 1), V(0, -1, 0));
-      const wl = palmWrist('L', V(.25, .003, .48), Q);
+      const wl = palmWrist('L', V(.25, .003, .30), Q);
       arm(c, side, V(sign * wl.x, wl.y, wl.z), V(sign * .26, .36, .15), side === 'L' ? Q : mirrorQ(Q));
     }
     const W = world(c);
