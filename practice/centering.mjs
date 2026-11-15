@@ -217,16 +217,11 @@ function halfCrane() {
   spine(L, [-3, -3, -3, -3, -3]); shoulder(L, 32, 12, 12);
   let W = wOf(p);
   const shL = W.hum_L.p, shR = W.hum_R.p;
-  supportedForearm(p, 'R', 0, .20);
-  let y = shL.y - .292;
-  for (let i = 0; i < 4; i++) {
-    // Keep the supporting palm nearer the shoulder. The previous 35 cm
-    // setback required more than 100 degrees of extension in this rig.
-    floorArm(p, 'L', V(shL.x + .015, y, shL.z - .28), shL.clone().add(V(.08, -.12, -.6)));
-    const palm = floorMin(p, l => l.side === 'L' && l.region === 'ладони');
-    const fore = floorMin(p, l => l.side === 'R' && l.region === 'предплечья');
-    y -= palm - fore;
-  }
+  // Photo: both palms on the floor. Each palm stays near its shoulder; a
+  // 35 cm setback required more than 100 degrees of wrist extension here.
+  const y = shL.y - .292;
+  floorArm(p, 'L', V(shL.x + .015, y, shL.z - .28), shL.clone().add(V(.08, -.12, -.6)));
+  floorArm(p, 'R', V(shR.x - .015, y, shR.z - .28), shR.clone().add(V(-.08, -.12, -.6)));
   rotateElbowPlane(p, 'L', -15);
   W = wOf(p);
   const upper = W.hum_L.p.clone().lerp(W.fore_L.p, .55);
@@ -239,7 +234,7 @@ function halfCrane() {
   L.foot_L = qAx(X, 38);
   L.thigh_R = p.rootQ.clone().invert().multiply(qAx(X, 130));
   L.shank_R = qAx(X, 90); L.foot_R = qAx(X, 45); L.toes_R = qAx(X, 10);
-  return finish(p, ['Асимметричная опора: левая ладонь и правое предплечье. Одна нога собрана у плеча, другая согнута и поднята.', 'Контакт колена с плечом восстановлен геометрически; давление между частями тела не рассчитывается.'], [1, .32, .48]);
+  return finish(p, ['Опора на обе ладони, как на фотографии. Одна нога собрана у плеча, другая согнута и поднята.', 'Контакт колена с плечом восстановлен геометрически; давление между частями тела не рассчитывается.'], [1, .32, .48]);
 }
 
 function kneelingTwist() {

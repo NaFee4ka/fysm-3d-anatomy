@@ -436,7 +436,7 @@ function releaseStages(id) {
       if (collision(first) || !clearEdge(open, first) || !clearEdge(first, wideHub)) continue;
       bodyGuides = [first];
     } else if (!clearEdge(open, wideHub)) {
-      if (id === 'handstand') {
+      if (id === 'handstand' || id === 'centering-06') {
         const detour = findHipFlexionDetour({ A, THREE, from: open, to: wideHub, oracle: hipOracle,
           samplesPerEdge: probeAll ? 100 : 1000, accept: c => !collision(c) });
         if (detour) {
@@ -535,7 +535,7 @@ function fitSavedTrackFrames() {
 // Endpoints whose reconstruction was deliberately changed and may be replanned
 // without regenerating unaffected coordinates. Every other change still needs
 // --geometry-only.
-const PARTIAL_REPLAN_POSE_IDS = ['centering-03'];
+const PARTIAL_REPLAN_POSE_IDS = ['centering-03', 'struna-05', 'centering-06'];
 function partialReplanRequests(catalog, affectedIds) {
   const affected = new Set(affectedIds);
   const requests = affectedIds.map(id => ({ id: 'release-' + id, kind: 'release', from: id, to: '__neutral' }));
@@ -566,9 +566,16 @@ function validateRawPlan(saved, { A, THREE, catalog, endpoints, sourceHashes, so
       || !Array.isArray(saved.neighbourFallbacks)) return false;
   if (Object.hasOwn(saved, 'coordinateOrigin')) {
     const origin = saved.coordinateOrigin;
+    // Plans authored before the Spider release module existed recorded the
+    // shorter list; both exact lists are accepted, nothing else.
+    const coordinateLists = [['muscle_surface_render.js', 'practice/poses.json', 'transition_build.mjs'],
+      ['muscle_surface_render.js', 'practice/poses.json', 'transition_build.mjs', 'transition_spider_release.mjs'],
+      // Pose-specific ground/contact branches (centering-06); every floor
+      // state is verified again in the final --from-plan build.
+      ['muscle_surface_render.js', 'practice/contacts.mjs', 'practice/ground_fit.mjs', 'practice/poses.json', 'transition_build.mjs', 'transition_spider_release.mjs']];
     const allowed = origin?.kind === 'bow-half-motion-repair-replanning'
       ? ['transition_build.mjs', 'transition_bow_release.mjs', 'transition_collision.mjs']
-      : ['muscle_surface_render.js', 'practice/poses.json', 'transition_build.mjs'];
+      : coordinateLists.find(list => exact(origin?.allowedChangedFiles, list)) || coordinateLists[2];
     if (!object(origin) || origin.schemaVersion !== 1
         || !['surface-context-root-y-rebase', 'partial-coordinate-replanning', 'bow-half-motion-repair-replanning'].includes(origin.kind)
         || !/^[a-f0-9]{64}$/.test(origin.oldArchiveSha256) || !object(origin.oldSourceHashes)
@@ -656,7 +663,7 @@ function validateRawPlan(saved, { A, THREE, catalog, endpoints, sourceHashes, so
 // CANDIDATE_VALIDATOR_END
 // COORDINATE_MIGRATION_BEGIN
 function migrateCoordinatePlan(saved, { A, THREE, catalog, endpoints, sourceHashes, sourceNames, oldArchiveSha256 }) {
-  const allowedChangedFiles = ['muscle_surface_render.js', 'practice/poses.json', 'transition_build.mjs'];
+  const allowedChangedFiles = ['muscle_surface_render.js', 'practice/contacts.mjs', 'practice/ground_fit.mjs', 'practice/poses.json', 'transition_build.mjs', 'transition_spider_release.mjs'];
   const fail = message => { throw new Error('Coordinate migration rejected: ' + message + '; regenerate with --geometry-only'); };
   if (!/^[a-f0-9]{64}$/.test(oldArchiveSha256)) fail('invalid original archive hash');
   if (!validateRawPlan(saved, { A, THREE, catalog, endpoints: saved?.endpoints,
@@ -713,7 +720,7 @@ function migrateCoordinatePlan(saved, { A, THREE, catalog, endpoints, sourceHash
 // PARTIAL_REPLAN_SELECTOR_BEGIN
 function selectPartialCoordinateReplan(saved, { A, THREE, catalog, endpoints, sourceHashes, sourceNames, oldArchiveSha256 }) {
   const fail = text => { throw new Error('Partial coordinate replanning rejected: ' + text + '; use --geometry-only'); };
-  const allowedChangedFiles = ['muscle_surface_render.js', 'practice/poses.json', 'transition_build.mjs'];
+  const allowedChangedFiles = ['muscle_surface_render.js', 'practice/contacts.mjs', 'practice/ground_fit.mjs', 'practice/poses.json', 'transition_build.mjs', 'transition_spider_release.mjs'];
   if (!/^[a-f0-9]{64}$/.test(oldArchiveSha256) || !validateRawPlan(saved, { A, THREE, catalog,
     endpoints: saved?.endpoints, sourceHashes: saved?.sourceHashes, sourceNames })) fail('invalid original coordinate context');
   const changedSourceFiles = sourceNames.filter(name => saved.sourceHashes[name] !== sourceHashes[name]).sort();

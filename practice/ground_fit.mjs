@@ -300,10 +300,9 @@ export function createPracticeGroundFitter({ A, THREE, surfaces, boneData, boneP
     const baseline = fit(input, { rigidTilt: { maxPitchDeg: 6, maxRollDeg: 6 } });
     const conf = baseline.conf, W = A.computeWorld(conf.local, conf.rootQ, conf.rootP);
     const shiftZ = .02, legDeg = 20, shoulder = W.hum_R.p, elbow = W.fore_R.p;
-    const remaining = LH * LH - (shoulder.x - elbow.x) ** 2 - (shoulder.z + shiftZ - elbow.z) ** 2;
-    if (remaining <= 0) throw new Error('Centred forearm support cannot be reached within the unchanged humerus length');
+    // Both palms support the body: shift the root forward and solve each arm
+    // back to its original wrist target and hand orientation.
     conf.rootP.z += shiftZ;
-    conf.rootP.y += elbow.y + Math.sign(shoulder.y - elbow.y) * Math.sqrt(remaining) - shoulder.y;
     const targetErrorsM = {};
     for (const side of ['L', 'R']) {
       const flex = armIK(conf.local, conf.rootQ, conf.rootP, side, W['hand_' + side].p, W['fore_' + side].p);
