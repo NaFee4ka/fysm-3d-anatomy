@@ -566,9 +566,13 @@ function validateRawPlan(saved, { A, THREE, catalog, endpoints, sourceHashes, so
       || !Array.isArray(saved.neighbourFallbacks)) return false;
   if (Object.hasOwn(saved, 'coordinateOrigin')) {
     const origin = saved.coordinateOrigin;
+    // Plans authored before the Spider release module existed recorded the
+    // shorter list; both exact lists are accepted, nothing else.
+    const coordinateLists = [['muscle_surface_render.js', 'practice/poses.json', 'transition_build.mjs'],
+      ['muscle_surface_render.js', 'practice/poses.json', 'transition_build.mjs', 'transition_spider_release.mjs']];
     const allowed = origin?.kind === 'bow-half-motion-repair-replanning'
       ? ['transition_build.mjs', 'transition_bow_release.mjs', 'transition_collision.mjs']
-      : ['muscle_surface_render.js', 'practice/poses.json', 'transition_build.mjs', 'transition_spider_release.mjs'];
+      : coordinateLists.find(list => exact(origin?.allowedChangedFiles, list)) || coordinateLists[1];
     if (!object(origin) || origin.schemaVersion !== 1
         || !['surface-context-root-y-rebase', 'partial-coordinate-replanning', 'bow-half-motion-repair-replanning'].includes(origin.kind)
         || !/^[a-f0-9]{64}$/.test(origin.oldArchiveSha256) || !object(origin.oldSourceHashes)
