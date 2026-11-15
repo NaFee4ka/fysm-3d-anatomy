@@ -407,8 +407,32 @@ function halfClavicleFirstWaypoint(open, wideHub) {
   return c;
 }
 // HALF_CLAVICLE_WAYPOINT_END
+// The single-leg low plank rests the left knee on the upper arm with the shin
+// folded beside the elbow. Opening the arm first drives the ulna through the
+// shin, so the leg leaves first: unfold the knee, swing the thigh outward and
+// only then take the position of the extended right leg.
+function singleLegPlankLegRelease(source) {
+  const mirrored = q => new THREE.Quaternion(q.x, -q.y, -q.z, q.w);
+  const back = clone(source);
+  for (const name of ['thigh', 'shank', 'foot', 'toes']) back.local[name + '_L'].copy(mirrored(source.local[name + '_R']));
+  if (collision(back)) return null;
+  const pelvis = A.computeWorld(source.local, source.rootQ, source.rootP).pelvis.q;
+  for (const knee of [110, 75]) for (const yaw of [50, 30, 70]) {
+    const unfolded = clone(source); unfolded.local.shank_L.copy(qAx(X, knee));
+    const outward = clone(unfolded), turn = new THREE.Quaternion().setFromAxisAngle(V(0, 1, 0), yaw * Math.PI / 180);
+    outward.local.thigh_L.copy(pelvis.clone().invert().multiply(turn).multiply(pelvis).multiply(unfolded.local.thigh_L)).normalize();
+    const chain = [source, unfolded, outward, back];
+    if (chain.slice(1).every(c => !collision(c)) && chain.slice(1).every((c, i) => clearEdge(chain[i], c))) {
+      console.log('Leg-first release', 'struna-07', JSON.stringify({ knee, yaw }));
+      return [unfolded, outward, back];
+    }
+  }
+  return null;
+}
 function releaseStages(id) {
-  const source = raw[id];
+  const legFirst = id === 'struna-07' ? singleLegPlankLegRelease(raw[id]) : [];
+  if (!legFirst) throw new Error('Unable to prepare the leg-first release: ' + id);
+  const source = legFirst.at(-1) || raw[id];
   let withdrawalAttempts = 0;
   // D7's hands start together. Separating intact hands before opening either
   // thumb avoids the opposite-thumb collision of an in-place release.
@@ -448,7 +472,7 @@ function releaseStages(id) {
         console.log('Open-arm body path rejected', id, abduction, elbow, JSON.stringify(clearEdge.lastFailure)); continue;
       }
     }
-    const exit = stages => [...stages, ...bodyGuides];
+    const exit = stages => [...legFirst, ...stages, ...bodyGuides];
     if (id === 'bow') {
       const special = prepareBowRelease({ A, THREE, conf: source, collision, clearEdge, openTarget: open });
       if (special) return { exit: exit([...special, open]), wideHub };

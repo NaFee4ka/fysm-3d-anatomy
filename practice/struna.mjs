@@ -235,10 +235,10 @@ function singleLegLowPlank() {
   // Keep both segment lengths and use the old ankle only for the free shin's
   // direction; neither joint is translated independently of its parent.
   const W = world(c), hip = W.thigh_L.p;
-  const upper = W.hum_L.p.clone().lerp(W.fore_L.p, .25);
+  const upper = W.hum_L.p.clone().lerp(W.fore_L.p, .35);
   const thighLength = A.S.shank_L.J.distanceTo(A.S.thigh_L.J);
   const shankLength = A.S.foot_L.J.distanceTo(A.S.shank_L.J);
-  const knee = upper.add(V(.035, .095, 0)).sub(hip).normalize().multiplyScalar(thighLength).add(hip);
+  const knee = upper.add(V(.06, .09, 0)).sub(hip).normalize().multiplyScalar(thighLength).add(hip);
   const ankle = W.foot_L.p.clone().sub(knee).normalize().multiplyScalar(shankLength).add(knee);
   legIK(c.local, c.rootQ, c.rootP, 'L', ankle, knee);
   // The airborne shin can open without moving the supporting knee or hip.
