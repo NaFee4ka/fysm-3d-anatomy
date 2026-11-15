@@ -436,7 +436,7 @@ function releaseStages(id) {
       if (collision(first) || !clearEdge(open, first) || !clearEdge(first, wideHub)) continue;
       bodyGuides = [first];
     } else if (!clearEdge(open, wideHub)) {
-      if (id === 'handstand') {
+      if (id === 'handstand' || id === 'centering-06') {
         const detour = findHipFlexionDetour({ A, THREE, from: open, to: wideHub, oracle: hipOracle,
           samplesPerEdge: probeAll ? 100 : 1000, accept: c => !collision(c) });
         if (detour) {
