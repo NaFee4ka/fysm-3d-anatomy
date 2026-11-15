@@ -211,7 +211,8 @@ const finiteArray = (value, length) => Array.isArray(value) && value.length === 
 const spineSegments = { ls: 'lumA', l34: 'lumB', tl: 'thA', t89: 'thB', t45: 'thC', ct: 'neckA', c45: 'neckB', ao: 'head' };
 // Regression for concentrating a photographed regional turn in one small
 // model hinge. This is an input-quality check, not a human strength limit.
-assert(Math.max(...spineJointTorque(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -25 * Math.PI / 180), SPINE_PASSIVE.t89).map(Math.abs)) > 1e6,
+// With the separate axial range the fixture gives about 51 end-range moments.
+assert(Math.max(...spineJointTorque(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -25 * Math.PI / 180), SPINE_PASSIVE.t89).map(Math.abs)) > 50 * SPINE_PASSIVE.t89.Mlim,
   'the old C7 concentrated-rotation fixture must expose extreme spring extrapolation');
 const quat = (value, label) => {
   assert(finiteArray(value, 4), label + ' must contain four finite quaternion components');
