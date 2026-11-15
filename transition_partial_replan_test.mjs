@@ -79,9 +79,9 @@ assert.equal(validate(noRelease, { ...context(), endpoints: data.endpoints, sour
 assert.throws(() => select(noRelease, context()), /missing canonical release/);
 const movedOther = context(); movedOther.endpoints.plank.sourceRootP[2] += .001;
 assert.throws(() => select(data, movedOther), /authorized scope/);
-// The pose replanned earlier is no longer authorized; changing it again needs --geometry-only.
-const movedC6 = context(); movedC6.endpoints['centering-06'].sourceRootP[2] += .001;
-assert.throws(() => select(data, movedC6), /authorized scope/);
+// A pose outside the authorized list still needs --geometry-only.
+const movedC7 = context(); movedC7.endpoints['centering-07'].sourceRootP[2] += .001;
+assert.throws(() => select(data, movedC7), /authorized scope/);
 // Assemble a structurally valid, still UNVERIFIED partial candidate. Both
 // incident neighbours deliberately use freshly declared graph fallbacks here;
 // this tests the actual loader's new origin branch without claiming geometry.
@@ -101,7 +101,7 @@ candidate.coordinateOrigin = { ...structuredClone(selected.origin), regeneratedT
 assert.equal(validate(candidate, c), true, 'the actual partial-origin parser must accept a complete synthetic rebuilt candidate');
 const corruptOrigins = [
   p => { p.coordinateOrigin.affectedPoseIds = ['plank']; },
-  p => { p.coordinateOrigin.affectedPoseIds = ['centering-06']; },
+  p => { p.coordinateOrigin.affectedPoseIds = ['centering-07']; },
   p => { p.coordinateOrigin.retainedTrackIds.push('release-' + AFFECTED); },
   p => { p.coordinateOrigin.regeneratedRequests.pop(); },
   p => { p.coordinateOrigin.oldTrackCount++; },

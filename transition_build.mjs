@@ -535,7 +535,7 @@ function fitSavedTrackFrames() {
 // Endpoints whose reconstruction was deliberately changed and may be replanned
 // without regenerating unaffected coordinates. Every other change still needs
 // --geometry-only.
-const PARTIAL_REPLAN_POSE_IDS = ['centering-03', 'struna-05'];
+const PARTIAL_REPLAN_POSE_IDS = ['centering-03', 'struna-05', 'centering-06'];
 function partialReplanRequests(catalog, affectedIds) {
   const affected = new Set(affectedIds);
   const requests = affectedIds.map(id => ({ id: 'release-' + id, kind: 'release', from: id, to: '__neutral' }));

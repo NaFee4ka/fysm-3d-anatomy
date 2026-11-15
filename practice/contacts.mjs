@@ -42,7 +42,7 @@ export const PRACTICE_SUPPORT_INTENT = {
   'centering-02': [hand('L'), hand('R'), toes('L'), toes('R')],
   'centering-03': [foot('L'), toes('R')], 'centering-04': [foot('L'), foot('R')],
   'centering-05': [fore('L'), fore('R'), toes('R')],
-  'centering-06': [hand('L'), fore('R')],
+  'centering-06': [hand('L'), hand('R')],
   'centering-07': [knee('L'), knee('R'), fore('L')],
   'centering-08': [knee('L'), knee('R'), intent(['грудь', 'нижние рёбра']), hand('L'), hand('R')],
 };

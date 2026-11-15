@@ -264,9 +264,8 @@ for (const id of ids) {
     if (id === 'detali-04') { any(UPPER_BACK, 'upper back/shoulder'); any(FOOT, 'supporting foot'); }
     if (id === 'centering-05') { both(FOREARM, 'forearm'); any(FOOT, 'supporting foot'); }
     if (id === 'centering-06') {
-      any(HAND, 'hand'); any(FOREARM, 'forearm');
-      check(['L', 'R'].some(side => has(HAND, side) && has(FOREARM, side === 'L' ? 'R' : 'L')),
-        id + ': requires a hand and the opposite forearm');
+      // Source photo: both palms on the floor, no forearm support.
+      both(HAND, 'hand'); check(!has(FOREARM), id + ': forearms must stay off the floor');
       check(!has(FOOT), id + ': feet must be lifted in the arm balance');
     }
     if (['centering-07', 'centering-08'].includes(id)) both(new Set(['колени']), 'knee');
