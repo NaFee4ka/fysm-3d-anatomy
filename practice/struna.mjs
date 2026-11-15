@@ -154,8 +154,14 @@ function chair(wings = false) {
   return place(c, [-1, .23, .5], wings ? ['Пятки подняты, ладони обращены вверх, как на исходной фотографии.'] : ['Запястный замок за спиной восстановлен по фотографии.']);
 }
 function spider() {
-  // Keep shoulders closer to the supports instead of putting almost straight
-  // forearms behind the palms and demanding 114 degrees of wrist extension.
+  // Photo: both knees rest high on the backs of the upper arms and the shins
+  // slope down and forward, feet together above the floor. The previous
+  // version drove the ankles to knee height, so the shins were horizontal and
+  // the legs read as a different arm balance. Trunk, shoulders and palms keep
+  // the earlier reconstruction: a stronger forward lean with the pelvis higher,
+  // as in the photograph, required wrist extension far beyond the model's
+  // 70-degree range (wrist reserve moments of 20-50 N*m), so the pelvis stays
+  // lower than in the photograph.
   const c = base(15); c.rootP = V(0, .115, 0);
   shoulders(c.local, 5, 5, 12); digits(c.local, SPREAD);
   for (const side of ['L', 'R']) {
@@ -165,8 +171,22 @@ function spider() {
     const wl = palmWrist('L', V(.285, .003, .14), Q);
     arm(c, side, V(sign * wl.x, wl.y, wl.z), V(sign * .33, .36, -.04), side === 'L' ? Q : mirrorQ(Q));
   }
+  // Each knee is placed on the posed upper arm at the thigh's own length from
+  // the hip; the shin then slopes below horizontal toward the midline.
+  // Segment lengths are unchanged.
+  const W = world(c);
+  const thighLength = A.S.shank_L.J.distanceTo(A.S.thigh_L.J);
+  const shankLength = A.S.foot_L.J.distanceTo(A.S.shank_L.J);
+  const shinDeg = 25;
+  for (const side of ['L', 'R']) {
+    const sign = side === 'L' ? 1 : -1, hip = W['thigh_' + side].p;
+    const upper = W['hum_' + side].p.clone().lerp(W['fore_' + side].p, .35).add(V(sign * .08, .07, 0));
+    const knee = upper.sub(hip).normalize().multiplyScalar(thighLength).add(hip);
+    const shin = V(-sign * .4, -Math.sin(shinDeg * Math.PI / 180), Math.cos(shinDeg * Math.PI / 180)).normalize();
+    legIK(c.local, c.rootQ, c.rootP, side, knee.clone().addScaledVector(shin, shankLength), knee);
+  }
   feet(c, -15);
-  return place(c, [-1, .28, .75], ['Контакт бёдер с руками — геометрическая реконструкция; давление тканей не вычислено.']);
+  return place(c, [-1, .28, .75], ['Колени на задней поверхности плеч, голени наклонены вниз-вперёд, стопы над полом. Контакт бёдер с руками — геометрическая реконструкция; давление тканей не вычислено.']);
 }
 function sumoTwist() {
   const c = base(40); c.rootP = V(0, .575, 0);
