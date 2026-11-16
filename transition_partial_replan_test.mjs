@@ -80,8 +80,8 @@ assert.throws(() => select(noRelease, context()), /missing canonical release/);
 const movedOther = context(); movedOther.endpoints.plank.sourceRootP[2] += .001;
 assert.throws(() => select(data, movedOther), /authorized scope/);
 // A pose outside the authorized list still needs --geometry-only.
-const movedC7 = context(); movedC7.endpoints['centering-07'].sourceRootP[2] += .001;
-assert.throws(() => select(data, movedC7), /authorized scope/);
+const movedC8 = context(); movedC8.endpoints['centering-08'].sourceRootP[2] += .001;
+assert.throws(() => select(data, movedC8), /authorized scope/);
 // Assemble a structurally valid, still UNVERIFIED partial candidate. Both
 // incident neighbours deliberately use freshly declared graph fallbacks here;
 // this tests the actual loader's new origin branch without claiming geometry.

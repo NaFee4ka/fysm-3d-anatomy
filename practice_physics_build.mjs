@@ -7,6 +7,7 @@ import { createHash } from 'node:crypto';
 import * as THREE from 'three';
 import { createAnatomy } from './anatomy3.js';
 import { makePhysics } from './physics_core.mjs';
+import { PRACTICE_STOPS } from './physics_params.mjs';
 import { createPracticeContacts, convexHull, supportMargin } from './practice/contacts.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
@@ -255,7 +256,7 @@ export async function buildPracticePhysics(options = {}) {
       let result;
       try {
         result = PH.solve(conf, { contacts: contacts.contacts, internalContacts: contacts.internalContacts,
-          tone: {}, iters: options.iters ?? 20000 });
+          tone: {}, stops: PRACTICE_STOPS, iters: options.iters ?? 40000 });
       } catch (error) {
         error.message = 'Practice pose ' + id + ': ' + error.message;
         error.practicePoseId = id;
@@ -265,7 +266,7 @@ export async function buildPracticePhysics(options = {}) {
       if (id === 'struna-08' && options.sensitivity !== false) {
         const alternateContacts = factory.build(id, W, { areaScale: .5 });
         const alternateResult = PH.solve(conf, { contacts: alternateContacts.contacts,
-          internalContacts: alternateContacts.internalContacts, tone: {}, iters: options.iters ?? 20000 });
+          internalContacts: alternateContacts.internalContacts, tone: {}, stops: PRACTICE_STOPS, iters: options.iters ?? 40000 });
         const alternate = serializePracticePhysics(A, PH, alternateResult, alternateContacts);
         const hypothesis = (pose, areaScale) => ({ areaScale,
           contactAreaM2: pose.diag.contacts.inferredPads.reduce((sum, pad) => sum + pad.areaM2, 0),

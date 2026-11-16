@@ -9,6 +9,9 @@ export const CONTACT_REFERENCE_AREA_M2 = .0004;
 // Two registered surface proxies, each with the existing 4 mm geometric band.
 // This is a model tolerance, not measured skin thickness or compliance.
 export const INTERNAL_CONTACT_TOLERANCE_M = 2 * FLOOR_BAND_M;
+// A thigh resting on an upper arm does not slide freely: skin on skin or on fabric holds with a static
+// coefficient of roughly 0.4–0.6. The lower value is assumed here; it is not measured for this practitioner.
+export const KNEE_ARM_FRICTION = .4;
 export const FINGERTIP_SOFT_OFFSET_M = .002;
 const HAND_REGIONS = new Set(['ладони', 'пальцы рук', 'кулаки', 'кисти']);
 const FOOT_REGIONS = new Set(['пятки', 'подушечки стоп', 'пальцы стоп', 'тыл стоп', 'наружный край стопы']);
@@ -549,7 +552,8 @@ export async function createPracticeContacts(A, THREE, muscleData, options = {})
         pointA: found.a.P.toArray(), pointB: found.b.P.toArray(), toleranceM: descriptor.toleranceM ?? INTERNAL_CONTACT_TOLERANCE_M,
         assumption: descriptor.kind === 'bilateral' ? 'closed grip; finger strength not identified'
           : descriptor.kind === 'pull' ? 'pull cone along the arm; cone width retained from the legacy grip model'
-            : 'unilateral normal contact; skin friction not measured and omitted' } };
+            : descriptor.mu > 0 ? 'unilateral contact; friction coefficient assumed, not measured'
+              : 'unilateral normal contact; skin friction not measured and omitted' } };
   }
   function internals(id, W, records, lmks) {
     const result = [], hands = side => seg => new RegExp('^(hand|f[1-5][mabc])_' + side + '$').test(seg);
@@ -580,7 +584,7 @@ export async function createPracticeContacts(A, THREE, muscleData, options = {})
         result.push(pairContact(W, records, lmks, { id: id + ':knee-arm:' + side, side, kind: 'unilateral',
           a: seg => seg === 'thigh_' + side || seg === 'shank_' + side,
           b: seg => seg === 'hum_' + side, anchorA: knee, anchorB: knee,
-          radiusA: .14, radiusB: .24, normal: P => {
+          radiusA: .14, radiusB: .24, mu: KNEE_ARM_FRICTION, normal: P => {
             const shoulder = W['hum_' + side].p, elbow = W['fore_' + side].p;
             const d = elbow.clone().sub(shoulder), t = Math.max(0, Math.min(1, P.clone().sub(shoulder).dot(d) / d.lengthSq()));
             return knee.clone().sub(shoulder.clone().addScaledVector(d, t));

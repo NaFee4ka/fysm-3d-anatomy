@@ -33,7 +33,7 @@ assert(Math.abs(minRatio - Math.cos(Math.PI / 16)) < 1e-12);
 report.friction = { facets: COULOMB_FACETS, directionChecks, minCircularCapacityRatio: minRatio, maxCircularCapacityRatio: maxRatio };
 
 function oldEulerMoment(parameter, angle, axis) {
-  const limit = axis === 0 ? (angle >= 0 ? parameter.flex : parameter.ext) : parameter.side;
+  const limit = axis === 0 ? (angle >= 0 ? parameter.flex : parameter.ext) : axis === 1 ? parameter.rot ?? parameter.side : parameter.side;
   const u = (Math.abs(angle) - .6 * limit) / (.4 * limit);
   return -parameter.k[axis] * angle - (u > 0 ? Math.sign(angle) * parameter.Mlim * Math.expm1(4 * u) / Math.expm1(4) : 0);
 }
